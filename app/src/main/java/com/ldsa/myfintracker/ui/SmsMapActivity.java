@@ -19,6 +19,7 @@ import com.ldsa.myfintracker.db.ExpenseDatabase;
 import com.ldsa.myfintracker.db.SenderConfig;
 import com.ldsa.myfintracker.sms.SmsReader;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.List;
@@ -87,15 +88,33 @@ public class SmsMapActivity extends Activity {
         if (cfg == null) return;
 
         String amount   = extractFirst(mSmsBody, cfg.amountRegex);
+        String date     = extractFirst(mSmsBody, cfg.dateRegex);
         String merchant = extractFirst(mSmsBody, cfg.merchantRegex);
         String card     = extractFirst(mSmsBody, cfg.cardRegex);
 
         if (!amount.isEmpty())
             mEtAmount.setText(amount.replaceAll("[^0-9.]", ""));
+        if (!date.isEmpty())
+            tryApplyExtractedDate(date.trim());
         if (!merchant.isEmpty())
             mEtMerchant.setText(merchant.trim());
         if (!card.isEmpty())
             mEtCard.setText(card.trim());
+    }
+
+    private void tryApplyExtractedDate(String raw) {
+        String[] formats = {"dd/MM/yyyy", "dd-MM-yyyy", "dd/MM/yy", "dd-MM-yy",
+                            "yyyy-MM-dd", "dd MMM yyyy", "dd MMM yy"};
+        for (String fmt : formats) {
+            try {
+                java.util.Date d = new SimpleDateFormat(fmt, Locale.getDefault()).parse(raw);
+                if (d != null) {
+                    mSelectedDateMs = d.getTime();
+                    updateDateTimeDisplay();
+                    return;
+                }
+            } catch (ParseException ignored) {}
+        }
     }
 
     private String extractFirst(String text, String regex) {

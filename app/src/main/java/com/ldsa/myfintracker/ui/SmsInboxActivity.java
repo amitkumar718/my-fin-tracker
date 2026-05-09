@@ -111,10 +111,9 @@ public class SmsInboxActivity extends Activity {
             if (checkSelfPermission(android.Manifest.permission.READ_SMS)
                     != PackageManager.PERMISSION_GRANTED) {
                 requestPermissions(new String[]{android.Manifest.permission.READ_SMS}, REQ_SMS_PERM);
-                return;
             }
+            // onResume handles loading once permission is confirmed
         }
-        loadSms();
     }
 
     private boolean hasSmsPermission() {

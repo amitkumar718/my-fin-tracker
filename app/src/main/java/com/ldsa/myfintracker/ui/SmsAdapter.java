@@ -29,6 +29,8 @@ public class SmsAdapter extends BaseAdapter {
     }
 
     private final Context mCtx;
+    private final SimpleDateFormat mDateFmt =
+        new SimpleDateFormat("dd MMM  HH:mm", Locale.getDefault());
     private List<ListItem> mItems = new ArrayList<ListItem>();
 
     SmsAdapter(Context ctx) {
@@ -90,9 +92,7 @@ public class SmsAdapter extends BaseAdapter {
         }
         SmsMessage msg = item.sms;
         h.tvSender.setText(msg.address != null ? msg.address : "Unknown");
-        h.tvDate.setText(msg.date > 0
-            ? new SimpleDateFormat("dd MMM  HH:mm", Locale.getDefault()).format(new Date(msg.date))
-            : "");
+        h.tvDate.setText(msg.date > 0 ? mDateFmt.format(new Date(msg.date)) : "");
         h.tvBody.setText(msg.body != null ? msg.body : "");
         return convertView;
     }
