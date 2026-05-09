@@ -21,7 +21,7 @@ public class SenderConfig {
                 return false;
             }
         }
-        return address.equalsIgnoreCase(pattern);
+        return address.toLowerCase().contains(pattern.toLowerCase());
     }
 
     public String getLabel() {

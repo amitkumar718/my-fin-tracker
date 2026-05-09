@@ -33,7 +33,7 @@
     <string name="hint_reason">Reason / note</string>
     <string name="hint_card">Card / UPI / wallet</string>
     <string name="hint_bank">Bank / sender</string>
-    <string name="hint_sender_pattern">Sender ID (e.g. HDFCBK)</string>
+    <string name="hint_sender_pattern">Partial sender ID (e.g. HDFCBK matches VK-HDFCBK)</string>
     <string name="hint_display_name">Friendly name (e.g. HDFC Bank)</string>
     <string name="hint_regex_amount">Amount regex (e.g. Rs\.?([\d,]+))</string>
     <string name="hint_regex_date">Date regex</string>
