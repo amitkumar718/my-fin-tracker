@@ -30,8 +30,7 @@ public class SmsInboxActivity extends Activity {
     private ListView mListView;
     private TextView mTvEmpty;
     private TextView mTvCount;
-    private SmsAdapter mAdapter;
-    private List<SmsMessage> mMessages = new ArrayList<SmsMessage>();
+    SmsAdapter mAdapter;
     private ExpenseDatabase mDb;
 
     @Override
@@ -45,9 +44,10 @@ public class SmsInboxActivity extends Activity {
         mTvEmpty  = (TextView) findViewById(R.id.tvEmpty);
         mTvCount  = (TextView) findViewById(R.id.tvSmsCount);
 
-        mAdapter = new SmsAdapter(this, mMessages);
+        mAdapter = new SmsAdapter(this);
         mListView.setAdapter(mAdapter);
-        mListView.setOnItemClickListener(new SmsItemClickListener(this));
+        mListView.setOnItemClickListener(new SmsClickListener(this));
+        mListView.setOnItemLongClickListener(new SmsLongClickListener(this));
 
         checkPermissionAndLoad();
     }
@@ -67,10 +67,7 @@ public class SmsInboxActivity extends Activity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
-        if (id == R.id.action_refresh) {
-            loadSms();
-            return true;
-        }
+        if (id == R.id.action_refresh) { loadSms(); return true; }
         if (id == R.id.action_settings) {
             startActivity(new Intent(this, SettingsActivity.class));
             return true;
@@ -78,36 +75,42 @@ public class SmsInboxActivity extends Activity {
         return super.onOptionsItemSelected(item);
     }
 
-    void openSmsMap(SmsMessage msg) {
+    void openSmsMap(SmsAdapter.ListItem item) {
         Intent i = new Intent(this, SmsMapActivity.class);
-        i.putExtra(SmsMapActivity.EXTRA_SMS_ADDRESS, msg.address);
-        i.putExtra(SmsMapActivity.EXTRA_SMS_BODY,    msg.body);
-        i.putExtra(SmsMapActivity.EXTRA_SMS_DATE,    msg.date);
+        i.putExtra(SmsMapActivity.EXTRA_SMS_ADDRESS, item.sms.address);
+        i.putExtra(SmsMapActivity.EXTRA_SMS_BODY,    item.sms.body);
+        i.putExtra(SmsMapActivity.EXTRA_SMS_DATE,    item.sms.date);
         startActivity(i);
     }
 
-    void onMessagesLoaded(List<SmsMessage> messages) {
-        mMessages = messages;
-        mAdapter.setItems(mMessages);
-        int count = mMessages.size();
-        mTvCount.setText(count + " message" + (count == 1 ? "" : "s"));
-        mTvEmpty.setVisibility(count == 0 ? View.VISIBLE : View.GONE);
-        mListView.setVisibility(count == 0 ? View.GONE : View.VISIBLE);
+    void openExtractConfig(SmsAdapter.ListItem item) {
+        Intent i = new Intent(this, SmsExtractConfigActivity.class);
+        i.putExtra(SmsExtractConfigActivity.EXTRA_SENDER_ID, item.senderConfig.id);
+        i.putExtra(SmsExtractConfigActivity.EXTRA_SMS_BODY,  item.sms.body);
+        startActivity(i);
+    }
+
+    void onItemsLoaded(List<SmsAdapter.ListItem> items) {
+        mAdapter.setItems(items);
+        int smsCount = 0;
+        for (SmsAdapter.ListItem it : items) {
+            if (it.type == SmsAdapter.ListItem.TYPE_SMS) smsCount++;
+        }
+        mTvCount.setText(smsCount + " message" + (smsCount == 1 ? "" : "s"));
+        mTvEmpty.setVisibility(smsCount == 0 ? View.VISIBLE : View.GONE);
+        mListView.setVisibility(smsCount == 0 ? View.GONE : View.VISIBLE);
     }
 
     private void loadSms() {
         List<SenderConfig> configs = mDb.getAllSenders();
-        Handler handler = new Handler(Looper.getMainLooper());
-        new LoadSmsThread(this, configs, handler).start();
+        new LoadSmsThread(this, configs, new Handler(Looper.getMainLooper())).start();
     }
 
     private void checkPermissionAndLoad() {
         if (android.os.Build.VERSION.SDK_INT >= 23) {
             if (checkSelfPermission(android.Manifest.permission.READ_SMS)
                     != PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(
-                    new String[]{android.Manifest.permission.READ_SMS},
-                    REQ_SMS_PERM);
+                requestPermissions(new String[]{android.Manifest.permission.READ_SMS}, REQ_SMS_PERM);
                 return;
             }
         }
@@ -143,37 +146,70 @@ public class SmsInboxActivity extends Activity {
         private final Handler mHandler;
 
         LoadSmsThread(SmsInboxActivity a, List<SenderConfig> configs, Handler h) {
-            mActivity = a;
-            mConfigs  = configs;
-            mHandler  = h;
+            mActivity = a; mConfigs = configs; mHandler = h;
         }
 
         public void run() {
-            List<SmsMessage> msgs = SmsReader.readMatchingSms(mActivity, mConfigs);
-            mHandler.post(new LoadSmsResultRunnable(mActivity, msgs));
+            List<SmsMessage> allSms = SmsReader.readMatchingSms(mActivity, mConfigs);
+            List<SmsAdapter.ListItem> grouped = buildGrouped(allSms, mConfigs);
+            mHandler.post(new LoadResultRunnable(mActivity, grouped));
+        }
+
+        private List<SmsAdapter.ListItem> buildGrouped(List<SmsMessage> allSms, List<SenderConfig> configs) {
+            List<SmsAdapter.ListItem> result = new ArrayList<SmsAdapter.ListItem>();
+            for (SenderConfig cfg : configs) {
+                List<SmsMessage> matching = new ArrayList<SmsMessage>();
+                for (SmsMessage msg : allSms) {
+                    if (cfg.matches(msg.address)) matching.add(msg);
+                }
+                if (!matching.isEmpty()) {
+                    SmsAdapter.ListItem header = new SmsAdapter.ListItem();
+                    header.type         = SmsAdapter.ListItem.TYPE_HEADER;
+                    header.senderConfig = cfg;
+                    result.add(header);
+                    for (SmsMessage msg : matching) {
+                        SmsAdapter.ListItem item = new SmsAdapter.ListItem();
+                        item.type         = SmsAdapter.ListItem.TYPE_SMS;
+                        item.senderConfig = cfg;
+                        item.sms          = msg;
+                        result.add(item);
+                    }
+                }
+            }
+            return result;
         }
     }
 
-    static class LoadSmsResultRunnable implements Runnable {
+    static class LoadResultRunnable implements Runnable {
         private final SmsInboxActivity mActivity;
-        private final List<SmsMessage> mMessages;
-
-        LoadSmsResultRunnable(SmsInboxActivity a, List<SmsMessage> msgs) {
-            mActivity = a;
-            mMessages = msgs;
+        private final List<SmsAdapter.ListItem> mItems;
+        LoadResultRunnable(SmsInboxActivity a, List<SmsAdapter.ListItem> items) {
+            mActivity = a; mItems = items;
         }
-
         public void run() {
-            if (!mActivity.isFinishing()) mActivity.onMessagesLoaded(mMessages);
+            if (!mActivity.isFinishing()) mActivity.onItemsLoaded(mItems);
         }
     }
 
-    static class SmsItemClickListener implements AdapterView.OnItemClickListener {
+    static class SmsClickListener implements AdapterView.OnItemClickListener {
         private final SmsInboxActivity mActivity;
-        SmsItemClickListener(SmsInboxActivity a) { mActivity = a; }
+        SmsClickListener(SmsInboxActivity a) { mActivity = a; }
         public void onItemClick(AdapterView<?> p, View v, int pos, long id) {
-            SmsMessage msg = (SmsMessage) mActivity.mAdapter.getItem(pos);
-            mActivity.openSmsMap(msg);
+            SmsAdapter.ListItem item = (SmsAdapter.ListItem) mActivity.mAdapter.getItem(pos);
+            if (item.type == SmsAdapter.ListItem.TYPE_SMS) mActivity.openSmsMap(item);
+        }
+    }
+
+    static class SmsLongClickListener implements AdapterView.OnItemLongClickListener {
+        private final SmsInboxActivity mActivity;
+        SmsLongClickListener(SmsInboxActivity a) { mActivity = a; }
+        public boolean onItemLongClick(AdapterView<?> p, View v, int pos, long id) {
+            SmsAdapter.ListItem item = (SmsAdapter.ListItem) mActivity.mAdapter.getItem(pos);
+            if (item.type == SmsAdapter.ListItem.TYPE_SMS) {
+                mActivity.openExtractConfig(item);
+                return true;
+            }
+            return false;
         }
     }
 }

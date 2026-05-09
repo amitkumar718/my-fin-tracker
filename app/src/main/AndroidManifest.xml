@@ -54,6 +54,11 @@
             android:label="@string/title_sender_template"
             android:exported="false" />
 
+        <activity
+            android:name=".ui.SmsExtractConfigActivity"
+            android:label="@string/title_sms_extract_config"
+            android:exported="false" />
+
     </application>
 
 </manifest>

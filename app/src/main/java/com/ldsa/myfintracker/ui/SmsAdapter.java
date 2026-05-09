@@ -8,56 +8,101 @@ import android.widget.BaseAdapter;
 import android.widget.TextView;
 
 import com.ldsa.myfintracker.R;
+import com.ldsa.myfintracker.db.SenderConfig;
 import com.ldsa.myfintracker.sms.SmsMessage;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
 public class SmsAdapter extends BaseAdapter {
 
-    private final Context mCtx;
-    private List<SmsMessage> mList;
+    static class ListItem {
+        static final int TYPE_HEADER = 0;
+        static final int TYPE_SMS    = 1;
 
-    SmsAdapter(Context ctx, List<SmsMessage> list) {
-        mCtx  = ctx;
-        mList = list;
+        int type;
+        SenderConfig senderConfig;
+        SmsMessage sms;
     }
 
-    void setItems(List<SmsMessage> list) {
-        mList = list;
+    private final Context mCtx;
+    private List<ListItem> mItems = new ArrayList<ListItem>();
+
+    SmsAdapter(Context ctx) {
+        mCtx = ctx;
+    }
+
+    void setItems(List<ListItem> items) {
+        mItems = items;
         notifyDataSetChanged();
     }
 
-    @Override public int getCount() { return mList.size(); }
-    @Override public Object getItem(int pos) { return mList.get(pos); }
-    @Override public long getItemId(int pos) { return mList.get(pos).id; }
+    @Override public int getCount() { return mItems.size(); }
+    @Override public Object getItem(int pos) { return mItems.get(pos); }
+    @Override public long getItemId(int pos) {
+        ListItem item = mItems.get(pos);
+        return item.type == ListItem.TYPE_SMS ? item.sms.id : -1;
+    }
+    @Override public int getViewTypeCount() { return 2; }
+    @Override public int getItemViewType(int pos) { return mItems.get(pos).type; }
+    @Override public boolean isEnabled(int pos) { return mItems.get(pos).type == ListItem.TYPE_SMS; }
 
     @Override
     public View getView(int pos, View convertView, ViewGroup parent) {
-        ViewHolder h;
+        ListItem item = mItems.get(pos);
+        if (item.type == ListItem.TYPE_HEADER) {
+            return getHeaderView(item, convertView, parent);
+        }
+        return getSmsView(item, convertView, parent);
+    }
+
+    private View getHeaderView(ListItem item, View convertView, ViewGroup parent) {
+        HeaderHolder h;
+        if (convertView == null) {
+            convertView = LayoutInflater.from(mCtx).inflate(R.layout.item_sms_header, parent, false);
+            h = new HeaderHolder();
+            h.tvName    = (TextView) convertView.findViewById(R.id.tvHeaderName);
+            h.tvPattern = (TextView) convertView.findViewById(R.id.tvHeaderPattern);
+            convertView.setTag(h);
+        } else {
+            h = (HeaderHolder) convertView.getTag();
+        }
+        h.tvName.setText(item.senderConfig.getLabel());
+        h.tvPattern.setText(item.senderConfig.pattern
+            + (item.senderConfig.isRegex ? "  (regex)" : ""));
+        return convertView;
+    }
+
+    private View getSmsView(ListItem item, View convertView, ViewGroup parent) {
+        SmsHolder h;
         if (convertView == null) {
             convertView = LayoutInflater.from(mCtx).inflate(R.layout.item_sms, parent, false);
-            h = new ViewHolder();
+            h = new SmsHolder();
             h.tvSender = (TextView) convertView.findViewById(R.id.tvSender);
             h.tvDate   = (TextView) convertView.findViewById(R.id.tvDate);
             h.tvBody   = (TextView) convertView.findViewById(R.id.tvBody);
             convertView.setTag(h);
         } else {
-            h = (ViewHolder) convertView.getTag();
+            h = (SmsHolder) convertView.getTag();
         }
-
-        SmsMessage msg = mList.get(pos);
+        SmsMessage msg = item.sms;
         h.tvSender.setText(msg.address != null ? msg.address : "Unknown");
-        SimpleDateFormat sdf = new SimpleDateFormat("dd MMM  HH:mm", Locale.getDefault());
-        h.tvDate.setText(msg.date > 0 ? sdf.format(new Date(msg.date)) : "");
+        h.tvDate.setText(msg.date > 0
+            ? new SimpleDateFormat("dd MMM  HH:mm", Locale.getDefault()).format(new Date(msg.date))
+            : "");
         h.tvBody.setText(msg.body != null ? msg.body : "");
-
         return convertView;
     }
 
-    static class ViewHolder {
+    static class HeaderHolder {
+        TextView tvName;
+        TextView tvPattern;
+    }
+
+    static class SmsHolder {
         TextView tvSender;
         TextView tvDate;
         TextView tvBody;

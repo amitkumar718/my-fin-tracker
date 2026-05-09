@@ -76,6 +76,11 @@
     <string name="msg_expense_deleted">Expense deleted</string>
     <string name="msg_sender_saved">Sender saved</string>
     <string name="msg_sender_deleted">Sender removed</string>
+    <string name="msg_extraction_saved">Extraction rules saved</string>
+    <string name="extract_no_match">(no match)</string>
+    <string name="extract_invalid_regex">(invalid regex)</string>
+    <string name="title_sms_extract_config">Configure Extraction</string>
+    <string name="btn_save_extraction">Save Extraction Rules</string>
 
     <string-array name="landing_page_labels">
         <item>Expenses (default)</item>
