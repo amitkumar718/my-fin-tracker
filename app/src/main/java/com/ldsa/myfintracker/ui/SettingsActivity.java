@@ -6,11 +6,11 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.ListView;
+import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -28,9 +28,8 @@ public class SettingsActivity extends Activity {
     private static final String PREF_LANDING = "landing_page";
 
     private Spinner mSpinnerLanding;
-    private ListView mListSenders;
+    private LinearLayout mContainerSenders;
     private TextView mTvNoSenders;
-    private SenderConfigAdapter mSenderAdapter;
     private List<SenderConfig> mSenders = new ArrayList<SenderConfig>();
     private ExpenseDatabase mDb;
     private long mPendingDeleteId = -1;
@@ -42,27 +41,21 @@ public class SettingsActivity extends Activity {
 
         mDb = ExpenseDatabase.getInstance(this);
 
-        mSpinnerLanding = (Spinner)  findViewById(R.id.spinnerLanding);
-        mListSenders    = (ListView) findViewById(R.id.listSenders);
-        mTvNoSenders    = (TextView) findViewById(R.id.tvNoSenders);
-        Button btnAdd   = (Button)   findViewById(R.id.btnAddSender);
+        mSpinnerLanding    = (Spinner)       findViewById(R.id.spinnerLanding);
+        mContainerSenders  = (LinearLayout)  findViewById(R.id.containerSenders);
+        mTvNoSenders       = (TextView)      findViewById(R.id.tvNoSenders);
+        Button btnAdd      = (Button)        findViewById(R.id.btnAddSender);
 
         ArrayAdapter<CharSequence> landingAdapter = ArrayAdapter.createFromResource(
             this, R.array.landing_page_labels, android.R.layout.simple_spinner_item);
         landingAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         mSpinnerLanding.setAdapter(landingAdapter);
 
-        // Set current selection
         SharedPreferences prefs = getSharedPreferences(PREF_FILE, MODE_PRIVATE);
         String landing = prefs.getString(PREF_LANDING, "expenses");
         mSpinnerLanding.setSelection("sms".equals(landing) ? 1 : 0);
 
         mSpinnerLanding.setOnItemSelectedListener(new LandingSelectedListener(this));
-
-        mSenderAdapter = new SenderConfigAdapter(this, mSenders);
-        mListSenders.setAdapter(mSenderAdapter);
-        mListSenders.setOnItemClickListener(new SenderClickListener(this));
-        mListSenders.setOnItemLongClickListener(new SenderLongClickListener(this));
 
         btnAdd.setOnClickListener(new AddSenderClickListener(this));
     }
@@ -82,9 +75,25 @@ public class SettingsActivity extends Activity {
 
     void reloadSenders() {
         mSenders = mDb.getAllSenders();
-        mSenderAdapter.setItems(mSenders);
+        mContainerSenders.removeAllViews();
+        LayoutInflater inflater = LayoutInflater.from(this);
+        for (int i = 0; i < mSenders.size(); i++) {
+            final SenderConfig s = mSenders.get(i);
+            View row = inflater.inflate(R.layout.item_sender, mContainerSenders, false);
+            ((TextView) row.findViewById(R.id.tvSenderName)).setText(s.getLabel());
+            ((TextView) row.findViewById(R.id.tvSenderPattern)).setText(s.pattern);
+            row.findViewById(R.id.tvRegexBadge).setVisibility(s.isRegex ? View.VISIBLE : View.GONE);
+            if (i > 0) {
+                LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) row.getLayoutParams();
+                lp.topMargin = (int) (8 * getResources().getDisplayMetrics().density);
+                row.setLayoutParams(lp);
+            }
+            row.setOnClickListener(new SenderRowClickListener(this, s.id));
+            row.setOnLongClickListener(new SenderRowLongClickListener(this, s.id));
+            mContainerSenders.addView(row);
+        }
         mTvNoSenders.setVisibility(mSenders.isEmpty() ? View.VISIBLE : View.GONE);
-        mListSenders.setVisibility(mSenders.isEmpty() ? View.GONE : View.VISIBLE);
+        mContainerSenders.setVisibility(mSenders.isEmpty() ? View.GONE : View.VISIBLE);
     }
 
     void openSenderTemplate(long senderId) {
@@ -132,23 +141,18 @@ public class SettingsActivity extends Activity {
         public void onClick(View v) { mA.openSenderTemplate(-1L); }
     }
 
-    static class SenderClickListener implements AdapterView.OnItemClickListener {
+    static class SenderRowClickListener implements View.OnClickListener {
         private final SettingsActivity mA;
-        SenderClickListener(SettingsActivity a) { mA = a; }
-        public void onItemClick(AdapterView<?> p, View v, int pos, long id) {
-            SenderConfig s = (SenderConfig) mA.mSenderAdapter.getItem(pos);
-            mA.openSenderTemplate(s.id);
-        }
+        private final long mId;
+        SenderRowClickListener(SettingsActivity a, long id) { mA = a; mId = id; }
+        public void onClick(View v) { mA.openSenderTemplate(mId); }
     }
 
-    static class SenderLongClickListener implements AdapterView.OnItemLongClickListener {
+    static class SenderRowLongClickListener implements View.OnLongClickListener {
         private final SettingsActivity mA;
-        SenderLongClickListener(SettingsActivity a) { mA = a; }
-        public boolean onItemLongClick(AdapterView<?> p, View v, int pos, long id) {
-            SenderConfig s = (SenderConfig) mA.mSenderAdapter.getItem(pos);
-            mA.confirmDeleteSender(s.id);
-            return true;
-        }
+        private final long mId;
+        SenderRowLongClickListener(SettingsActivity a, long id) { mA = a; mId = id; }
+        public boolean onLongClick(View v) { mA.confirmDeleteSender(mId); return true; }
     }
 
     static class DeleteSenderConfirmListener implements DialogInterface.OnClickListener {
