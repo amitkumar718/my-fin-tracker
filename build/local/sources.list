@@ -1,0 +1,16 @@
+app/src/main/java/com/ldsa/myfintracker/db/Expense.java
+app/src/main/java/com/ldsa/myfintracker/db/SenderConfig.java
+app/src/main/java/com/ldsa/myfintracker/db/ExpenseDatabase.java
+app/src/main/java/com/ldsa/myfintracker/sms/SmsMessage.java
+app/src/main/java/com/ldsa/myfintracker/sms/SmsReader.java
+app/src/main/java/com/ldsa/myfintracker/ui/ExpenseDetailActivity.java
+app/src/main/java/com/ldsa/myfintracker/ui/ExpenseAdapter.java
+app/src/main/java/com/ldsa/myfintracker/ui/SmsAdapter.java
+app/src/main/java/com/ldsa/myfintracker/ui/SenderConfigAdapter.java
+app/src/main/java/com/ldsa/myfintracker/ui/MainActivity.java
+app/src/main/java/com/ldsa/myfintracker/ui/SmsInboxActivity.java
+app/src/main/java/com/ldsa/myfintracker/ui/SmsMapActivity.java
+app/src/main/java/com/ldsa/myfintracker/ui/AddExpenseActivity.java
+app/src/main/java/com/ldsa/myfintracker/ui/SenderTemplateActivity.java
+app/src/main/java/com/ldsa/myfintracker/ui/SettingsActivity.java
+app/src/main/java/com/ldsa/myfintracker/R.java

@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F0F4F8">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <!-- Search bar -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#1976D2"
+            android:paddingLeft="12dp"
+            android:paddingRight="12dp"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp">
+
+            <EditText
+                android:id="@+id/etSearch"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:background="@drawable/bg_search"
+                android:hint="@string/hint_search"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp"
+                android:singleLine="true"
+                android:inputType="text"
+                android:textColor="#212121"
+                android:textColorHint="#9E9E9E"
+                android:textSize="14sp" />
+
+        </LinearLayout>
+
+        <!-- Filter chips row -->
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#FFFFFF"
+            android:paddingLeft="12dp"
+            android:paddingRight="12dp"
+            android:paddingTop="10dp"
+            android:paddingBottom="8dp"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <Button
+                    android:id="@+id/btnFilterAll"
+                    android:layout_width="wrap_content"
+                    android:layout_height="32dp"
+                    android:text="@string/filter_all"
+                    android:textSize="12sp"
+                    android:paddingLeft="16dp"
+                    android:paddingRight="16dp"
+                    android:layout_marginRight="8dp"
+                    android:background="@drawable/bg_chip_active"
+                    android:textColor="#FFFFFF" />
+
+                <Button
+                    android:id="@+id/btnFilterOnline"
+                    android:layout_width="wrap_content"
+                    android:layout_height="32dp"
+                    android:text="@string/filter_online"
+                    android:textSize="12sp"
+                    android:paddingLeft="16dp"
+                    android:paddingRight="16dp"
+                    android:layout_marginRight="8dp"
+                    android:background="@drawable/bg_chip"
+                    android:textColor="#1565C0" />
+
+                <Button
+                    android:id="@+id/btnFilterOffline"
+                    android:layout_width="wrap_content"
+                    android:layout_height="32dp"
+                    android:text="@string/filter_offline"
+                    android:textSize="12sp"
+                    android:paddingLeft="16dp"
+                    android:paddingRight="16dp"
+                    android:layout_marginRight="8dp"
+                    android:background="@drawable/bg_chip"
+                    android:textColor="#1565C0" />
+
+                <Button
+                    android:id="@+id/btnFilterMonth"
+                    android:layout_width="wrap_content"
+                    android:layout_height="32dp"
+                    android:text="@string/filter_month"
+                    android:textSize="12sp"
+                    android:paddingLeft="16dp"
+                    android:paddingRight="16dp"
+                    android:background="@drawable/bg_chip"
+                    android:textColor="#1565C0" />
+
+            </LinearLayout>
+        </HorizontalScrollView>
+
+        <!-- Sort + count row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:background="#FFFFFF"
+            android:paddingLeft="12dp"
+            android:paddingRight="12dp"
+            android:paddingBottom="8dp"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/tvCount"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="0 expenses"
+                android:textColor="#757575"
+                android:textSize="12sp" />
+
+            <Button
+                android:id="@+id/btnSortDate"
+                android:layout_width="wrap_content"
+                android:layout_height="28dp"
+                android:text="Date ▼"
+                android:textSize="11sp"
+                android:paddingLeft="10dp"
+                android:paddingRight="10dp"
+                android:layout_marginRight="4dp"
+                android:background="@drawable/bg_button_secondary"
+                android:textColor="#1976D2" />
+
+            <Button
+                android:id="@+id/btnSortAmount"
+                android:layout_width="wrap_content"
+                android:layout_height="28dp"
+                android:text="Amount"
+                android:textSize="11sp"
+                android:paddingLeft="10dp"
+                android:paddingRight="10dp"
+                android:layout_marginRight="4dp"
+                android:background="@drawable/bg_button_secondary"
+                android:textColor="#1976D2" />
+
+            <Button
+                android:id="@+id/btnSortMerchant"
+                android:layout_width="wrap_content"
+                android:layout_height="28dp"
+                android:text="Merchant"
+                android:textSize="11sp"
+                android:paddingLeft="10dp"
+                android:paddingRight="10dp"
+                android:background="@drawable/bg_button_secondary"
+                android:textColor="#1976D2" />
+
+        </LinearLayout>
+
+        <!-- Divider -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#E0E0E0" />
+
+        <!-- Expense list -->
+        <ListView
+            android:id="@+id/listExpenses"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:divider="@android:color/transparent"
+            android:dividerHeight="8dp"
+            android:clipToPadding="false"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="72dp"
+            android:scrollbarStyle="outsideOverlay"
+            android:background="#F0F4F8" />
+
+        <TextView
+            android:id="@+id/tvEmpty"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="@string/empty_expenses"
+            android:textColor="#9E9E9E"
+            android:textSize="15sp"
+            android:paddingLeft="32dp"
+            android:paddingRight="32dp"
+            android:visibility="gone" />
+
+    </LinearLayout>
+
+    <!-- FAB -->
+    <Button
+        android:id="@+id/fabAdd"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="16dp"
+        android:text="+"
+        android:textSize="28sp"
+        android:textColor="#FFFFFF"
+        android:background="@drawable/bg_fab"
+        android:elevation="6dp" />
+
+</FrameLayout>
