@@ -2,129 +2,153 @@ package com.ldsa.myfintracker.ui;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.ldsa.myfintracker.R;
 import com.ldsa.myfintracker.db.ExpenseDatabase;
-import com.ldsa.myfintracker.db.SenderConfig;
-
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import com.ldsa.myfintracker.db.ExtractionPattern;
 
 public class SmsExtractConfigActivity extends Activity {
 
-    public static final String EXTRA_SENDER_ID = "sender_id";
-    public static final String EXTRA_SMS_BODY  = "sms_body";
+    public static final String EXTRA_SENDER_ID  = "sender_id";
+    public static final String EXTRA_PATTERN_ID = "pattern_id";
+    public static final String EXTRA_SMS_BODY   = "sms_body";
+
+    static final String[] TYPE_VALUES = {
+        ExtractionPattern.TYPE_OTHER,
+        ExtractionPattern.TYPE_UPI,
+        ExtractionPattern.TYPE_CARD_ONLINE,
+        ExtractionPattern.TYPE_CARD_POS,
+        ExtractionPattern.TYPE_NETBANKING_PURCHASE,
+        ExtractionPattern.TYPE_NETBANKING_TRANSFER,
+        ExtractionPattern.TYPE_ATM
+    };
 
     private String mSmsBody;
-    private long mSenderId;
+    private long   mSenderId;
+    private long   mPatternId;
     private ExpenseDatabase mDb;
+    private ExtractionPattern mPattern;
 
-    private EditText mEtAmountRegex;
-    private EditText mEtDateRegex;
-    private EditText mEtMerchantRegex;
-    private EditText mEtCardRegex;
-
-    private TextView mTvAmountPreview;
-    private TextView mTvDatePreview;
-    private TextView mTvMerchantPreview;
-    private TextView mTvCardPreview;
+    private EditText     mEtPatternName;
+    private Spinner      mSpinnerType;
+    private TextView     mTvTemplateText;
+    private TextView     mTvTemplateRegex;
+    private LinearLayout mCardPreview;
+    private TextView     mTvPreviewAmount;
+    private TextView     mTvPreviewBalance;
+    private TextView     mTvPreviewMerchant;
+    private TextView     mTvPreviewCard;
+    private TextView     mTvPreviewAccount;
+    private TextView     mTvPreviewDate;
+    private TextView     mTvPreviewTime;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sms_extract_config);
 
-        mSenderId = getIntent().getLongExtra(EXTRA_SENDER_ID, -1L);
-        mSmsBody  = getIntent().getStringExtra(EXTRA_SMS_BODY);
-        mDb       = ExpenseDatabase.getInstance(this);
+        mSenderId  = getIntent().getLongExtra(EXTRA_SENDER_ID,  -1L);
+        mPatternId = getIntent().getLongExtra(EXTRA_PATTERN_ID, -1L);
+        mSmsBody   = getIntent().getStringExtra(EXTRA_SMS_BODY);
+        mDb        = ExpenseDatabase.getInstance(this);
 
-        TextView tvSmsBody     = (TextView) findViewById(R.id.tvSmsBody);
-        mEtAmountRegex         = (EditText) findViewById(R.id.etAmountRegex);
-        mEtDateRegex           = (EditText) findViewById(R.id.etDateRegex);
-        mEtMerchantRegex       = (EditText) findViewById(R.id.etMerchantRegex);
-        mEtCardRegex           = (EditText) findViewById(R.id.etCardRegex);
-        mTvAmountPreview       = (TextView) findViewById(R.id.tvAmountPreview);
-        mTvDatePreview         = (TextView) findViewById(R.id.tvDatePreview);
-        mTvMerchantPreview     = (TextView) findViewById(R.id.tvMerchantPreview);
-        mTvCardPreview         = (TextView) findViewById(R.id.tvCardPreview);
-        Button btnSave         = (Button)   findViewById(R.id.btnSaveExtraction);
+        LinearLayout cardSmsBody = (LinearLayout) findViewById(R.id.cardSmsBody);
+        TextView     tvSmsBody   = (TextView)     findViewById(R.id.tvSmsBody);
+        mEtPatternName           = (EditText)     findViewById(R.id.etPatternName);
+        mSpinnerType             = (Spinner)      findViewById(R.id.spinnerTxnType);
+        mTvTemplateText          = (TextView)     findViewById(R.id.tvTemplateText);
+        mTvTemplateRegex         = (TextView)     findViewById(R.id.tvTemplateRegex);
+        mCardPreview             = (LinearLayout) findViewById(R.id.cardExtractionPreview);
+        mTvPreviewAmount         = (TextView)     findViewById(R.id.tvPreviewAmount);
+        mTvPreviewBalance        = (TextView)     findViewById(R.id.tvPreviewBalance);
+        mTvPreviewMerchant       = (TextView)     findViewById(R.id.tvPreviewMerchant);
+        mTvPreviewCard           = (TextView)     findViewById(R.id.tvPreviewCard);
+        mTvPreviewAccount        = (TextView)     findViewById(R.id.tvPreviewAccount);
+        mTvPreviewDate           = (TextView)     findViewById(R.id.tvPreviewDate);
+        mTvPreviewTime           = (TextView)     findViewById(R.id.tvPreviewTime);
+        Button btnSave           = (Button)       findViewById(R.id.btnSaveExtraction);
 
-        tvSmsBody.setText(mSmsBody != null ? mSmsBody : "");
-
-        // Pre-fill if this sender already has extraction regexes
-        if (mSenderId >= 0) {
-            SenderConfig cfg = mDb.getSenderById(mSenderId);
-            if (cfg != null) {
-                if (cfg.amountRegex   != null) mEtAmountRegex.setText(cfg.amountRegex);
-                if (cfg.dateRegex     != null) mEtDateRegex.setText(cfg.dateRegex);
-                if (cfg.merchantRegex != null) mEtMerchantRegex.setText(cfg.merchantRegex);
-                if (cfg.cardRegex     != null) mEtCardRegex.setText(cfg.cardRegex);
-            }
+        if (mSmsBody != null && !mSmsBody.isEmpty()) {
+            cardSmsBody.setVisibility(View.VISIBLE);
+            tvSmsBody.setText(mSmsBody);
+        } else {
+            cardSmsBody.setVisibility(View.GONE);
         }
 
-        RegexWatcher watcher = new RegexWatcher(this);
-        mEtAmountRegex.addTextChangedListener(watcher);
-        mEtDateRegex.addTextChangedListener(watcher);
-        mEtMerchantRegex.addTextChangedListener(watcher);
-        mEtCardRegex.addTextChangedListener(watcher);
+        ArrayAdapter<CharSequence> typeAdapter = ArrayAdapter.createFromResource(
+            this, R.array.transaction_type_labels, android.R.layout.simple_spinner_item);
+        typeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        mSpinnerType.setAdapter(typeAdapter);
+
+        if (mPatternId >= 0) {
+            mPattern = mDb.getPatternById(mPatternId);
+            if (mPattern != null) populate(mPattern);
+        }
+
+        if (mPattern == null) mCardPreview.setVisibility(View.GONE);
 
         btnSave.setOnClickListener(new SaveClickListener(this));
-
-        updatePreview();
     }
 
-    void updatePreview() {
-        if (mSmsBody == null) return;
-        mTvAmountPreview.setText(extract(mSmsBody, mEtAmountRegex.getText().toString()));
-        mTvDatePreview.setText(extract(mSmsBody, mEtDateRegex.getText().toString()));
-        mTvMerchantPreview.setText(extract(mSmsBody, mEtMerchantRegex.getText().toString()));
-        mTvCardPreview.setText(extract(mSmsBody, mEtCardRegex.getText().toString()));
+    private void populate(ExtractionPattern p) {
+        if (p.name != null) mEtPatternName.setText(p.name);
+        String type = p.transactionType != null ? p.transactionType : "";
+        for (int i = 0; i < TYPE_VALUES.length; i++) {
+            if (TYPE_VALUES[i].equals(type)) { mSpinnerType.setSelection(i); break; }
+        }
+        mTvTemplateText.setText(p.templateText != null ? p.templateText : "");
+        mTvTemplateRegex.setText(p.templateRegex != null ? p.templateRegex : "");
+
+        if (mSmsBody != null && !mSmsBody.isEmpty() && p.templateRegex != null) {
+            showExtractionPreview(p);
+        } else {
+            mCardPreview.setVisibility(View.GONE);
+        }
+    }
+
+    private void showExtractionPreview(ExtractionPattern p) {
+        String amt  = p.extractGroup(mSmsBody, p.amountGroup);
+        String bal  = p.extractGroup(mSmsBody, p.balanceGroup);
+        String mer  = p.extractGroup(mSmsBody, p.merchantGroup);
+        String card = p.extractGroup(mSmsBody, p.cardGroup);
+        String acct = p.extractGroup(mSmsBody, p.accountGroup);
+        String date = p.extractGroup(mSmsBody, p.dateGroup);
+        String time = p.extractGroup(mSmsBody, p.timeGroup);
+
+        boolean hasAny = !amt.isEmpty() || !bal.isEmpty() || !mer.isEmpty()
+                      || !card.isEmpty() || !acct.isEmpty() || !date.isEmpty() || !time.isEmpty();
+        if (!hasAny) { mCardPreview.setVisibility(View.GONE); return; }
+
+        mCardPreview.setVisibility(View.VISIBLE);
+        mTvPreviewAmount.setText(amt.isEmpty()   ? "(—)" : amt);
+        mTvPreviewBalance.setText(bal.isEmpty()  ? "(—)" : bal);
+        mTvPreviewMerchant.setText(mer.isEmpty() ? "(—)" : mer);
+        mTvPreviewCard.setText(card.isEmpty()    ? "(—)" : card);
+        mTvPreviewAccount.setText(acct.isEmpty() ? "(—)" : acct);
+        mTvPreviewDate.setText(date.isEmpty()    ? "(—)" : date);
+        mTvPreviewTime.setText(time.isEmpty()    ? "(—)" : time);
     }
 
     void save() {
-        if (mSenderId < 0) { finish(); return; }
-        SenderConfig cfg = mDb.getSenderById(mSenderId);
-        if (cfg == null) { finish(); return; }
-
-        cfg.amountRegex   = mEtAmountRegex.getText().toString().trim();
-        cfg.dateRegex     = mEtDateRegex.getText().toString().trim();
-        cfg.merchantRegex = mEtMerchantRegex.getText().toString().trim();
-        cfg.cardRegex     = mEtCardRegex.getText().toString().trim();
-
-        mDb.updateSender(cfg);
+        if (mPattern == null) { finish(); return; }
+        mPattern.name            = mEtPatternName.getText().toString().trim();
+        mPattern.transactionType = TYPE_VALUES[mSpinnerType.getSelectedItemPosition()];
+        mDb.updatePattern(mPattern);
         Toast.makeText(this, R.string.msg_extraction_saved, Toast.LENGTH_SHORT).show();
         finish();
-    }
-
-    private String extract(String text, String regex) {
-        if (regex == null || regex.trim().isEmpty()) return "";
-        try {
-            Matcher m = Pattern.compile(regex.trim(), Pattern.CASE_INSENSITIVE).matcher(text);
-            if (m.find()) return m.groupCount() > 0 ? m.group(1) : m.group(0);
-            return getString(R.string.extract_no_match);
-        } catch (Exception e) {
-            return getString(R.string.extract_invalid_regex);
-        }
     }
 
     // ============================================================
     // Static classes — D8 constraints
     // ============================================================
-
-    static class RegexWatcher implements TextWatcher {
-        private final SmsExtractConfigActivity mA;
-        RegexWatcher(SmsExtractConfigActivity a) { mA = a; }
-        public void beforeTextChanged(CharSequence s, int st, int c, int af) {}
-        public void onTextChanged(CharSequence s, int st, int b, int c) {}
-        public void afterTextChanged(Editable s) { mA.updatePreview(); }
-    }
 
     static class SaveClickListener implements View.OnClickListener {
         private final SmsExtractConfigActivity mA;

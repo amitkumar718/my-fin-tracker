@@ -7,10 +7,6 @@ public class SenderConfig {
     public String pattern;
     public String displayName;
     public boolean isRegex;
-    public String amountRegex;
-    public String dateRegex;
-    public String merchantRegex;
-    public String cardRegex;
 
     public boolean matches(String address) {
         if (address == null || pattern == null) return false;

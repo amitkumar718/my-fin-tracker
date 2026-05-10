@@ -31,6 +31,17 @@
         android:layout_height="1dp"
         android:background="#E0E0E0" />
 
+    <Button
+        android:id="@+id/btnNewMatches"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:text="Found new matches"
+        android:textColor="#FFFFFF"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:background="@drawable/bg_button_primary"
+        android:visibility="gone" />
+
     <ListView
         android:id="@+id/listSms"
         android:layout_width="match_parent"

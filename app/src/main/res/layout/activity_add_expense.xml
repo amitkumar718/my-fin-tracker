@@ -159,6 +159,23 @@
                 android:textColor="#212121"
                 android:layout_marginBottom="10dp" />
 
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/label_balance_after"
+                android:textColor="#757575"
+                android:textSize="12sp" />
+
+            <EditText
+                android:id="@+id/etBalance"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:hint="@string/hint_balance_field"
+                android:inputType="numberDecimal"
+                android:textSize="14sp"
+                android:textColor="#212121"
+                android:layout_marginBottom="10dp" />
+
             <CheckBox
                 android:id="@+id/cbOnline"
                 android:layout_width="match_parent"
@@ -181,6 +198,25 @@
                 android:layout_height="48dp"
                 android:hint="@string/hint_bank"
                 android:inputType="text"
+                android:textSize="14sp"
+                android:textColor="#212121"
+                android:layout_marginBottom="10dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/label_remarks"
+                android:textColor="#757575"
+                android:textSize="12sp" />
+
+            <EditText
+                android:id="@+id/etRemarks"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="72dp"
+                android:hint="@string/hint_remarks"
+                android:inputType="textMultiLine|textCapSentences"
+                android:gravity="top"
                 android:textSize="14sp"
                 android:textColor="#212121"
                 android:layout_marginBottom="16dp" />

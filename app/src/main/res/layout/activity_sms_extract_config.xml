@@ -15,13 +15,15 @@
 
         <!-- SMS body reference card -->
         <LinearLayout
+            android:id="@+id/cardSmsBody"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:background="@drawable/bg_card_blue"
             android:elevation="2dp"
             android:padding="14dp"
-            android:layout_marginBottom="12dp">
+            android:layout_marginBottom="12dp"
+            android:visibility="gone">
 
             <TextView
                 android:layout_width="match_parent"
@@ -39,11 +41,12 @@
                 android:text=""
                 android:textColor="#212121"
                 android:textSize="13sp"
-                android:fontFamily="monospace" />
+                android:fontFamily="monospace"
+                android:textIsSelectable="true" />
 
         </LinearLayout>
 
-        <!-- Extraction rules card -->
+        <!-- Pattern config card -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -56,150 +59,160 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Extraction Patterns"
+                android:text="Extraction Pattern"
                 android:textColor="#1976D2"
                 android:textSize="13sp"
                 android:textStyle="bold"
+                android:layout_marginBottom="12dp" />
+
+            <!-- Pattern name -->
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="Pattern Name" android:textColor="#757575" android:textSize="12sp" />
+            <EditText
+                android:id="@+id/etPatternName"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:hint="@string/hint_pattern_name"
+                android:inputType="textCapWords"
+                android:textSize="13sp"
+                android:textColor="#212121"
+                android:layout_marginBottom="12dp" />
+
+            <!-- Transaction type -->
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="@string/label_transaction_type"
+                android:textColor="#757575" android:textSize="12sp" />
+            <Spinner
+                android:id="@+id/spinnerTxnType"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:layout_marginBottom="14dp" />
+
+            <!-- Template text -->
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="@string/label_pattern_template"
+                android:textColor="#757575" android:textSize="12sp"
                 android:layout_marginBottom="4dp" />
+            <TextView
+                android:id="@+id/tvTemplateText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text=""
+                android:textColor="#212121"
+                android:textSize="12sp"
+                android:fontFamily="monospace"
+                android:background="#F5F5F5"
+                android:padding="8dp"
+                android:textIsSelectable="true"
+                android:layout_marginBottom="12dp" />
+
+            <!-- Combined regex -->
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="Combined Regex"
+                android:textColor="#757575" android:textSize="12sp"
+                android:layout_marginBottom="4dp" />
+            <TextView
+                android:id="@+id/tvTemplateRegex"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text=""
+                android:textColor="#1565C0"
+                android:textSize="11sp"
+                android:fontFamily="monospace"
+                android:background="#E3F2FD"
+                android:padding="8dp"
+                android:textIsSelectable="true" />
+
+        </LinearLayout>
+
+        <!-- Extraction preview card (shown when SMS body is available and regex matches) -->
+        <LinearLayout
+            android:id="@+id/cardExtractionPreview"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_card_extracted"
+            android:elevation="2dp"
+            android:padding="16dp"
+            android:layout_marginBottom="12dp"
+            android:visibility="gone">
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Write a regex for each field. Use a capture group to extract a value, e.g. Rs\.([\d,]+). Preview updates as you type."
-                android:textColor="#9E9E9E"
-                android:textSize="11sp"
-                android:layout_marginBottom="14dp" />
+                android:text="Extraction Preview"
+                android:textColor="#2E7D32"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="10dp" />
 
-            <!-- Amount -->
-            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:text="Amount" android:textColor="#757575" android:textSize="12sp" />
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:orientation="horizontal" android:gravity="center_vertical"
-                android:layout_marginBottom="12dp">
-                <EditText
-                    android:id="@+id/etAmountRegex"
-                    android:layout_width="0dp"
-                    android:layout_height="44dp"
-                    android:layout_weight="1"
-                    android:hint="@string/hint_regex_amount"
-                    android:inputType="text"
-                    android:textSize="12sp"
-                    android:textColor="#212121"
-                    android:fontFamily="monospace" />
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text=" → "
-                    android:textColor="#9E9E9E"
-                    android:textSize="14sp" />
-                <TextView
-                    android:id="@+id/tvAmountPreview"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text=""
-                    android:textColor="#2E7D32"
-                    android:textSize="13sp"
-                    android:textStyle="bold"
+                android:orientation="horizontal" android:layout_marginBottom="4dp">
+                <TextView android:layout_width="80dp" android:layout_height="wrap_content"
+                    android:text="Amount" android:textColor="#757575" android:textSize="12sp" />
+                <TextView android:id="@+id/tvPreviewAmount"
+                    android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                    android:text="" android:textColor="#212121" android:textSize="12sp"
+                    android:fontFamily="monospace" android:textStyle="bold" />
+            </LinearLayout>
+
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="horizontal" android:layout_marginBottom="4dp">
+                <TextView android:layout_width="80dp" android:layout_height="wrap_content"
+                    android:text="Balance" android:textColor="#757575" android:textSize="12sp" />
+                <TextView android:id="@+id/tvPreviewBalance"
+                    android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                    android:text="" android:textColor="#212121" android:textSize="12sp"
                     android:fontFamily="monospace" />
             </LinearLayout>
 
-            <!-- Date -->
-            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:text="Date" android:textColor="#757575" android:textSize="12sp" />
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:orientation="horizontal" android:gravity="center_vertical"
-                android:layout_marginBottom="12dp">
-                <EditText
-                    android:id="@+id/etDateRegex"
-                    android:layout_width="0dp"
-                    android:layout_height="44dp"
-                    android:layout_weight="1"
-                    android:hint="@string/hint_regex_date"
-                    android:inputType="text"
-                    android:textSize="12sp"
-                    android:textColor="#212121"
-                    android:fontFamily="monospace" />
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text=" → "
-                    android:textColor="#9E9E9E"
-                    android:textSize="14sp" />
-                <TextView
-                    android:id="@+id/tvDatePreview"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text=""
-                    android:textColor="#1565C0"
-                    android:textSize="13sp"
+                android:orientation="horizontal" android:layout_marginBottom="4dp">
+                <TextView android:layout_width="80dp" android:layout_height="wrap_content"
+                    android:text="Merchant" android:textColor="#757575" android:textSize="12sp" />
+                <TextView android:id="@+id/tvPreviewMerchant"
+                    android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                    android:text="" android:textColor="#212121" android:textSize="12sp"
                     android:fontFamily="monospace" />
             </LinearLayout>
 
-            <!-- Merchant -->
-            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:text="Merchant" android:textColor="#757575" android:textSize="12sp" />
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:orientation="horizontal" android:gravity="center_vertical"
-                android:layout_marginBottom="12dp">
-                <EditText
-                    android:id="@+id/etMerchantRegex"
-                    android:layout_width="0dp"
-                    android:layout_height="44dp"
-                    android:layout_weight="1"
-                    android:hint="@string/hint_regex_merchant"
-                    android:inputType="text"
-                    android:textSize="12sp"
-                    android:textColor="#212121"
-                    android:fontFamily="monospace" />
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text=" → "
-                    android:textColor="#9E9E9E"
-                    android:textSize="14sp" />
-                <TextView
-                    android:id="@+id/tvMerchantPreview"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text=""
-                    android:textColor="#1565C0"
-                    android:textSize="13sp"
+                android:orientation="horizontal" android:layout_marginBottom="4dp">
+                <TextView android:layout_width="80dp" android:layout_height="wrap_content"
+                    android:text="Card" android:textColor="#757575" android:textSize="12sp" />
+                <TextView android:id="@+id/tvPreviewCard"
+                    android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                    android:text="" android:textColor="#212121" android:textSize="12sp"
                     android:fontFamily="monospace" />
             </LinearLayout>
 
-            <!-- Card -->
-            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:text="Card / UPI" android:textColor="#757575" android:textSize="12sp" />
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:orientation="horizontal" android:gravity="center_vertical"
-                android:layout_marginBottom="4dp">
-                <EditText
-                    android:id="@+id/etCardRegex"
-                    android:layout_width="0dp"
-                    android:layout_height="44dp"
-                    android:layout_weight="1"
-                    android:hint="@string/hint_regex_card"
-                    android:inputType="text"
-                    android:textSize="12sp"
-                    android:textColor="#212121"
+                android:orientation="horizontal" android:layout_marginBottom="4dp">
+                <TextView android:layout_width="80dp" android:layout_height="wrap_content"
+                    android:text="Account" android:textColor="#757575" android:textSize="12sp" />
+                <TextView android:id="@+id/tvPreviewAccount"
+                    android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                    android:text="" android:textColor="#212121" android:textSize="12sp"
                     android:fontFamily="monospace" />
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text=" → "
-                    android:textColor="#9E9E9E"
-                    android:textSize="14sp" />
-                <TextView
-                    android:id="@+id/tvCardPreview"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text=""
-                    android:textColor="#1565C0"
-                    android:textSize="13sp"
+            </LinearLayout>
+
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="horizontal" android:layout_marginBottom="4dp">
+                <TextView android:layout_width="80dp" android:layout_height="wrap_content"
+                    android:text="Date" android:textColor="#757575" android:textSize="12sp" />
+                <TextView android:id="@+id/tvPreviewDate"
+                    android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                    android:text="" android:textColor="#212121" android:textSize="12sp"
+                    android:fontFamily="monospace" />
+            </LinearLayout>
+
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <TextView android:layout_width="80dp" android:layout_height="wrap_content"
+                    android:text="Time" android:textColor="#757575" android:textSize="12sp" />
+                <TextView android:id="@+id/tvPreviewTime"
+                    android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                    android:text="" android:textColor="#212121" android:textSize="12sp"
                     android:fontFamily="monospace" />
             </LinearLayout>
 

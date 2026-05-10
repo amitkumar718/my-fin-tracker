@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingLeft="20dp"
+    android:paddingRight="20dp"
+    android:paddingTop="16dp"
+    android:paddingBottom="8dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/hint_card_last4"
+        android:textColor="#757575"
+        android:textSize="12sp" />
+
+    <EditText
+        android:id="@+id/etCardLast4"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:hint="1234"
+        android:inputType="number"
+        android:maxLength="4"
+        android:textSize="16sp"
+        android:textColor="#212121"
+        android:layout_marginBottom="12dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/hint_card_name"
+        android:textColor="#757575"
+        android:textSize="12sp" />
+
+    <EditText
+        android:id="@+id/etCardName"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:hint="e.g. HDFC Regalia"
+        android:inputType="textCapWords"
+        android:textSize="14sp"
+        android:textColor="#212121"
+        android:layout_marginBottom="12dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/label_card_type"
+        android:textColor="#757575"
+        android:textSize="12sp"
+        android:layout_marginBottom="4dp" />
+
+    <RadioGroup
+        android:id="@+id/rgCardType"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <RadioButton
+            android:id="@+id/rbDebit"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/label_debit"
+            android:checked="true" />
+
+        <RadioButton
+            android:id="@+id/rbCredit"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/label_credit" />
+
+    </RadioGroup>
+
+</LinearLayout>

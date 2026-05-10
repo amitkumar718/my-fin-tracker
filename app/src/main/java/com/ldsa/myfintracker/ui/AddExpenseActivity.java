@@ -28,8 +28,10 @@ public class AddExpenseActivity extends Activity {
     private EditText mEtMerchant;
     private EditText mEtReason;
     private EditText mEtCard;
+    private EditText mEtBalance;
     private CheckBox mCbOnline;
     private EditText mEtBank;
+    private EditText mEtRemarks;
 
     long mSelectedDateMs;
     private ExpenseDatabase mDb;
@@ -48,8 +50,10 @@ public class AddExpenseActivity extends Activity {
         mEtMerchant = (EditText)  findViewById(R.id.etMerchant);
         mEtReason   = (EditText)  findViewById(R.id.etReason);
         mEtCard     = (EditText)  findViewById(R.id.etCard);
+        mEtBalance  = (EditText)  findViewById(R.id.etBalance);
         mCbOnline   = (CheckBox)  findViewById(R.id.cbOnline);
         mEtBank     = (EditText)  findViewById(R.id.etBank);
+        mEtRemarks  = (EditText)  findViewById(R.id.etRemarks);
         Button btnSave = (Button) findViewById(R.id.btnSave);
 
         updateDateTimeDisplay();
@@ -107,7 +111,12 @@ public class AddExpenseActivity extends Activity {
         expense.card     = mEtCard.getText().toString().trim();
         expense.isOnline = mCbOnline.isChecked();
         expense.bank     = mEtBank.getText().toString().trim();
+        expense.remarks  = mEtRemarks.getText().toString().trim();
         expense.createdAt = System.currentTimeMillis();
+        String balStr = mEtBalance.getText().toString().trim().replace(",", "");
+        if (!balStr.isEmpty()) {
+            try { expense.balance = Double.parseDouble(balStr); } catch (NumberFormatException ignored) {}
+        }
 
         mDb.insertExpense(expense);
         Toast.makeText(this, R.string.msg_expense_saved, Toast.LENGTH_SHORT).show();

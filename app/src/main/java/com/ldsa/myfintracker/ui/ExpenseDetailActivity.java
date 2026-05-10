@@ -39,9 +39,12 @@ public class ExpenseDetailActivity extends Activity {
     private TextView mTvMerchant;
     private TextView mTvReason;
     private TextView mTvCard;
+    private TextView mTvAccountNumber;
+    private TextView mTvBalance;
     private TextView mTvOnline;
     private TextView mTvBank;
     private TextView mTvSms;
+    private TextView mTvRemarks;
 
     private EditText mEtAmount;
     private EditText mEtDate;
@@ -49,8 +52,11 @@ public class ExpenseDetailActivity extends Activity {
     private EditText mEtMerchant;
     private EditText mEtReason;
     private EditText mEtCard;
+    private EditText mEtAccountNumber;
+    private EditText mEtBalance;
     private CheckBox mCbOnline;
     private EditText mEtBank;
+    private EditText mEtRemarks;
 
     private View mViewMode;
     private View mEditMode;
@@ -82,19 +88,25 @@ public class ExpenseDetailActivity extends Activity {
         mTvTime     = (TextView)  mViewMode.findViewById(R.id.tvTime);
         mTvMerchant = (TextView)  mViewMode.findViewById(R.id.tvMerchant);
         mTvReason   = (TextView)  mViewMode.findViewById(R.id.tvReason);
-        mTvCard     = (TextView)  mViewMode.findViewById(R.id.tvCard);
+        mTvCard          = (TextView)  mViewMode.findViewById(R.id.tvCard);
+        mTvAccountNumber = (TextView)  mViewMode.findViewById(R.id.tvAccountNumber);
+        mTvBalance       = (TextView)  mViewMode.findViewById(R.id.tvBalance);
         mTvOnline   = (TextView)  mViewMode.findViewById(R.id.tvOnline);
         mTvBank     = (TextView)  mViewMode.findViewById(R.id.tvBank);
         mTvSms      = (TextView)  mViewMode.findViewById(R.id.tvSms);
+        mTvRemarks  = (TextView)  mViewMode.findViewById(R.id.tvRemarks);
 
         mEtAmount   = (EditText)  mEditMode.findViewById(R.id.etAmount);
         mEtDate     = (EditText)  mEditMode.findViewById(R.id.etDate);
         mEtTime     = (EditText)  mEditMode.findViewById(R.id.etTime);
         mEtMerchant = (EditText)  mEditMode.findViewById(R.id.etMerchant);
         mEtReason   = (EditText)  mEditMode.findViewById(R.id.etReason);
-        mEtCard     = (EditText)  mEditMode.findViewById(R.id.etCard);
+        mEtCard          = (EditText)  mEditMode.findViewById(R.id.etCard);
+        mEtAccountNumber = (EditText)  mEditMode.findViewById(R.id.etAccountNumber);
+        mEtBalance       = (EditText)  mEditMode.findViewById(R.id.etBalance);
         mCbOnline   = (CheckBox)  mEditMode.findViewById(R.id.cbOnline);
         mEtBank     = (EditText)  mEditMode.findViewById(R.id.etBank);
+        mEtRemarks  = (EditText)  mEditMode.findViewById(R.id.etRemarks);
         mBtnSave    = (Button)    mEditMode.findViewById(R.id.btnSave);
 
         mLabelsLayout = (LinearLayout) findViewById(R.id.labelsLayout);
@@ -160,9 +172,20 @@ public class ExpenseDetailActivity extends Activity {
         mTvMerchant.setText(orDash(mExpense.merchant));
         mTvReason.setText(orDash(mExpense.reason));
         mTvCard.setText(orDash(mExpense.card));
-        mTvOnline.setText(mExpense.isOnline ? "Online" : "Offline");
+        mTvAccountNumber.setText(orDash(mExpense.accountNumber));
+        mTvBalance.setText(mExpense.balance > 0
+            ? String.format(Locale.getDefault(), "₹%.2f", mExpense.balance) : "—");
+        String txnLabel = mExpense.isOnline ? "Online" : "Offline";
+        if (mExpense.transactionType != null && !mExpense.transactionType.isEmpty()) {
+            com.ldsa.myfintracker.db.ExtractionPattern tmp =
+                new com.ldsa.myfintracker.db.ExtractionPattern();
+            tmp.transactionType = mExpense.transactionType;
+            txnLabel = tmp.getTypeLabel();
+        }
+        mTvOnline.setText(txnLabel);
         mTvBank.setText(orDash(mExpense.bank));
         mTvSms.setText(orDash(mExpense.originalSms));
+        mTvRemarks.setText(orDash(mExpense.remarks));
     }
 
     private void bindEditMode() {
@@ -174,8 +197,12 @@ public class ExpenseDetailActivity extends Activity {
         mEtMerchant.setText(mExpense.merchant != null ? mExpense.merchant : "");
         mEtReason.setText(mExpense.reason != null ? mExpense.reason : "");
         mEtCard.setText(mExpense.card != null ? mExpense.card : "");
+        mEtAccountNumber.setText(mExpense.accountNumber != null ? mExpense.accountNumber : "");
+        mEtBalance.setText(mExpense.balance > 0
+            ? String.format(Locale.getDefault(), "%.2f", mExpense.balance) : "");
         mCbOnline.setChecked(mExpense.isOnline);
         mEtBank.setText(mExpense.bank != null ? mExpense.bank : "");
+        mEtRemarks.setText(mExpense.remarks != null ? mExpense.remarks : "");
     }
 
     void renderLabels() {
@@ -233,9 +260,15 @@ public class ExpenseDetailActivity extends Activity {
         mExpense.dateMs   = mSelectedDateMs;
         mExpense.merchant = mEtMerchant.getText().toString().trim();
         mExpense.reason   = mEtReason.getText().toString().trim();
-        mExpense.card     = mEtCard.getText().toString().trim();
+        mExpense.card          = mEtCard.getText().toString().trim();
+        mExpense.accountNumber = mEtAccountNumber.getText().toString().trim();
+        String balStr = mEtBalance.getText().toString().trim().replace(",", "");
+        if (!balStr.isEmpty()) {
+            try { mExpense.balance = Double.parseDouble(balStr); } catch (NumberFormatException ignored) {}
+        }
         mExpense.isOnline = mCbOnline.isChecked();
         mExpense.bank     = mEtBank.getText().toString().trim();
+        mExpense.remarks  = mEtRemarks.getText().toString().trim();
 
         mDb.updateExpense(mExpense);
         Toast.makeText(this, "Saved", Toast.LENGTH_SHORT).show();

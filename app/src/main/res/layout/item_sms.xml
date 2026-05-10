@@ -44,7 +44,18 @@
         android:text=""
         android:textColor="#424242"
         android:textSize="13sp"
-        android:maxLines="3"
+        android:maxLines="2"
         android:ellipsize="end" />
+
+    <TextView
+        android:id="@+id/tvExtracted"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text=""
+        android:textColor="#2E7D32"
+        android:textSize="12sp"
+        android:fontFamily="monospace"
+        android:visibility="gone" />
 
 </LinearLayout>

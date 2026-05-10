@@ -15,7 +15,12 @@ public class Expense {
     public String bank;
     public String originalSms;
     public String labelsJson;
-    public long createdAt;
+    public long   createdAt;
+    public double balance;
+    public String transactionType;
+    public String accountNumber;
+    public String remarks;
+    public long   patternId = -1;
 
     public List<String> getLabels() {
         List<String> labels = new ArrayList<String>();

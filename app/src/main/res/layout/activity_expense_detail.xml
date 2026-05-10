@@ -109,7 +109,19 @@
                 android:textSize="15sp" android:layout_marginBottom="8dp" />
 
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:text="Transaction type" android:textColor="#757575" android:textSize="11sp" />
+                android:text="@string/label_account_number" android:textColor="#757575" android:textSize="11sp" />
+            <TextView android:id="@+id/tvAccountNumber" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:text="—" android:textColor="#212121"
+                android:textSize="15sp" android:layout_marginBottom="8dp" />
+
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="@string/label_balance_after" android:textColor="#757575" android:textSize="11sp" />
+            <TextView android:id="@+id/tvBalance" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:text="—" android:textColor="#212121"
+                android:textSize="15sp" android:layout_marginBottom="8dp" />
+
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="@string/label_transaction_type" android:textColor="#757575" android:textSize="11sp" />
             <TextView android:id="@+id/tvOnline" android:layout_width="match_parent"
                 android:layout_height="wrap_content" android:text="—" android:textColor="#1565C0"
                 android:textSize="15sp" android:layout_marginBottom="8dp" />
@@ -124,7 +136,13 @@
                 android:text="@string/label_original_sms" android:textColor="#757575" android:textSize="11sp" />
             <TextView android:id="@+id/tvSms" android:layout_width="match_parent"
                 android:layout_height="wrap_content" android:text="—" android:textColor="#616161"
-                android:textSize="12sp" android:layout_marginBottom="4dp" />
+                android:textSize="12sp" android:layout_marginBottom="8dp" />
+
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="@string/label_remarks" android:textColor="#757575" android:textSize="11sp" />
+            <TextView android:id="@+id/tvRemarks" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:text="—" android:textColor="#212121"
+                android:textSize="14sp" android:layout_marginBottom="4dp" />
 
         </LinearLayout>
 
@@ -188,6 +206,20 @@
                 android:inputType="text" android:textSize="14sp" android:textColor="#212121"
                 android:layout_marginBottom="10dp" />
 
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="@string/label_account_number" android:textColor="#757575" android:textSize="12sp" />
+            <EditText android:id="@+id/etAccountNumber" android:layout_width="match_parent"
+                android:layout_height="48dp" android:hint="@string/hint_account_number"
+                android:inputType="text" android:textSize="14sp" android:textColor="#212121"
+                android:layout_marginBottom="10dp" />
+
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="@string/label_balance_after" android:textColor="#757575" android:textSize="12sp" />
+            <EditText android:id="@+id/etBalance" android:layout_width="match_parent"
+                android:layout_height="48dp" android:hint="@string/hint_balance_field"
+                android:inputType="numberDecimal" android:textSize="14sp" android:textColor="#212121"
+                android:layout_marginBottom="10dp" />
+
             <CheckBox android:id="@+id/cbOnline" android:layout_width="match_parent"
                 android:layout_height="wrap_content" android:text="@string/label_online"
                 android:textSize="14sp" android:textColor="#212121" android:layout_marginBottom="10dp" />
@@ -197,6 +229,16 @@
             <EditText android:id="@+id/etBank" android:layout_width="match_parent"
                 android:layout_height="48dp" android:hint="@string/hint_bank"
                 android:inputType="text" android:textSize="14sp" android:textColor="#212121"
+                android:layout_marginBottom="10dp" />
+
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="@string/label_remarks" android:textColor="#757575" android:textSize="12sp" />
+            <EditText android:id="@+id/etRemarks" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:minHeight="72dp"
+                android:hint="@string/hint_remarks"
+                android:inputType="textMultiLine|textCapSentences"
+                android:gravity="top"
+                android:textSize="14sp" android:textColor="#212121"
                 android:layout_marginBottom="16dp" />
 
             <Button android:id="@+id/btnSave" android:layout_width="match_parent"

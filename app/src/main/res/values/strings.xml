@@ -76,11 +76,52 @@
     <string name="msg_expense_deleted">Expense deleted</string>
     <string name="msg_sender_saved">Sender saved</string>
     <string name="msg_sender_deleted">Sender removed</string>
-    <string name="msg_extraction_saved">Extraction rules saved</string>
+    <string name="msg_extraction_saved">Extraction pattern saved</string>
     <string name="extract_no_match">(no match)</string>
     <string name="extract_invalid_regex">(invalid regex)</string>
     <string name="title_sms_extract_config">Configure Extraction</string>
-    <string name="btn_save_extraction">Save Extraction Rules</string>
+    <string name="btn_save_extraction">Save Pattern</string>
+
+    <string name="hint_pattern_name">Pattern name (e.g. UPI Debit, Card POS)</string>
+    <string name="hint_balance">Balance regex (e.g. Avl Bal[: ]+Rs\.?([\d,]+))</string>
+    <string name="label_balance">Balance After Txn</string>
+    <string name="label_transaction_type">Transaction Type</string>
+    <string name="label_card_type">Card Type</string>
+    <string name="label_debit">Debit</string>
+    <string name="label_credit">Credit</string>
+    <string name="btn_add_pattern">+ Add Pattern</string>
+    <string name="btn_add_card">+ Add Card</string>
+    <string name="hint_card_last4">Last 4 digits</string>
+    <string name="hint_card_name">Card name (e.g. HDFC Regalia)</string>
+    <string name="confirm_delete_pattern">Remove this extraction pattern?</string>
+    <string name="confirm_delete_card">Remove this card?</string>
+    <string name="msg_pattern_deleted">Pattern removed</string>
+    <string name="msg_card_saved">Card saved</string>
+    <string name="msg_card_deleted">Card removed</string>
+    <string name="label_extraction_patterns">Extraction Patterns</string>
+    <string name="label_cards">Cards</string>
+    <string name="hint_balance_field">Balance after txn</string>
+    <string name="label_balance_after">Balance After</string>
+    <string name="label_remarks">Remarks</string>
+    <string name="hint_remarks">Notes or comments…</string>
+    <string name="label_account_number">Account / UPI ID</string>
+    <string name="hint_account_number">e.g. XX1234 or user@upi</string>
+    <string name="btn_save_and_create_pattern">Apply Regex</string>
+    <string name="msg_expense_and_pattern_saved">Expense &amp; extraction pattern saved</string>
+    <string name="label_pattern_template">Pattern Template</string>
+    <string name="hint_pattern_template">Select text and replace with tokens — use Skip for transaction IDs or ref numbers</string>
+    <string name="label_expense_details">Expense Details</string>
+    <string name="error_template_needs_amount">Template must contain an (/amount/) token</string>
+
+    <string-array name="transaction_type_labels">
+        <item>Other</item>
+        <item>UPI</item>
+        <item>Card Online</item>
+        <item>Card POS</item>
+        <item>Netbanking Purchase</item>
+        <item>Netbanking Transfer</item>
+        <item>ATM Withdrawal</item>
+    </string-array>
 
     <string-array name="landing_page_labels">
         <item>Expenses (default)</item>
