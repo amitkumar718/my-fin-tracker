@@ -6,6 +6,9 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashSet;
@@ -17,7 +20,7 @@ import java.util.regex.Pattern;
 public class ExpenseDatabase extends SQLiteOpenHelper {
 
     private static final String DB_NAME    = "fin_tracker.db";
-    private static final int    DB_VERSION = 5;
+    private static final int    DB_VERSION = 6;
 
     // ── expenses ──────────────────────────────────────────────────
     static final String T_EXPENSE    = "expenses";
@@ -60,6 +63,13 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
     static final String P_ACCT_GRP   = "account_group";
     static final String P_DATE_GRP   = "date_group";
     static final String P_TIME_GRP   = "time_group";
+
+    // ── trips ─────────────────────────────────────────────────────
+    static final String T_TRIP      = "trips";
+    static final String TR_ID       = "_id";
+    static final String TR_NAME     = "name";
+    static final String TR_START    = "start_ms";
+    static final String TR_END      = "end_ms";
 
     // ── cards ─────────────────────────────────────────────────────
     static final String T_CARD      = "cards";
@@ -130,6 +140,13 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
             C_NAME      + " TEXT," +
             C_TYPE      + " INTEGER NOT NULL DEFAULT 0" +
         ")");
+
+        db.execSQL("CREATE TABLE " + T_TRIP + " (" +
+            TR_ID    + " INTEGER PRIMARY KEY AUTOINCREMENT," +
+            TR_NAME  + " TEXT NOT NULL," +
+            TR_START + " INTEGER NOT NULL," +
+            TR_END   + " INTEGER NOT NULL" +
+        ")");
     }
 
     @Override
@@ -138,6 +155,7 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
         db.execSQL("DROP TABLE IF EXISTS " + T_SENDER);
         db.execSQL("DROP TABLE IF EXISTS " + T_PATTERN);
         db.execSQL("DROP TABLE IF EXISTS " + T_CARD);
+        db.execSQL("DROP TABLE IF EXISTS " + T_TRIP);
         onCreate(db);
     }
 
@@ -375,6 +393,94 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
         return list.isEmpty() ? null : list.get(0);
     }
 
+    // ==================== TRIP ====================
+
+    public long insertTrip(Trip t) {
+        return getWritableDatabase().insert(T_TRIP, null, tripToValues(t));
+    }
+
+    public void updateTrip(Trip t) {
+        getWritableDatabase().update(T_TRIP, tripToValues(t),
+            TR_ID + "=?", new String[]{String.valueOf(t.id)});
+    }
+
+    public void deleteTrip(long id) {
+        Trip t = getTripById(id);
+        if (t != null) removeTripLabel(t.name);
+        getWritableDatabase().delete(T_TRIP, TR_ID + "=?", new String[]{String.valueOf(id)});
+    }
+
+    public List<Trip> getAllTrips() {
+        Cursor c = getReadableDatabase().query(T_TRIP, null,
+            null, null, null, null, TR_START + " DESC");
+        return tripCursorToList(c);
+    }
+
+    public Trip getTripById(long id) {
+        Cursor c = getReadableDatabase().query(T_TRIP, null,
+            TR_ID + "=?", new String[]{String.valueOf(id)}, null, null, null);
+        List<Trip> list = tripCursorToList(c);
+        return list.isEmpty() ? null : list.get(0);
+    }
+
+    public List<Expense> getExpensesInRange(long startMs, long endMs) {
+        Cursor c = getReadableDatabase().query(T_EXPENSE, null,
+            E_DATE_MS + " >= ? AND " + E_DATE_MS + " <= ?",
+            new String[]{String.valueOf(startMs), String.valueOf(endMs)},
+            null, null, E_DATE_MS + " DESC");
+        return expenseCursorToList(c);
+    }
+
+    /** Adds the trip name as a label to every expense whose date falls within the trip range. */
+    public void addTripLabel(Trip t) {
+        List<Expense> inRange = getExpensesInRange(t.startMs, t.endMs);
+        for (Expense e : inRange) {
+            JSONArray arr = parseLabels(e.labelsJson);
+            boolean found = false;
+            for (int i = 0; i < arr.length(); i++) {
+                try { if (t.name.equals(arr.getString(i))) { found = true; break; } }
+                catch (JSONException ignored) {}
+            }
+            if (!found) {
+                arr.put(t.name);
+                e.labelsJson = serializeLabels(arr);
+                updateExpense(e);
+            }
+        }
+    }
+
+    /** Removes the given label string from all expenses that carry it. */
+    public void removeTripLabel(String label) {
+        if (label == null || label.isEmpty()) return;
+        List<Expense> all = expenseCursorToList(getReadableDatabase().query(
+            T_EXPENSE, null,
+            E_LABELS + " IS NOT NULL AND " + E_LABELS + " LIKE ?",
+            new String[]{"%" + label + "%"}, null, null, null));
+        for (Expense e : all) {
+            JSONArray arr = parseLabels(e.labelsJson);
+            JSONArray updated = new JSONArray();
+            for (int i = 0; i < arr.length(); i++) {
+                try {
+                    String v = arr.getString(i);
+                    if (!label.equals(v)) updated.put(v);
+                } catch (JSONException ignored) {}
+            }
+            if (updated.length() != arr.length()) {
+                e.labelsJson = serializeLabels(updated);
+                updateExpense(e);
+            }
+        }
+    }
+
+    private JSONArray parseLabels(String json) {
+        if (json == null || json.isEmpty()) return new JSONArray();
+        try { return new JSONArray(json); } catch (JSONException e) { return new JSONArray(); }
+    }
+
+    private String serializeLabels(JSONArray arr) {
+        return arr.toString();
+    }
+
     // ==================== Private helpers ====================
 
     private Expense fromExpenseCursor(Cursor c) {
@@ -510,6 +616,29 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
     private List<Card> cardCursorToList(Cursor c) {
         List<Card> list = new ArrayList<Card>();
         try { while (c.moveToNext()) list.add(fromCardCursor(c)); } finally { c.close(); }
+        return list;
+    }
+
+    private Trip fromTripCursor(Cursor c) {
+        Trip t = new Trip();
+        t.id      = c.getLong(c.getColumnIndexOrThrow(TR_ID));
+        t.name    = c.getString(c.getColumnIndexOrThrow(TR_NAME));
+        t.startMs = c.getLong(c.getColumnIndexOrThrow(TR_START));
+        t.endMs   = c.getLong(c.getColumnIndexOrThrow(TR_END));
+        return t;
+    }
+
+    private ContentValues tripToValues(Trip t) {
+        ContentValues cv = new ContentValues();
+        cv.put(TR_NAME,  t.name);
+        cv.put(TR_START, t.startMs);
+        cv.put(TR_END,   t.endMs);
+        return cv;
+    }
+
+    private List<Trip> tripCursorToList(Cursor c) {
+        List<Trip> list = new ArrayList<Trip>();
+        try { while (c.moveToNext()) list.add(fromTripCursor(c)); } finally { c.close(); }
         return list;
     }
 }

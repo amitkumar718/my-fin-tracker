@@ -113,6 +113,41 @@
     <string name="label_expense_details">Expense Details</string>
     <string name="error_template_needs_amount">Template must contain an (/amount/) token</string>
 
+    <string name="label_trips">Trips</string>
+    <string name="label_new_trip">New Trip</string>
+    <string name="label_edit_trip">Edit Trip</string>
+    <string name="label_trip_name">Trip Name</string>
+    <string name="hint_trip_name">e.g. Goa Trip, Business Conference</string>
+    <string name="label_start_date">Start Date &amp; Time</string>
+    <string name="label_end_date">End Date &amp; Time</string>
+    <string name="hint_pick_date">Pick Date</string>
+    <string name="hint_pick_time">Pick Time</string>
+    <string name="btn_save_trip">Save Trip</string>
+    <string name="btn_new_trip">+ New Trip</string>
+    <string name="msg_trip_saved">Trip saved</string>
+    <string name="msg_trip_deleted">Trip deleted</string>
+    <string name="title_trip_detail">Trip Expenses</string>
+    <string name="msg_no_trips">No trips yet.\nTap "+ New Trip" to create one.</string>
+    <string name="msg_no_expenses_in_trip">No expenses in this date range.</string>
+    <string name="label_delete_trip">Delete trip?</string>
+    <string name="error_trip_name_required">Trip name is required</string>
+    <string name="error_trip_date_range">End date must be after start date</string>
+
+    <string-array name="filter_options">
+        <item>All</item>
+        <item>Online</item>
+        <item>Offline</item>
+        <item>This Month</item>
+    </string-array>
+
+    <string-array name="sort_options">
+        <item>↓ Date</item>
+        <item>↑ Date</item>
+        <item>↓ Amount</item>
+        <item>↑ Amount</item>
+        <item>Merchant</item>
+    </string-array>
+
     <string-array name="transaction_type_labels">
         <item>Other</item>
         <item>UPI</item>
