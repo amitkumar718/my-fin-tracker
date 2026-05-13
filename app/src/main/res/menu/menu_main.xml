@@ -16,4 +16,12 @@
         android:id="@+id/action_trips"
         android:title="@string/label_trips"
         android:showAsAction="never" />
+    <item
+        android:id="@+id/action_import_statement"
+        android:title="@string/action_import_statement"
+        android:showAsAction="never" />
+    <item
+        android:id="@+id/action_pdf_inbox"
+        android:title="@string/action_pdf_inbox"
+        android:showAsAction="never" />
 </menu>

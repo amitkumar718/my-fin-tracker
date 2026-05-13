@@ -299,6 +299,14 @@ public class MainActivity extends Activity {
                 mMain.startActivity(new Intent(mMain, TripListActivity.class));
                 return true;
             }
+            if (id == R.id.action_import_statement) {
+                mMain.startActivity(new Intent(mMain, StatementImportActivity.class));
+                return true;
+            }
+            if (id == R.id.action_pdf_inbox) {
+                mMain.startActivity(new Intent(mMain, PdfInboxActivity.class));
+                return true;
+            }
             return false;
         }
     }

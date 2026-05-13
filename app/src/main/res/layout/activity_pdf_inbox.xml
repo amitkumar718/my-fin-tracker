@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#F0F4F8">
+
+    <!-- Blue header: bank selector + pick button -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="#1976D2"
+        android:paddingLeft="8dp"
+        android:paddingRight="8dp"
+        android:paddingTop="7dp"
+        android:paddingBottom="7dp"
+        android:gravity="center_vertical">
+
+        <Spinner
+            android:id="@+id/spinnerPdfBank"
+            android:layout_width="0dp"
+            android:layout_height="36dp"
+            android:layout_weight="1"
+            android:layout_marginRight="6dp"
+            android:background="@drawable/bg_spinner_white" />
+
+        <Button
+            android:id="@+id/btnPickPdf"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:text="@string/btn_pick_statement"
+            android:textSize="12sp"
+            android:textColor="#1976D2"
+            android:background="@drawable/bg_spinner_white"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp" />
+
+    </LinearLayout>
+
+    <!-- Status line -->
+    <TextView
+        android:id="@+id/tvPdfStatus"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingLeft="12dp"
+        android:paddingRight="12dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="4dp"
+        android:textSize="12sp"
+        android:textColor="#546E7A"
+        android:text="@string/pdf_inbox_hint" />
+
+    <!-- Empty state -->
+    <TextView
+        android:id="@+id/tvPdfEmpty"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:text="@string/pdf_inbox_empty"
+        android:textColor="#9E9E9E"
+        android:textSize="14sp"
+        android:paddingLeft="32dp"
+        android:paddingRight="32dp"
+        android:visibility="visible" />
+
+    <!-- Line list -->
+    <ListView
+        android:id="@+id/listPdfLines"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:divider="#E0E0E0"
+        android:dividerHeight="1dp"
+        android:clipToPadding="false"
+        android:paddingLeft="0dp"
+        android:paddingRight="0dp"
+        android:paddingBottom="16dp"
+        android:scrollbarStyle="outsideOverlay"
+        android:visibility="gone" />
+
+</LinearLayout>

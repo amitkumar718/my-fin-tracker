@@ -39,10 +39,12 @@ import java.util.regex.Pattern;
 
 public class SmsMapActivity extends Activity {
 
-    public static final String EXTRA_SMS_ADDRESS = "sms_address";
-    public static final String EXTRA_SMS_BODY    = "sms_body";
-    public static final String EXTRA_SMS_DATE    = "sms_date";
-    public static final String EXTRA_SENDER_ID   = "sender_id";
+    public static final String EXTRA_SMS_ADDRESS   = "sms_address";
+    public static final String EXTRA_SMS_BODY      = "sms_body";
+    public static final String EXTRA_SMS_DATE      = "sms_date";
+    public static final String EXTRA_SENDER_ID     = "sender_id";
+    /** When true the template EditText starts blank instead of pre-filled with the body text. */
+    public static final String EXTRA_BLANK_TEMPLATE = "blank_template";
 
     // token labels inserted into the SMS template
     static final String TOK_AMOUNT   = "(/amount/)";
@@ -135,7 +137,8 @@ public class SmsMapActivity extends Activity {
         mEtBank.setText(mSmsAddress != null ? mSmsAddress : "");
         updateDateTimeDisplay();
 
-        mEtTemplate.setText(mSmsBody != null ? mSmsBody : "");
+        boolean blankTemplate = getIntent().getBooleanExtra(EXTRA_BLANK_TEMPLATE, false);
+        mEtTemplate.setText((!blankTemplate && mSmsBody != null) ? mSmsBody : "");
         autoExtract();
         updatePatternHint();
         updateRegexPreview();

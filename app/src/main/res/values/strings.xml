@@ -133,6 +133,38 @@
     <string name="error_trip_name_required">Trip name is required</string>
     <string name="error_trip_date_range">End date must be after start date</string>
 
+    <!-- Statement import -->
+    <string name="title_statement_import">Import Bank Statement</string>
+    <string name="label_all_banks">All Banks</string>
+    <string name="btn_pick_statement">Pick PDF / TXT</string>
+    <string name="btn_scan_expenses">Scan for Expenses</string>
+    <string name="btn_import_selected">Import Selected</string>
+    <string name="action_import_statement">Import Statement</string>
+    <string name="status_pick_file_hint">Select a bank, then pick a PDF or TXT statement file.</string>
+    <string name="status_reading_file">Reading file…</string>
+    <string name="status_file_ready">File loaded. Tap Scan to find expenses.</string>
+    <string name="status_extract_failed">Could not extract text. Try converting the PDF to TXT first using pdftotext in Termux.</string>
+    <string name="status_extract_garbled">Text looks garbled — PDF may use a non-standard font encoding. Try: pdftotext statement.pdf statement.txt in Termux, then import the .txt file.</string>
+    <string name="status_scanning">Scanning for expense patterns…</string>
+    <string name="status_no_text">No text loaded. Please pick a file first.</string>
+    <string name="status_no_patterns">No extraction patterns found for this bank. Configure patterns in Settings → Sender Patterns.</string>
+    <string name="status_no_matches">No expense matches found. Patterns may not match this statement format.</string>
+    <string name="status_none_selected">No expenses selected.</string>
+    <string name="status_importing">Importing…</string>
+    <string name="status_found_n">Found %d expense(s). Deselect any false matches, then tap Import.</string>
+    <string name="status_imported_n">Imported %d expense(s).</string>
+
+    <!-- PDF Inbox -->
+    <string name="title_pdf_inbox">PDF Inbox</string>
+    <string name="action_pdf_inbox">PDF Inbox</string>
+    <string name="pdf_inbox_hint">Pick a PDF or TXT bank statement to see its lines here.</string>
+    <string name="pdf_inbox_empty">No file loaded yet.\nTap "Pick PDF / TXT" to begin.</string>
+    <string name="pdf_inbox_status">%1$d lines  ·  %2$d matched</string>
+    <string name="pdf_password_title">Password Required</string>
+    <string name="pdf_password_msg">This PDF is password-protected. Enter the document password.</string>
+    <string name="pdf_password_wrong">Incorrect password. Please try again.</string>
+    <string name="hint_pdf_password">PDF password</string>
+
     <string-array name="filter_options">
         <item>All</item>
         <item>Online</item>
