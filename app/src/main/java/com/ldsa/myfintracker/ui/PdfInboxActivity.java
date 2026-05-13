@@ -4,29 +4,24 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
-import android.text.InputType;
+import android.provider.OpenableColumns;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ListView;
-import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.ldsa.myfintracker.R;
 import com.ldsa.myfintracker.db.ExpenseDatabase;
 import com.ldsa.myfintracker.db.ExtractionPattern;
-import com.ldsa.myfintracker.db.SenderConfig;
-import com.ldsa.myfintracker.pdf.PdfDecryptor;
-import com.ldsa.myfintracker.pdf.PdfTextExtractor;
+import com.ldsa.myfintracker.db.PdfStatement;
 
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -35,19 +30,21 @@ public class PdfInboxActivity extends Activity {
 
     private static final int REQ_PICK = 301;
 
-    private Spinner  mSpinnerBank;
-    private TextView mTvStatus;
-    private TextView mTvEmpty;
-    private ListView mListView;
+    private ListView             mListView;
+    private TextView             mTvEmpty;
+    private PdfStatementAdapter  mAdapter;
+    private ExpenseDatabase      mDb;
 
-    private PdfLineAdapter     mAdapter;
-    private ExpenseDatabase    mDb;
-    private List<SenderConfig> mSenders = new ArrayList<SenderConfig>();
-    private List<String>       mLines   = new ArrayList<String>();  // raw lines from loaded file
-    long    mSelectedSenderId = -1L;
-    boolean mReady  = false;
-    Uri     mLastUri;      // remembered for password re-try
-    boolean mLastIsPdf;
+    // Pick-dialog state
+    private Uri     mPendingUri;
+    private String  mPendingDisplayName;
+    private boolean mPendingIsPdf;
+    private EditText mDialogBank;
+    private EditText mDialogMonth;
+    private TextView mDialogFileName;
+    private Button   mDialogOk;
+
+    private long mPendingDeleteId = -1L;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,79 +53,28 @@ public class PdfInboxActivity extends Activity {
 
         mDb = ExpenseDatabase.getInstance(this);
 
-        mSpinnerBank = (Spinner)  findViewById(R.id.spinnerPdfBank);
-        mTvStatus    = (TextView) findViewById(R.id.tvPdfStatus);
-        mTvEmpty     = (TextView) findViewById(R.id.tvPdfEmpty);
-        mListView    = (ListView) findViewById(R.id.listPdfLines);
+        mTvEmpty  = (TextView) findViewById(R.id.tvStatementsEmpty);
+        mListView = (ListView) findViewById(R.id.listStatements);
 
-        mAdapter = new PdfLineAdapter(this);
+        mAdapter = new PdfStatementAdapter(this);
         mListView.setAdapter(mAdapter);
-        mListView.setOnItemClickListener(new LineClickListener(this));
+        mListView.setOnItemClickListener(new ItemClickListener(this));
+        mListView.setOnItemLongClickListener(new ItemLongClickListener(this));
 
-        Button btnPick = (Button) findViewById(R.id.btnPickPdf);
-        btnPick.setOnClickListener(new PickClickListener(this));
-
-        loadSenders();
-    }
-
-    private void loadSenders() {
-        mSenders = mDb.getAllSenders();
-        List<String> labels = new ArrayList<String>();
-        labels.add(getString(R.string.label_all_banks));
-        for (SenderConfig s : mSenders) labels.add(s.getLabel());
-        ArrayAdapter<String> a = new ArrayAdapter<String>(
-                this, android.R.layout.simple_spinner_item, labels);
-        a.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        mSpinnerBank.setAdapter(a);
-        mReady = true;
-        mSpinnerBank.setOnItemSelectedListener(new BankSelectedListener(this));
+        ((Button) findViewById(R.id.btnAddStatement))
+            .setOnClickListener(new AddClickListener(this));
     }
 
     @Override
-    protected void onActivityResult(int req, int res, Intent data) {
-        super.onActivityResult(req, res, data);
-        if (req != REQ_PICK || res != RESULT_OK || data == null) return;
-        Uri uri = data.getData();
-        if (uri == null) return;
-        mLastUri = uri;
-        String mimeType = getContentResolver().getType(uri);
-        mLastIsPdf = "application/pdf".equals(mimeType)
-                || (uri.getLastPathSegment() != null
-                    && uri.getLastPathSegment().toLowerCase(Locale.US).endsWith(".pdf"));
-        startLoad(null);
+    protected void onResume() {
+        super.onResume();
+        reload();
     }
 
-    void startLoad(String password) {
-        mTvStatus.setText(R.string.status_reading_file);
-        mTvEmpty.setVisibility(View.GONE);
-        mListView.setVisibility(View.GONE);
-        new LoadThread(this, mLastUri, mLastIsPdf, password, mSelectedSenderId,
-                new Handler(Looper.getMainLooper())).start();
-    }
-
-    void onLinesLoaded(List<String> lines, List<PdfLineAdapter.PdfLine> items, String statusMsg) {
-        if (PdfDecryptor.NEEDS_PASSWORD.equals(statusMsg)) {
-            showPasswordDialog(false);
-            return;
-        }
-        if (statusMsg.startsWith(PdfDecryptor.WRONG_PASSWORD)) {
-            String diag = statusMsg.substring(PdfDecryptor.WRONG_PASSWORD.length()).trim();
-            if (!diag.isEmpty()) Toast.makeText(this, diag, Toast.LENGTH_LONG).show();
-            showPasswordDialog(true);
-            return;
-        }
-        if (statusMsg.startsWith(PdfTextExtractor.EXTRACT_EMPTY)) {
-            String diag = statusMsg.substring(PdfTextExtractor.EXTRACT_EMPTY.length()).trim();
-            mTvStatus.setText(getString(R.string.status_extract_failed)
-                    + (diag.isEmpty() ? "" : "\n" + diag));
-            mTvEmpty.setVisibility(View.VISIBLE);
-            mListView.setVisibility(View.GONE);
-            return;
-        }
-        mLines = lines;
-        mAdapter.setItems(items);
-        mTvStatus.setText(statusMsg);
-        if (items.isEmpty()) {
+    private void reload() {
+        List<PdfStatement> stmts = mDb.getAllPdfStatements();
+        mAdapter.setData(stmts);
+        if (stmts.isEmpty()) {
             mTvEmpty.setVisibility(View.VISIBLE);
             mListView.setVisibility(View.GONE);
         } else {
@@ -137,40 +83,109 @@ public class PdfInboxActivity extends Activity {
         }
     }
 
-    void showPasswordDialog(boolean wrongPassword) {
-        EditText etPass = new EditText(this);
-        etPass.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
-        etPass.setHint(R.string.hint_pdf_password);
+    void openStatement(int pos) {
+        PdfStatement s = mAdapter.getStatement(pos);
+        Intent intent = new Intent(this, PdfLinesActivity.class);
+        intent.putExtra(PdfLinesActivity.EXTRA_STATEMENT_ID, s.id);
+        startActivity(intent);
+    }
+
+    void confirmDelete(int pos) {
+        mPendingDeleteId = mAdapter.getStatement(pos).id;
         new AlertDialog.Builder(this)
-            .setTitle(R.string.pdf_password_title)
-            .setMessage(wrongPassword ? R.string.pdf_password_wrong : R.string.pdf_password_msg)
-            .setView(etPass)
-            .setPositiveButton(android.R.string.ok, new PasswordOkListener(this, etPass))
+            .setMessage(R.string.confirm_delete_statement)
+            .setPositiveButton(android.R.string.ok, new DeleteConfirmListener(this))
             .setNegativeButton(android.R.string.cancel, null)
             .show();
     }
 
-    void onBankSelected(int pos) {
-        mSelectedSenderId = (pos == 0) ? -1L : mSenders.get(pos - 1).id;
-        if (!mLines.isEmpty()) {
-            // Re-run match highlighting with new sender's patterns
-            new MatchThread(this, new ArrayList<String>(mLines), mSelectedSenderId,
-                    mDb, new Handler(Looper.getMainLooper())).start();
+    void deleteStatement() {
+        if (mPendingDeleteId >= 0) {
+            mDb.deletePdfStatement(mPendingDeleteId);
+            mPendingDeleteId = -1L;
+            Toast.makeText(this, R.string.msg_statement_deleted, Toast.LENGTH_SHORT).show();
+            reload();
         }
     }
 
-    void onMatchDone(List<PdfLineAdapter.PdfLine> items) {
-        mAdapter.setItems(items);
-    }
+    void showPickDialog() {
+        mPendingUri         = null;
+        mPendingDisplayName = null;
+        mPendingIsPdf       = false;
 
-    void openLine(int pos) {
-        String line = mAdapter.getLineText(pos);
-        if (line.isEmpty()) return;
-        Intent intent = new Intent(this, SmsMapActivity.class);
-        intent.putExtra(SmsMapActivity.EXTRA_SMS_BODY, line);
-        intent.putExtra(SmsMapActivity.EXTRA_SENDER_ID, mSelectedSenderId);
-        intent.putExtra(SmsMapActivity.EXTRA_BLANK_TEMPLATE, true);
-        startActivity(intent);
+        float dp = getResources().getDisplayMetrics().density;
+        int pad  = (int)(16 * dp);
+
+        LinearLayout root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setPadding(pad, pad / 2, pad, 0);
+
+        // Bank name
+        TextView tvBank = new TextView(this);
+        tvBank.setText(R.string.label_bank);
+        tvBank.setTextColor(0xFF757575);
+        tvBank.setTextSize(12);
+        root.addView(tvBank);
+
+        mDialogBank = new EditText(this);
+        mDialogBank.setHint(R.string.hint_bank);
+        LinearLayout.LayoutParams blp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        blp.bottomMargin = pad / 2;
+        mDialogBank.setLayoutParams(blp);
+        root.addView(mDialogBank);
+
+        // Month
+        TextView tvMonth = new TextView(this);
+        tvMonth.setText(R.string.label_month);
+        tvMonth.setTextColor(0xFF757575);
+        tvMonth.setTextSize(12);
+        root.addView(tvMonth);
+
+        mDialogMonth = new EditText(this);
+        mDialogMonth.setHint(R.string.hint_month);
+        LinearLayout.LayoutParams mlp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        mlp.bottomMargin = pad / 2;
+        mDialogMonth.setLayoutParams(mlp);
+        root.addView(mDialogMonth);
+
+        // File row
+        LinearLayout fileRow = new LinearLayout(this);
+        fileRow.setOrientation(LinearLayout.HORIZONTAL);
+        fileRow.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        LinearLayout.LayoutParams frlp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        frlp.bottomMargin = pad / 4;
+        fileRow.setLayoutParams(frlp);
+
+        mDialogFileName = new TextView(this);
+        mDialogFileName.setText(R.string.pdf_no_file);
+        mDialogFileName.setTextColor(0xFF9E9E9E);
+        mDialogFileName.setTextSize(12);
+        LinearLayout.LayoutParams fnlp = new LinearLayout.LayoutParams(
+                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+        mDialogFileName.setLayoutParams(fnlp);
+        fileRow.addView(mDialogFileName);
+
+        Button btnBrowse = new Button(this);
+        btnBrowse.setText(R.string.btn_browse_file);
+        btnBrowse.setTextSize(12);
+        btnBrowse.setOnClickListener(new BrowseClickListener(this));
+        fileRow.addView(btnBrowse);
+
+        root.addView(fileRow);
+
+        AlertDialog dialog = new AlertDialog.Builder(this)
+            .setTitle(R.string.pdf_dialog_title)
+            .setView(root)
+            .setPositiveButton(android.R.string.ok, new PickOkListener(this))
+            .setNegativeButton(android.R.string.cancel, null)
+            .create();
+
+        dialog.show();
+        mDialogOk = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+        mDialogOk.setEnabled(false);
     }
 
     void pickFile() {
@@ -182,112 +197,84 @@ public class PdfInboxActivity extends Activity {
         startActivityForResult(intent, REQ_PICK);
     }
 
-    // ============================================================
-    // Worker threads
-    // ============================================================
+    @Override
+    protected void onActivityResult(int req, int res, Intent data) {
+        super.onActivityResult(req, res, data);
+        if (req != REQ_PICK || res != RESULT_OK || data == null) return;
+        Uri uri = data.getData();
+        if (uri == null) return;
 
-    /** Loads a PDF or TXT file, extracts text, splits into lines, runs pattern matching. */
-    static class LoadThread extends Thread {
-        private final PdfInboxActivity mA;
-        private final Uri     mUri;
-        private final boolean mIsPdf;
-        private final String  mPassword; // null = no password
-        private final long    mSenderId;
-        private final Handler mHandler;
+        // Take persistable permission so the URI survives across restarts
+        try {
+            getContentResolver().takePersistableUriPermission(
+                    uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        } catch (SecurityException ignored) {}
 
-        LoadThread(PdfInboxActivity a, Uri uri, boolean isPdf, String password,
-                   long senderId, Handler h) {
-            mA = a; mUri = uri; mIsPdf = isPdf; mPassword = password;
-            mSenderId = senderId; mHandler = h;
-        }
-
-        public void run() {
-            String raw = "";
+        // Resolve proper display name from the document provider
+        String displayName = null;
+        Cursor cursor = getContentResolver().query(uri, null, null, null, null);
+        if (cursor != null) {
             try {
-                InputStream is = mA.getContentResolver().openInputStream(mUri);
-                if (is != null) {
-                    if (mIsPdf) {
-                        raw = PdfTextExtractor.extract(is, mPassword);
-                    } else {
-                        java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
-                        byte[] buf = new byte[8192]; int n;
-                        while ((n = is.read(buf)) >= 0) baos.write(buf, 0, n);
-                        is.close();
-                        raw = baos.toString("UTF-8");
-                    }
+                if (cursor.moveToFirst()) {
+                    int col = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+                    if (col >= 0) displayName = cursor.getString(col);
                 }
-            } catch (Exception ignored) {}
-
-            // Propagate sentinel strings directly to the UI handler
-            if (PdfDecryptor.NEEDS_PASSWORD.equals(raw)
-                    || raw.startsWith(PdfDecryptor.WRONG_PASSWORD)
-                    || raw.startsWith(PdfTextExtractor.EXTRACT_EMPTY)) {
-                mHandler.post(new LoadDoneRunnable(mA, new ArrayList<String>(),
-                        new ArrayList<PdfLineAdapter.PdfLine>(), raw));
-                return;
+            } finally {
+                cursor.close();
             }
-
-            List<String> lines = splitLines(raw);
-            List<ExtractionPattern> patterns = loadPatterns(mA.mDb, mSenderId);
-            List<PdfLineAdapter.PdfLine> items = matchLines(lines, patterns);
-
-            String statusMsg;
-            if (raw.isEmpty()) {
-                statusMsg = mA.getString(R.string.status_extract_failed);
-            } else {
-                int matched = 0;
-                for (PdfLineAdapter.PdfLine pl : items) {
-                    if (pl.matchSummary != null) matched++;
-                }
-                statusMsg = mA.getString(R.string.pdf_inbox_status, items.size(), matched);
-            }
-
-            mHandler.post(new LoadDoneRunnable(mA, lines, items, statusMsg));
         }
+        if (displayName == null || displayName.isEmpty()) {
+            String seg = uri.getLastPathSegment();
+            // Strip "primary:Download/" prefix that SAF paths often have
+            displayName = (seg != null && seg.contains("/"))
+                    ? seg.substring(seg.lastIndexOf('/') + 1) : seg;
+        }
+        if (displayName == null) displayName = "statement";
+
+        // Determine if it's a PDF via MIME type (most reliable)
+        String mimeType = getContentResolver().getType(uri);
+        boolean isPdf = "application/pdf".equals(mimeType)
+                || (displayName.toLowerCase(Locale.US).endsWith(".pdf"));
+
+        mPendingUri         = uri;
+        mPendingDisplayName = displayName;
+        mPendingIsPdf       = isPdf;
+
+        if (mDialogFileName != null) {
+            mDialogFileName.setText(displayName);
+            mDialogFileName.setTextColor(0xFF212121);
+        }
+        if (mDialogOk != null) mDialogOk.setEnabled(true);
     }
 
-    static class LoadDoneRunnable implements Runnable {
-        private final PdfInboxActivity             mA;
-        private final List<String>                 mLines;
-        private final List<PdfLineAdapter.PdfLine> mItems;
-        private final String                       mStatus;
-        LoadDoneRunnable(PdfInboxActivity a, List<String> lines,
-                         List<PdfLineAdapter.PdfLine> items, String status) {
-            mA = a; mLines = lines; mItems = items; mStatus = status;
-        }
-        public void run() { if (!mA.isFinishing()) mA.onLinesLoaded(mLines, mItems, mStatus); }
+    void saveAndOpen() {
+        if (mPendingUri == null) return;
+
+        String bank  = (mDialogBank  != null) ? mDialogBank.getText().toString().trim()  : "";
+        String month = (mDialogMonth != null) ? mDialogMonth.getText().toString().trim() : "";
+
+        PdfStatement s = new PdfStatement();
+        s.senderId    = -1L;
+        s.bankName    = bank.isEmpty() ? null : bank;
+        s.isPdf       = mPendingIsPdf;
+        s.month       = month.isEmpty() ? null : month;
+        s.uri         = mPendingUri.toString();
+        s.displayName = mPendingDisplayName;
+        s.createdAt   = System.currentTimeMillis();
+
+        long newId = mDb.insertPdfStatement(s);
+        s.id = newId;
+
+        reload();
+
+        Intent intent = new Intent(this, PdfLinesActivity.class);
+        intent.putExtra(PdfLinesActivity.EXTRA_STATEMENT_ID, newId);
+        startActivity(intent);
     }
 
-    /** Re-runs pattern matching when the bank selector changes. */
-    static class MatchThread extends Thread {
-        private final PdfInboxActivity mA;
-        private final List<String>     mLines;
-        private final long             mSenderId;
-        private final ExpenseDatabase  mDb;
-        private final Handler          mHandler;
-
-        MatchThread(PdfInboxActivity a, List<String> lines, long senderId,
-                    ExpenseDatabase db, Handler h) {
-            mA = a; mLines = lines; mSenderId = senderId; mDb = db; mHandler = h;
-        }
-
-        public void run() {
-            List<ExtractionPattern> patterns = loadPatterns(mDb, mSenderId);
-            List<PdfLineAdapter.PdfLine> items = matchLines(mLines, patterns);
-            mHandler.post(new MatchDoneRunnable(mA, items));
-        }
-    }
-
-    static class MatchDoneRunnable implements Runnable {
-        private final PdfInboxActivity             mA;
-        private final List<PdfLineAdapter.PdfLine> mItems;
-        MatchDoneRunnable(PdfInboxActivity a, List<PdfLineAdapter.PdfLine> items) {
-            mA = a; mItems = items;
-        }
-        public void run() { if (!mA.isFinishing()) mA.onMatchDone(mItems); }
-    }
-
-    // ── Shared static helpers ─────────────────────────────────────────────────
+    // ============================================================
+    // Shared static helpers (also used by PdfLinesActivity)
+    // ============================================================
 
     static List<String> splitLines(String text) {
         List<String> out = new ArrayList<String>();
@@ -316,7 +303,6 @@ public class PdfInboxActivity extends Activity {
         return out;
     }
 
-    /** Returns a short summary string if any pattern matches the line, null otherwise. */
     private static String tryMatch(String line, List<ExtractionPattern> patterns) {
         for (ExtractionPattern p : patterns) {
             if (!p.matches(line)) continue;
@@ -337,35 +323,44 @@ public class PdfInboxActivity extends Activity {
     // Static listener classes
     // ============================================================
 
-    static class PickClickListener implements View.OnClickListener {
+    static class AddClickListener implements View.OnClickListener {
         private final PdfInboxActivity mA;
-        PickClickListener(PdfInboxActivity a) { mA = a; }
+        AddClickListener(PdfInboxActivity a) { mA = a; }
+        public void onClick(View v) { mA.showPickDialog(); }
+    }
+
+    static class BrowseClickListener implements View.OnClickListener {
+        private final PdfInboxActivity mA;
+        BrowseClickListener(PdfInboxActivity a) { mA = a; }
         public void onClick(View v) { mA.pickFile(); }
     }
 
-    static class LineClickListener implements AdapterView.OnItemClickListener {
+    static class PickOkListener implements DialogInterface.OnClickListener {
         private final PdfInboxActivity mA;
-        LineClickListener(PdfInboxActivity a) { mA = a; }
+        PickOkListener(PdfInboxActivity a) { mA = a; }
+        public void onClick(DialogInterface d, int which) { mA.saveAndOpen(); }
+    }
+
+    static class ItemClickListener implements AdapterView.OnItemClickListener {
+        private final PdfInboxActivity mA;
+        ItemClickListener(PdfInboxActivity a) { mA = a; }
         public void onItemClick(AdapterView<?> p, View v, int pos, long id) {
-            mA.openLine(pos);
+            mA.openStatement(pos);
         }
     }
 
-    static class BankSelectedListener implements AdapterView.OnItemSelectedListener {
+    static class ItemLongClickListener implements AdapterView.OnItemLongClickListener {
         private final PdfInboxActivity mA;
-        BankSelectedListener(PdfInboxActivity a) { mA = a; }
-        public void onItemSelected(AdapterView<?> p, View v, int pos, long id) {
-            if (mA.mReady) mA.onBankSelected(pos);
+        ItemLongClickListener(PdfInboxActivity a) { mA = a; }
+        public boolean onItemLongClick(AdapterView<?> p, View v, int pos, long id) {
+            mA.confirmDelete(pos);
+            return true;
         }
-        public void onNothingSelected(AdapterView<?> p) {}
     }
 
-    static class PasswordOkListener implements DialogInterface.OnClickListener {
+    static class DeleteConfirmListener implements DialogInterface.OnClickListener {
         private final PdfInboxActivity mA;
-        private final EditText         mEt;
-        PasswordOkListener(PdfInboxActivity a, EditText et) { mA = a; mEt = et; }
-        public void onClick(DialogInterface dialog, int which) {
-            mA.startLoad(mEt.getText().toString());
-        }
+        DeleteConfirmListener(PdfInboxActivity a) { mA = a; }
+        public void onClick(DialogInterface d, int which) { mA.deleteStatement(); }
     }
 }

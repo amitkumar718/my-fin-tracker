@@ -287,20 +287,12 @@ public class MainActivity extends Activity {
                 mMain.startActivity(new Intent(mMain, SmsInboxActivity.class));
                 return true;
             }
-            if (id == R.id.action_add_expense) {
-                mMain.startActivity(new Intent(mMain, AddExpenseActivity.class));
-                return true;
-            }
             if (id == R.id.action_settings) {
                 mMain.startActivity(new Intent(mMain, SettingsActivity.class));
                 return true;
             }
             if (id == R.id.action_trips) {
                 mMain.startActivity(new Intent(mMain, TripListActivity.class));
-                return true;
-            }
-            if (id == R.id.action_import_statement) {
-                mMain.startActivity(new Intent(mMain, StatementImportActivity.class));
                 return true;
             }
             if (id == R.id.action_pdf_inbox) {

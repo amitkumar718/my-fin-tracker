@@ -45,6 +45,8 @@ public class SmsMapActivity extends Activity {
     public static final String EXTRA_SENDER_ID     = "sender_id";
     /** When true the template EditText starts blank instead of pre-filled with the body text. */
     public static final String EXTRA_BLANK_TEMPLATE = "blank_template";
+    /** When true the saved pattern is tagged as a PDF pattern (is_pdf=1). */
+    public static final String EXTRA_IS_PDF = "is_pdf";
 
     // token labels inserted into the SMS template
     static final String TOK_AMOUNT   = "(/amount/)";
@@ -333,6 +335,7 @@ public class SmsMapActivity extends Activity {
         p.senderId        = mSenderId;
         p.templateText    = template;
         p.transactionType = mTxnType;
+        p.isPdf           = getIntent().getBooleanExtra(EXTRA_IS_PDF, false);
 
         ExtractionPattern tmp = new ExtractionPattern();
         tmp.transactionType = mTxnType;

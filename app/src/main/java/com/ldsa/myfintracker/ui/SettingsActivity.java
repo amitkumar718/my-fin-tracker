@@ -34,7 +34,9 @@ public class SettingsActivity extends Activity {
 
     private Spinner       mSpinnerLanding;
     private LinearLayout  mContainerSenders;
+    private LinearLayout  mContainerPdfPatterns;
     private TextView      mTvNoSenders;
+    private TextView      mTvNoPdfPatterns;
     private ExpenseDatabase mDb;
     private long mPendingDeleteSenderId  = -1;
     private long mPendingDeletePatternId = -1;
@@ -53,10 +55,12 @@ public class SettingsActivity extends Activity {
 
         mDb = ExpenseDatabase.getInstance(this);
 
-        mSpinnerLanding   = (Spinner)      findViewById(R.id.spinnerLanding);
-        mContainerSenders = (LinearLayout) findViewById(R.id.containerSenders);
-        mTvNoSenders      = (TextView)     findViewById(R.id.tvNoSenders);
-        Button btnAdd     = (Button)       findViewById(R.id.btnAddSender);
+        mSpinnerLanding       = (Spinner)      findViewById(R.id.spinnerLanding);
+        mContainerSenders     = (LinearLayout) findViewById(R.id.containerSenders);
+        mContainerPdfPatterns = (LinearLayout) findViewById(R.id.containerPdfPatterns);
+        mTvNoSenders          = (TextView)     findViewById(R.id.tvNoSenders);
+        mTvNoPdfPatterns      = (TextView)     findViewById(R.id.tvNoPdfPatterns);
+        Button btnAdd         = (Button)       findViewById(R.id.btnAddSender);
 
         ArrayAdapter<CharSequence> landingAdapter = ArrayAdapter.createFromResource(
             this, R.array.landing_page_labels, android.R.layout.simple_spinner_item);
@@ -186,6 +190,65 @@ public class SettingsActivity extends Activity {
 
         mTvNoSenders.setVisibility(senders.isEmpty() ? View.VISIBLE : View.GONE);
         mContainerSenders.setVisibility(senders.isEmpty() ? View.GONE : View.VISIBLE);
+
+        reloadPdfPatterns();
+    }
+
+    void reloadPdfPatterns() {
+        List<SenderConfig> pdfSenders = mDb.getSendersWithPdfPatterns();
+        mContainerPdfPatterns.removeAllViews();
+        LayoutInflater inflater = LayoutInflater.from(this);
+        float dp = getResources().getDisplayMetrics().density;
+
+        for (int i = 0; i < pdfSenders.size(); i++) {
+            SenderConfig s = pdfSenders.get(i);
+            if (i > 0) {
+                View spacer = new android.view.View(this);
+                spacer.setLayoutParams(new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, (int)(dp * 8)));
+                mContainerPdfPatterns.addView(spacer);
+            }
+
+            TextView tvBank = new TextView(this);
+            tvBank.setText(s.getLabel());
+            tvBank.setTextColor(0xFF212121);
+            tvBank.setTextSize(13);
+            tvBank.setTypeface(null, android.graphics.Typeface.BOLD);
+            LinearLayout.LayoutParams blp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+            blp.bottomMargin = (int)(dp * 4);
+            tvBank.setLayoutParams(blp);
+            mContainerPdfPatterns.addView(tvBank);
+
+            List<com.ldsa.myfintracker.db.ExtractionPattern> patterns =
+                    mDb.getPdfPatternsBySender(s.id);
+            for (com.ldsa.myfintracker.db.ExtractionPattern p : patterns) {
+                View pRow = inflater.inflate(R.layout.item_extraction_pattern,
+                    mContainerPdfPatterns, false);
+                String label = (p.name != null && !p.name.isEmpty()) ? p.name : "Pattern #" + p.id;
+                ((TextView) pRow.findViewById(R.id.tvPatternName)).setText(label);
+                android.widget.TextView badge =
+                    (android.widget.TextView) pRow.findViewById(R.id.tvPatternTypeBadge);
+                if (p.transactionType != null && !p.transactionType.isEmpty()) {
+                    badge.setVisibility(View.VISIBLE);
+                    badge.setText(p.getTypeLabel());
+                } else {
+                    badge.setVisibility(View.GONE);
+                }
+                LinearLayout.LayoutParams plp = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+                plp.leftMargin   = (int)(dp * 8);
+                plp.bottomMargin = (int)(dp * 4);
+                pRow.setLayoutParams(plp);
+                pRow.setOnClickListener(new PatternRowClickListener(this, p.id, s.id));
+                pRow.setOnLongClickListener(new PatternRowLongClickListener(this, p.id));
+                mContainerPdfPatterns.addView(pRow);
+            }
+        }
+
+        boolean hasPdfPatterns = !pdfSenders.isEmpty();
+        mTvNoPdfPatterns.setVisibility(hasPdfPatterns ? View.GONE : View.VISIBLE);
+        mContainerPdfPatterns.setVisibility(hasPdfPatterns ? View.VISIBLE : View.GONE);
     }
 
     private void addVerticalSpace(float heightPx) {

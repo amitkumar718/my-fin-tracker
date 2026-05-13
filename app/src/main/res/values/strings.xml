@@ -155,15 +155,28 @@
     <string name="status_imported_n">Imported %d expense(s).</string>
 
     <!-- PDF Inbox -->
-    <string name="title_pdf_inbox">PDF Inbox</string>
+    <string name="title_pdf_inbox">PDF Statements</string>
+    <string name="title_pdf_lines">PDF Statement</string>
     <string name="action_pdf_inbox">PDF Inbox</string>
     <string name="pdf_inbox_hint">Pick a PDF or TXT bank statement to see its lines here.</string>
     <string name="pdf_inbox_empty">No file loaded yet.\nTap "Pick PDF / TXT" to begin.</string>
+    <string name="pdf_inbox_empty_lib">No statements yet.\nTap + Add to import one.</string>
     <string name="pdf_inbox_status">%1$d lines  ·  %2$d matched</string>
     <string name="pdf_password_title">Password Required</string>
     <string name="pdf_password_msg">This PDF is password-protected. Enter the document password.</string>
     <string name="pdf_password_wrong">Incorrect password. Please try again.</string>
     <string name="hint_pdf_password">PDF password</string>
+    <string name="btn_add_statement">+ Add</string>
+    <string name="pdf_dialog_title">Add Statement</string>
+    <string name="label_month">Month</string>
+    <string name="hint_month">YYYY-MM (e.g. 2025-01)</string>
+    <string name="btn_browse_file">Browse…</string>
+    <string name="pdf_no_file">No file selected</string>
+    <string name="pdf_lines_hint">Tap a line to configure a regex pattern for it.</string>
+    <string name="confirm_delete_statement">Remove this statement record?</string>
+    <string name="msg_statement_deleted">Statement removed</string>
+    <string name="label_pdf_patterns">PDF Patterns</string>
+    <string name="pdf_no_patterns">No PDF patterns yet.\nOpen a statement line to create one.</string>
 
     <string-array name="filter_options">
         <item>All</item>

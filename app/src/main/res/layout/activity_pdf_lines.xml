@@ -5,57 +5,59 @@
     android:orientation="vertical"
     android:background="#F0F4F8">
 
-    <!-- Blue header -->
+    <!-- Blue header: bank + month -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:background="#1976D2"
         android:paddingLeft="12dp"
-        android:paddingRight="8dp"
-        android:paddingTop="7dp"
-        android:paddingBottom="7dp"
+        android:paddingRight="12dp"
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp"
         android:gravity="center_vertical">
 
         <TextView
-            android:layout_width="0dp"
+            android:id="@+id/tvPdfLinesHeader"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/title_pdf_inbox"
             android:textColor="#FFFFFF"
-            android:textSize="16sp"
-            android:textStyle="bold" />
-
-        <Button
-            android:id="@+id/btnAddStatement"
-            android:layout_width="wrap_content"
-            android:layout_height="36dp"
-            android:text="@string/btn_add_statement"
-            android:textSize="12sp"
-            android:textColor="#1976D2"
-            android:background="@drawable/bg_spinner_white"
-            android:paddingLeft="14dp"
-            android:paddingRight="14dp" />
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:text="@string/title_pdf_lines" />
 
     </LinearLayout>
 
+    <!-- Status line -->
+    <TextView
+        android:id="@+id/tvPdfStatus"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingLeft="12dp"
+        android:paddingRight="12dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="4dp"
+        android:textSize="12sp"
+        android:textColor="#546E7A"
+        android:text="@string/status_reading_file" />
+
     <!-- Empty state -->
     <TextView
-        android:id="@+id/tvStatementsEmpty"
+        android:id="@+id/tvPdfEmpty"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
         android:gravity="center"
-        android:text="@string/pdf_inbox_empty_lib"
+        android:text="@string/pdf_lines_hint"
         android:textColor="#9E9E9E"
         android:textSize="14sp"
         android:paddingLeft="32dp"
         android:paddingRight="32dp"
-        android:visibility="visible" />
+        android:visibility="gone" />
 
-    <!-- Statement list -->
+    <!-- Line list -->
     <ListView
-        android:id="@+id/listStatements"
+        android:id="@+id/listPdfLines"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
