@@ -13,22 +13,275 @@
         android:paddingTop="12dp"
         android:paddingBottom="24dp">
 
-        <!-- Original SMS reference card -->
+        <!-- PDF section: hidden by default, shown when opened from PDF Inbox -->
+        <LinearLayout
+            android:id="@+id/layoutPdfSection"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="#E3F2FD"
+            android:padding="12dp"
+            android:layout_marginBottom="10dp"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/tvPdfSectionFileName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="13sp"
+                android:textColor="#0D47A1"
+                android:fontFamily="monospace"
+                android:singleLine="true"
+                android:ellipsize="middle"
+                android:layout_marginBottom="6dp"
+                android:text="" />
+
+            <Button
+                android:id="@+id/btnPickFromPdf"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/btn_pick_from_pdf"
+                android:textSize="14sp"
+                android:textAllCaps="false"
+                android:enabled="false" />
+
+            <TextView
+                android:id="@+id/tvPdfLoadStatus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="13sp"
+                android:textColor="#1565C0"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="8dp"
+                android:text="" />
+
+            <!-- Bank box -->
+            <LinearLayout
+                android:id="@+id/layoutBankLineSection"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="#DDEEFF"
+                android:padding="10dp"
+                android:layout_marginBottom="8dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/label_bank_line"
+                    android:textSize="14sp"
+                    android:textColor="#1565C0"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="6dp" />
+
+                <TextView
+                    android:id="@+id/tvBankOrigLine"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="14sp"
+                    android:textColor="#212121"
+                    android:typeface="monospace"
+                    android:textIsSelectable="true"
+                    android:layout_marginBottom="6dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/label_pdf_bank_pattern"
+                    android:textSize="13sp"
+                    android:textColor="#1565C0" />
+
+                <HorizontalScrollView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:scrollbars="none"
+                    android:layout_marginTop="4dp"
+                    android:layout_marginBottom="4dp">
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+                        <Button android:id="@+id/btnBankPatAny"
+                            android:layout_width="wrap_content" android:layout_height="36dp"
+                            android:text="Any" android:textSize="13sp" android:textColor="#1565C0"
+                            android:background="@drawable/bg_button_secondary"
+                            android:paddingLeft="12dp" android:paddingRight="12dp"
+                            android:layout_marginRight="6dp" />
+                        <Button android:id="@+id/btnBankPatWord"
+                            android:layout_width="wrap_content" android:layout_height="36dp"
+                            android:text="Word" android:textSize="13sp" android:textColor="#1565C0"
+                            android:background="@drawable/bg_button_secondary"
+                            android:paddingLeft="12dp" android:paddingRight="12dp"
+                            android:layout_marginRight="6dp" />
+                        <Button android:id="@+id/btnBankPatWords"
+                            android:layout_width="wrap_content" android:layout_height="36dp"
+                            android:text="Words" android:textSize="13sp" android:textColor="#1565C0"
+                            android:background="@drawable/bg_button_secondary"
+                            android:paddingLeft="12dp" android:paddingRight="12dp"
+                            android:layout_marginRight="6dp" />
+                        <Button android:id="@+id/btnBankPatSkip"
+                            android:layout_width="wrap_content" android:layout_height="36dp"
+                            android:text="Skip" android:textSize="13sp" android:textColor="#757575"
+                            android:background="@drawable/bg_button_secondary"
+                            android:paddingLeft="12dp" android:paddingRight="12dp" />
+                    </LinearLayout>
+                </HorizontalScrollView>
+
+                <EditText
+                    android:id="@+id/etBankPattern"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/hint_pdf_bank_pattern"
+                    android:textSize="14sp"
+                    android:inputType="textNoSuggestions"
+                    android:singleLine="true" />
+
+                <TextView
+                    android:id="@+id/tvBankPatternPreview"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="13sp"
+                    android:textColor="#37474F"
+                    android:typeface="monospace"
+                    android:layout_marginTop="4dp"
+                    android:visibility="gone" />
+
+            </LinearLayout>
+
+            <!-- Month box -->
+            <LinearLayout
+                android:id="@+id/layoutMonthLineSection"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="#DDEEDD"
+                android:padding="10dp"
+                android:layout_marginBottom="8dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/label_month_line"
+                    android:textSize="14sp"
+                    android:textColor="#2E7D32"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="6dp" />
+
+                <TextView
+                    android:id="@+id/tvMonthOrigLine"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="14sp"
+                    android:textColor="#212121"
+                    android:typeface="monospace"
+                    android:textIsSelectable="true"
+                    android:layout_marginBottom="6dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/label_pdf_month_pattern"
+                    android:textSize="13sp"
+                    android:textColor="#2E7D32" />
+
+                <HorizontalScrollView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:scrollbars="none"
+                    android:layout_marginTop="4dp"
+                    android:layout_marginBottom="4dp">
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+                        <Button android:id="@+id/btnMonthPatMonYYYY"
+                            android:layout_width="wrap_content" android:layout_height="36dp"
+                            android:text="Mon YYYY" android:textSize="13sp" android:textColor="#2E7D32"
+                            android:background="@drawable/bg_button_secondary"
+                            android:paddingLeft="12dp" android:paddingRight="12dp"
+                            android:layout_marginRight="6dp" />
+                        <Button android:id="@+id/btnMonthPatYYYYMM"
+                            android:layout_width="wrap_content" android:layout_height="36dp"
+                            android:text="YYYY-MM" android:textSize="13sp" android:textColor="#2E7D32"
+                            android:background="@drawable/bg_button_secondary"
+                            android:paddingLeft="12dp" android:paddingRight="12dp"
+                            android:layout_marginRight="6dp" />
+                        <Button android:id="@+id/btnMonthPatMMYYYY"
+                            android:layout_width="wrap_content" android:layout_height="36dp"
+                            android:text="MM/YYYY" android:textSize="13sp" android:textColor="#2E7D32"
+                            android:background="@drawable/bg_button_secondary"
+                            android:paddingLeft="12dp" android:paddingRight="12dp"
+                            android:layout_marginRight="6dp" />
+                        <Button android:id="@+id/btnMonthPatAny"
+                            android:layout_width="wrap_content" android:layout_height="36dp"
+                            android:text="Any" android:textSize="13sp" android:textColor="#2E7D32"
+                            android:background="@drawable/bg_button_secondary"
+                            android:paddingLeft="12dp" android:paddingRight="12dp"
+                            android:layout_marginRight="6dp" />
+                        <Button android:id="@+id/btnMonthPatSkip"
+                            android:layout_width="wrap_content" android:layout_height="36dp"
+                            android:text="Skip" android:textSize="13sp" android:textColor="#757575"
+                            android:background="@drawable/bg_button_secondary"
+                            android:paddingLeft="12dp" android:paddingRight="12dp" />
+                    </LinearLayout>
+                </HorizontalScrollView>
+
+                <EditText
+                    android:id="@+id/etMonthPattern"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/hint_pdf_month_pattern"
+                    android:textSize="14sp"
+                    android:inputType="textNoSuggestions"
+                    android:singleLine="true" />
+
+                <TextView
+                    android:id="@+id/tvMonthPatternPreview"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="13sp"
+                    android:textColor="#37474F"
+                    android:typeface="monospace"
+                    android:layout_marginTop="4dp"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/label_month"
+                    android:textSize="13sp"
+                    android:textColor="#2E7D32"
+                    android:layout_marginTop="8dp" />
+
+                <EditText
+                    android:id="@+id/etPdfMonth"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/hint_month"
+                    android:textSize="15sp"
+                    android:inputType="text"
+                    android:singleLine="true" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- Transaction box: original line + pattern template -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:background="@drawable/bg_card_blue"
-            android:elevation="2dp"
-            android:padding="14dp"
+            android:background="#FFF3E0"
+            android:padding="12dp"
             android:layout_marginBottom="10dp">
 
             <TextView
+                android:id="@+id/tvTransHeader"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Original SMS"
-                android:textColor="#1565C0"
-                android:textSize="11sp"
+                android:text="@string/label_original_sms"
+                android:textSize="14sp"
+                android:textColor="#E65100"
                 android:textStyle="bold"
                 android:layout_marginBottom="6dp" />
 
@@ -38,36 +291,26 @@
                 android:layout_height="wrap_content"
                 android:text=""
                 android:textColor="#212121"
-                android:textSize="13sp"
-                android:textIsSelectable="true" />
-
-        </LinearLayout>
-
-        <!-- Template editor card -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:background="@drawable/bg_card"
-            android:elevation="2dp"
-            android:padding="14dp"
-            android:layout_marginBottom="10dp">
+                android:textSize="15sp"
+                android:typeface="monospace"
+                android:textIsSelectable="true"
+                android:layout_marginBottom="10dp" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/label_pattern_template"
-                android:textColor="#1976D2"
-                android:textSize="12sp"
+                android:textColor="#E65100"
+                android:textSize="14sp"
                 android:textStyle="bold"
-                android:layout_marginBottom="4dp" />
+                android:layout_marginBottom="2dp" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/hint_pattern_template"
                 android:textColor="#9E9E9E"
-                android:textSize="11sp"
+                android:textSize="13sp"
                 android:layout_marginBottom="8dp" />
 
             <!-- Token buttons strip -->
@@ -83,66 +326,66 @@
                     android:orientation="horizontal">
 
                     <Button android:id="@+id/btnTokAmount"
-                        android:layout_width="wrap_content" android:layout_height="32dp"
-                        android:text="Amt" android:textSize="11sp" android:textColor="#2E7D32"
+                        android:layout_width="wrap_content" android:layout_height="36dp"
+                        android:text="Amt" android:textSize="13sp" android:textColor="#2E7D32"
                         android:background="@drawable/bg_button_secondary"
-                        android:paddingLeft="10dp" android:paddingRight="10dp"
+                        android:paddingLeft="12dp" android:paddingRight="12dp"
                         android:layout_marginRight="6dp" />
 
                     <Button android:id="@+id/btnTokMerchant"
-                        android:layout_width="wrap_content" android:layout_height="32dp"
-                        android:text="Merchant" android:textSize="11sp" android:textColor="#1565C0"
+                        android:layout_width="wrap_content" android:layout_height="36dp"
+                        android:text="Merchant" android:textSize="13sp" android:textColor="#1565C0"
                         android:background="@drawable/bg_button_secondary"
-                        android:paddingLeft="10dp" android:paddingRight="10dp"
+                        android:paddingLeft="12dp" android:paddingRight="12dp"
                         android:layout_marginRight="6dp" />
 
                     <Button android:id="@+id/btnTokCard"
-                        android:layout_width="wrap_content" android:layout_height="32dp"
-                        android:text="Card" android:textSize="11sp" android:textColor="#1565C0"
+                        android:layout_width="wrap_content" android:layout_height="36dp"
+                        android:text="Card" android:textSize="13sp" android:textColor="#1565C0"
                         android:background="@drawable/bg_button_secondary"
-                        android:paddingLeft="10dp" android:paddingRight="10dp"
+                        android:paddingLeft="12dp" android:paddingRight="12dp"
                         android:layout_marginRight="6dp" />
 
                     <Button android:id="@+id/btnTokAcNo"
-                        android:layout_width="wrap_content" android:layout_height="32dp"
-                        android:text="Ac.No" android:textSize="11sp" android:textColor="#1565C0"
+                        android:layout_width="wrap_content" android:layout_height="36dp"
+                        android:text="Ac.No" android:textSize="13sp" android:textColor="#1565C0"
                         android:background="@drawable/bg_button_secondary"
-                        android:paddingLeft="10dp" android:paddingRight="10dp"
+                        android:paddingLeft="12dp" android:paddingRight="12dp"
                         android:layout_marginRight="6dp" />
 
                     <Button android:id="@+id/btnTokUpi"
-                        android:layout_width="wrap_content" android:layout_height="32dp"
-                        android:text="UPI" android:textSize="11sp" android:textColor="#1565C0"
+                        android:layout_width="wrap_content" android:layout_height="36dp"
+                        android:text="UPI" android:textSize="13sp" android:textColor="#1565C0"
                         android:background="@drawable/bg_button_secondary"
-                        android:paddingLeft="10dp" android:paddingRight="10dp"
+                        android:paddingLeft="12dp" android:paddingRight="12dp"
                         android:layout_marginRight="6dp" />
 
                     <Button android:id="@+id/btnTokDate"
-                        android:layout_width="wrap_content" android:layout_height="32dp"
-                        android:text="Date" android:textSize="11sp" android:textColor="#6A1B9A"
+                        android:layout_width="wrap_content" android:layout_height="36dp"
+                        android:text="Date" android:textSize="13sp" android:textColor="#6A1B9A"
                         android:background="@drawable/bg_button_secondary"
-                        android:paddingLeft="10dp" android:paddingRight="10dp"
+                        android:paddingLeft="12dp" android:paddingRight="12dp"
                         android:layout_marginRight="6dp" />
 
                     <Button android:id="@+id/btnTokTime"
-                        android:layout_width="wrap_content" android:layout_height="32dp"
-                        android:text="Time" android:textSize="11sp" android:textColor="#6A1B9A"
+                        android:layout_width="wrap_content" android:layout_height="36dp"
+                        android:text="Time" android:textSize="13sp" android:textColor="#6A1B9A"
                         android:background="@drawable/bg_button_secondary"
-                        android:paddingLeft="10dp" android:paddingRight="10dp"
+                        android:paddingLeft="12dp" android:paddingRight="12dp"
                         android:layout_marginRight="6dp" />
 
                     <Button android:id="@+id/btnTokBalance"
-                        android:layout_width="wrap_content" android:layout_height="32dp"
-                        android:text="Bal" android:textSize="11sp" android:textColor="#2E7D32"
+                        android:layout_width="wrap_content" android:layout_height="36dp"
+                        android:text="Bal" android:textSize="13sp" android:textColor="#2E7D32"
                         android:background="@drawable/bg_button_secondary"
-                        android:paddingLeft="10dp" android:paddingRight="10dp"
+                        android:paddingLeft="12dp" android:paddingRight="12dp"
                         android:layout_marginRight="6dp" />
 
                     <Button android:id="@+id/btnTokIgnore"
-                        android:layout_width="wrap_content" android:layout_height="32dp"
-                        android:text="Skip" android:textSize="11sp" android:textColor="#757575"
+                        android:layout_width="wrap_content" android:layout_height="36dp"
+                        android:text="Skip" android:textSize="13sp" android:textColor="#757575"
                         android:background="@drawable/bg_button_secondary"
-                        android:paddingLeft="10dp" android:paddingRight="10dp" />
+                        android:paddingLeft="12dp" android:paddingRight="12dp" />
 
                 </LinearLayout>
             </HorizontalScrollView>
@@ -152,10 +395,10 @@
                 android:id="@+id/etTemplate"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:minHeight="80dp"
+                android:minHeight="60dp"
                 android:gravity="top"
                 android:inputType="textMultiLine|textNoSuggestions"
-                android:textSize="13sp"
+                android:textSize="15sp"
                 android:textColor="#212121"
                 android:background="#FAFAFA"
                 android:padding="8dp"
@@ -166,23 +409,23 @@
                 android:id="@+id/tvExtractPreview"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="6dp"
                 android:background="#ECEFF1"
                 android:padding="8dp"
-                android:textSize="11sp"
+                android:textSize="13sp"
                 android:textColor="#37474F"
                 android:typeface="monospace"
                 android:visibility="gone" />
 
-            <!-- Pattern edit hint — amber, shown when modifying a saved pattern -->
+            <!-- Pattern edit hint -->
             <TextView
                 android:id="@+id/tvPatternHint"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
+                android:layout_marginTop="4dp"
                 android:background="#FFF8E1"
                 android:padding="8dp"
-                android:textSize="12sp"
+                android:textSize="13sp"
                 android:textColor="#E65100"
                 android:textStyle="italic"
                 android:visibility="gone" />
@@ -203,7 +446,7 @@
                 android:layout_height="wrap_content"
                 android:text="@string/label_expense_details"
                 android:textColor="#1976D2"
-                android:textSize="13sp"
+                android:textSize="15sp"
                 android:textStyle="bold"
                 android:layout_marginBottom="12dp" />
 
@@ -214,61 +457,61 @@
                     android:layout_weight="1" android:orientation="vertical"
                     android:layout_marginRight="8dp">
                     <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                        android:text="@string/label_date" android:textColor="#757575" android:textSize="12sp" />
+                        android:text="@string/label_date" android:textColor="#757575" android:textSize="13sp" />
                     <EditText android:id="@+id/etDate" android:layout_width="match_parent"
                         android:layout_height="48dp" android:inputType="none"
                         android:focusable="false" android:clickable="true"
-                        android:textSize="14sp" android:textColor="#212121" />
+                        android:textSize="15sp" android:textColor="#212121" />
                 </LinearLayout>
                 <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
                     android:layout_weight="1" android:orientation="vertical">
                     <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                        android:text="@string/label_time" android:textColor="#757575" android:textSize="12sp" />
+                        android:text="@string/label_time" android:textColor="#757575" android:textSize="13sp" />
                     <EditText android:id="@+id/etTime" android:layout_width="match_parent"
                         android:layout_height="48dp" android:inputType="none"
                         android:focusable="false" android:clickable="true"
-                        android:textSize="14sp" android:textColor="#212121" />
+                        android:textSize="15sp" android:textColor="#212121" />
                 </LinearLayout>
             </LinearLayout>
 
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:text="@string/label_transaction_type" android:textColor="#757575" android:textSize="12sp" />
+                android:text="@string/label_transaction_type" android:textColor="#757575" android:textSize="13sp" />
             <Spinner android:id="@+id/spinnerTxnType"
                 android:layout_width="match_parent" android:layout_height="48dp"
                 android:layout_marginBottom="10dp" />
 
             <CheckBox android:id="@+id/cbOnline" android:layout_width="match_parent"
                 android:layout_height="wrap_content" android:text="@string/label_online"
-                android:textSize="14sp" android:textColor="#212121"
+                android:textSize="15sp" android:textColor="#212121"
                 android:layout_marginBottom="10dp" />
 
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:text="@string/label_reason" android:textColor="#757575" android:textSize="12sp" />
+                android:text="@string/label_reason" android:textColor="#757575" android:textSize="13sp" />
             <EditText android:id="@+id/etReason" android:layout_width="match_parent"
                 android:layout_height="48dp" android:hint="@string/hint_reason"
-                android:inputType="textCapSentences" android:textSize="14sp"
+                android:inputType="textCapSentences" android:textSize="15sp"
                 android:textColor="#212121" android:layout_marginBottom="10dp" />
 
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:text="@string/label_bank" android:textColor="#757575" android:textSize="12sp" />
+                android:text="@string/label_bank" android:textColor="#757575" android:textSize="13sp" />
             <EditText android:id="@+id/etBank" android:layout_width="match_parent"
                 android:layout_height="48dp" android:hint="@string/hint_bank"
-                android:inputType="text" android:textSize="14sp"
+                android:inputType="text" android:textSize="15sp"
                 android:textColor="#212121" android:layout_marginBottom="10dp" />
 
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:text="@string/label_remarks" android:textColor="#757575" android:textSize="12sp" />
+                android:text="@string/label_remarks" android:textColor="#757575" android:textSize="13sp" />
             <EditText android:id="@+id/etRemarks" android:layout_width="match_parent"
                 android:layout_height="wrap_content" android:minHeight="60dp"
                 android:gravity="top" android:hint="@string/hint_remarks"
                 android:inputType="textMultiLine|textCapSentences"
-                android:textSize="14sp" android:textColor="#212121"
+                android:textSize="15sp" android:textColor="#212121"
                 android:layout_marginBottom="16dp" />
 
             <Button android:id="@+id/btnSave"
-                android:layout_width="match_parent" android:layout_height="48dp"
+                android:layout_width="match_parent" android:layout_height="52dp"
                 android:text="@string/btn_save_and_create_pattern"
-                android:textColor="#FFFFFF" android:textSize="14sp"
+                android:textColor="#FFFFFF" android:textSize="15sp"
                 android:background="@drawable/bg_button_primary" />
 
         </LinearLayout>
