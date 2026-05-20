@@ -9,4 +9,5 @@ public class PdfStatement {
     public String uri;        // persistable content:// URI string
     public String displayName;
     public long   createdAt;
+    public String lastTransLine; // last transaction line selected from picker
 }

@@ -11,8 +11,6 @@ import android.provider.OpenableColumns;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
-import android.widget.EditText;
-import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -35,14 +33,9 @@ public class PdfInboxActivity extends Activity {
     private PdfStatementAdapter  mAdapter;
     private ExpenseDatabase      mDb;
 
-    // Pick-dialog state
     private Uri     mPendingUri;
     private String  mPendingDisplayName;
     private boolean mPendingIsPdf;
-    private EditText mDialogBank;
-    private EditText mDialogMonth;
-    private TextView mDialogFileName;
-    private Button   mDialogOk;
 
     private long mPendingDeleteId = -1L;
 
@@ -85,8 +78,10 @@ public class PdfInboxActivity extends Activity {
 
     void openStatement(int pos) {
         PdfStatement s = mAdapter.getStatement(pos);
-        Intent intent = new Intent(this, PdfLinesActivity.class);
-        intent.putExtra(PdfLinesActivity.EXTRA_STATEMENT_ID, s.id);
+        Intent intent = new Intent(this, SmsMapActivity.class);
+        intent.putExtra(SmsMapActivity.EXTRA_STATEMENT_ID, s.id);
+        intent.putExtra(SmsMapActivity.EXTRA_BLANK_TEMPLATE, true);
+        intent.putExtra(SmsMapActivity.EXTRA_IS_PDF,         true);
         startActivity(intent);
     }
 
@@ -109,83 +104,7 @@ public class PdfInboxActivity extends Activity {
     }
 
     void showPickDialog() {
-        mPendingUri         = null;
-        mPendingDisplayName = null;
-        mPendingIsPdf       = false;
-
-        float dp = getResources().getDisplayMetrics().density;
-        int pad  = (int)(16 * dp);
-
-        LinearLayout root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(pad, pad / 2, pad, 0);
-
-        // Bank name
-        TextView tvBank = new TextView(this);
-        tvBank.setText(R.string.label_bank);
-        tvBank.setTextColor(0xFF757575);
-        tvBank.setTextSize(12);
-        root.addView(tvBank);
-
-        mDialogBank = new EditText(this);
-        mDialogBank.setHint(R.string.hint_bank);
-        LinearLayout.LayoutParams blp = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        blp.bottomMargin = pad / 2;
-        mDialogBank.setLayoutParams(blp);
-        root.addView(mDialogBank);
-
-        // Month
-        TextView tvMonth = new TextView(this);
-        tvMonth.setText(R.string.label_month);
-        tvMonth.setTextColor(0xFF757575);
-        tvMonth.setTextSize(12);
-        root.addView(tvMonth);
-
-        mDialogMonth = new EditText(this);
-        mDialogMonth.setHint(R.string.hint_month);
-        LinearLayout.LayoutParams mlp = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        mlp.bottomMargin = pad / 2;
-        mDialogMonth.setLayoutParams(mlp);
-        root.addView(mDialogMonth);
-
-        // File row
-        LinearLayout fileRow = new LinearLayout(this);
-        fileRow.setOrientation(LinearLayout.HORIZONTAL);
-        fileRow.setGravity(android.view.Gravity.CENTER_VERTICAL);
-        LinearLayout.LayoutParams frlp = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        frlp.bottomMargin = pad / 4;
-        fileRow.setLayoutParams(frlp);
-
-        mDialogFileName = new TextView(this);
-        mDialogFileName.setText(R.string.pdf_no_file);
-        mDialogFileName.setTextColor(0xFF9E9E9E);
-        mDialogFileName.setTextSize(12);
-        LinearLayout.LayoutParams fnlp = new LinearLayout.LayoutParams(
-                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
-        mDialogFileName.setLayoutParams(fnlp);
-        fileRow.addView(mDialogFileName);
-
-        Button btnBrowse = new Button(this);
-        btnBrowse.setText(R.string.btn_browse_file);
-        btnBrowse.setTextSize(12);
-        btnBrowse.setOnClickListener(new BrowseClickListener(this));
-        fileRow.addView(btnBrowse);
-
-        root.addView(fileRow);
-
-        AlertDialog dialog = new AlertDialog.Builder(this)
-            .setTitle(R.string.pdf_dialog_title)
-            .setView(root)
-            .setPositiveButton(android.R.string.ok, new PickOkListener(this))
-            .setNegativeButton(android.R.string.cancel, null)
-            .create();
-
-        dialog.show();
-        mDialogOk = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
-        mDialogOk.setEnabled(false);
+        pickFile();
     }
 
     void pickFile() {
@@ -240,35 +159,29 @@ public class PdfInboxActivity extends Activity {
         mPendingDisplayName = displayName;
         mPendingIsPdf       = isPdf;
 
-        if (mDialogFileName != null) {
-            mDialogFileName.setText(displayName);
-            mDialogFileName.setTextColor(0xFF212121);
-        }
-        if (mDialogOk != null) mDialogOk.setEnabled(true);
+        saveAndOpen();
     }
 
     void saveAndOpen() {
         if (mPendingUri == null) return;
 
-        String bank  = (mDialogBank  != null) ? mDialogBank.getText().toString().trim()  : "";
-        String month = (mDialogMonth != null) ? mDialogMonth.getText().toString().trim() : "";
-
         PdfStatement s = new PdfStatement();
         s.senderId    = -1L;
-        s.bankName    = bank.isEmpty() ? null : bank;
+        s.bankName    = null;
         s.isPdf       = mPendingIsPdf;
-        s.month       = month.isEmpty() ? null : month;
+        s.month       = null;
         s.uri         = mPendingUri.toString();
         s.displayName = mPendingDisplayName;
         s.createdAt   = System.currentTimeMillis();
 
         long newId = mDb.insertPdfStatement(s);
-        s.id = newId;
 
         reload();
 
-        Intent intent = new Intent(this, PdfLinesActivity.class);
-        intent.putExtra(PdfLinesActivity.EXTRA_STATEMENT_ID, newId);
+        Intent intent = new Intent(this, SmsMapActivity.class);
+        intent.putExtra(SmsMapActivity.EXTRA_STATEMENT_ID, newId);
+        intent.putExtra(SmsMapActivity.EXTRA_BLANK_TEMPLATE, true);
+        intent.putExtra(SmsMapActivity.EXTRA_IS_PDF,         true);
         startActivity(intent);
     }
 
@@ -327,18 +240,6 @@ public class PdfInboxActivity extends Activity {
         private final PdfInboxActivity mA;
         AddClickListener(PdfInboxActivity a) { mA = a; }
         public void onClick(View v) { mA.showPickDialog(); }
-    }
-
-    static class BrowseClickListener implements View.OnClickListener {
-        private final PdfInboxActivity mA;
-        BrowseClickListener(PdfInboxActivity a) { mA = a; }
-        public void onClick(View v) { mA.pickFile(); }
-    }
-
-    static class PickOkListener implements DialogInterface.OnClickListener {
-        private final PdfInboxActivity mA;
-        PickOkListener(PdfInboxActivity a) { mA = a; }
-        public void onClick(DialogInterface d, int which) { mA.saveAndOpen(); }
     }
 
     static class ItemClickListener implements AdapterView.OnItemClickListener {

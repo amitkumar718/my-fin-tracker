@@ -90,6 +90,7 @@
             android:label="@string/title_pdf_lines"
             android:exported="false" />
 
+
     </application>
 
 </manifest>

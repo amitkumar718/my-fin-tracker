@@ -20,7 +20,7 @@ import java.util.regex.Pattern;
 public class ExpenseDatabase extends SQLiteOpenHelper {
 
     private static final String DB_NAME    = "fin_tracker.db";
-    private static final int    DB_VERSION = 8;
+    private static final int    DB_VERSION = 10;
 
     // ── expenses ──────────────────────────────────────────────────
     static final String T_EXPENSE    = "expenses";
@@ -81,7 +81,15 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
     static final String PS_MONTH    = "month";
     static final String PS_URI      = "uri";
     static final String PS_NAME     = "display_name";
-    static final String PS_CREATED  = "created_at";
+    static final String PS_CREATED   = "created_at";
+    static final String PS_TRANS_LINE = "last_trans_line";
+
+    // ── pdf_field_patterns ────────────────────────────────────────
+    static final String T_PDF_FIELD_PAT = "pdf_field_patterns";
+    static final String PFP_ID          = "_id";
+    static final String PFP_TYPE        = "field_type";
+    static final String PFP_PATTERN     = "pattern";
+    static final String PFP_CREATED     = "created_at";
 
     // ── cards ─────────────────────────────────────────────────────
     static final String T_CARD      = "cards";
@@ -171,6 +179,13 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
             TR_START + " INTEGER NOT NULL," +
             TR_END   + " INTEGER NOT NULL" +
         ")");
+
+        db.execSQL("CREATE TABLE " + T_PDF_FIELD_PAT + " (" +
+            PFP_ID      + " INTEGER PRIMARY KEY AUTOINCREMENT," +
+            PFP_TYPE    + " TEXT NOT NULL," +
+            PFP_PATTERN + " TEXT NOT NULL," +
+            PFP_CREATED + " INTEGER NOT NULL" +
+        ")");
     }
 
     @Override
@@ -190,14 +205,27 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
                 " ADD COLUMN " + P_IS_PDF + " INTEGER NOT NULL DEFAULT 0");
         }
         if (oldVersion < 8) {
-            // Add bank_name and is_pdf to pdf_statements if upgrading from v7
             try {
                 db.execSQL("ALTER TABLE " + T_PDF_STMT +
                     " ADD COLUMN " + PS_BANK + " TEXT");
-            } catch (Exception ignored) {} // column may already exist (fresh v7 install)
+            } catch (Exception ignored) {}
             try {
                 db.execSQL("ALTER TABLE " + T_PDF_STMT +
                     " ADD COLUMN " + PS_IS_PDF + " INTEGER NOT NULL DEFAULT 0");
+            } catch (Exception ignored) {}
+        }
+        if (oldVersion < 9) {
+            db.execSQL("CREATE TABLE IF NOT EXISTS " + T_PDF_FIELD_PAT + " (" +
+                PFP_ID      + " INTEGER PRIMARY KEY AUTOINCREMENT," +
+                PFP_TYPE    + " TEXT NOT NULL," +
+                PFP_PATTERN + " TEXT NOT NULL," +
+                PFP_CREATED + " INTEGER NOT NULL" +
+            ")");
+        }
+        if (oldVersion < 10) {
+            try {
+                db.execSQL("ALTER TABLE " + T_PDF_STMT +
+                    " ADD COLUMN " + PS_TRANS_LINE + " TEXT");
             } catch (Exception ignored) {}
         }
     }
@@ -392,6 +420,12 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
         return patternCursorToList(c);
     }
 
+    public List<ExtractionPattern> getAllPdfPatterns() {
+        Cursor c = getReadableDatabase().query(T_PATTERN, null,
+            P_IS_PDF + "=1 OR " + P_SENDER_ID + "=-1", null, null, null, P_ID + " ASC");
+        return patternCursorToList(c);
+    }
+
     public ExtractionPattern getPatternById(long id) {
         Cursor c = getReadableDatabase().query(T_PATTERN, null,
             P_ID + "=?", new String[]{String.valueOf(id)}, null, null, null);
@@ -470,6 +504,32 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
 
     public long insertPdfStatement(PdfStatement s) {
         return getWritableDatabase().insert(T_PDF_STMT, null, pdfStmtToValues(s));
+    }
+
+    public void updatePdfStatement(PdfStatement s) {
+        getWritableDatabase().update(T_PDF_STMT, pdfStmtToValues(s),
+            PS_ID + "=?", new String[]{String.valueOf(s.id)});
+    }
+
+    /** Replaces the stored pattern for the given field type ('bank' or 'month'). */
+    public void setPdfFieldPattern(String type, String pattern) {
+        SQLiteDatabase db = getWritableDatabase();
+        db.delete(T_PDF_FIELD_PAT, PFP_TYPE + "=?", new String[]{type});
+        if (pattern != null && !pattern.isEmpty()) {
+            ContentValues cv = new ContentValues();
+            cv.put(PFP_TYPE,    type);
+            cv.put(PFP_PATTERN, pattern);
+            cv.put(PFP_CREATED, System.currentTimeMillis());
+            db.insert(T_PDF_FIELD_PAT, null, cv);
+        }
+    }
+
+    /** Returns the stored pattern for the given field type, or null if none. */
+    public String getPdfFieldPattern(String type) {
+        Cursor c = getReadableDatabase().query(T_PDF_FIELD_PAT, new String[]{PFP_PATTERN},
+            PFP_TYPE + "=?", new String[]{type}, null, null, PFP_CREATED + " DESC", "1");
+        try { if (c.moveToFirst()) return c.getString(0); } finally { c.close(); }
+        return null;
     }
 
     public void deletePdfStatement(long id) {
@@ -727,26 +787,29 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
 
     private PdfStatement fromPdfStmtCursor(Cursor c) {
         PdfStatement s = new PdfStatement();
-        s.id          = c.getLong(c.getColumnIndexOrThrow(PS_ID));
-        s.senderId    = c.getLong(c.getColumnIndexOrThrow(PS_SENDER));
-        s.bankName    = c.getString(c.getColumnIndexOrThrow(PS_BANK));
-        s.isPdf       = c.getInt(c.getColumnIndexOrThrow(PS_IS_PDF)) != 0;
-        s.month       = c.getString(c.getColumnIndexOrThrow(PS_MONTH));
-        s.uri         = c.getString(c.getColumnIndexOrThrow(PS_URI));
-        s.displayName = c.getString(c.getColumnIndexOrThrow(PS_NAME));
-        s.createdAt   = c.getLong(c.getColumnIndexOrThrow(PS_CREATED));
+        s.id            = c.getLong(c.getColumnIndexOrThrow(PS_ID));
+        s.senderId      = c.getLong(c.getColumnIndexOrThrow(PS_SENDER));
+        s.bankName      = c.getString(c.getColumnIndexOrThrow(PS_BANK));
+        s.isPdf         = c.getInt(c.getColumnIndexOrThrow(PS_IS_PDF)) != 0;
+        s.month         = c.getString(c.getColumnIndexOrThrow(PS_MONTH));
+        s.uri           = c.getString(c.getColumnIndexOrThrow(PS_URI));
+        s.displayName   = c.getString(c.getColumnIndexOrThrow(PS_NAME));
+        s.createdAt     = c.getLong(c.getColumnIndexOrThrow(PS_CREATED));
+        int tci = c.getColumnIndex(PS_TRANS_LINE);
+        s.lastTransLine = (tci >= 0 && !c.isNull(tci)) ? c.getString(tci) : null;
         return s;
     }
 
     private ContentValues pdfStmtToValues(PdfStatement s) {
         ContentValues cv = new ContentValues();
-        cv.put(PS_SENDER,  s.senderId);
-        cv.put(PS_BANK,    s.bankName);
-        cv.put(PS_IS_PDF,  s.isPdf ? 1 : 0);
-        cv.put(PS_MONTH,   s.month);
-        cv.put(PS_URI,     s.uri);
-        cv.put(PS_NAME,    s.displayName);
-        cv.put(PS_CREATED, s.createdAt);
+        cv.put(PS_SENDER,     s.senderId);
+        cv.put(PS_BANK,       s.bankName);
+        cv.put(PS_IS_PDF,     s.isPdf ? 1 : 0);
+        cv.put(PS_MONTH,      s.month);
+        cv.put(PS_URI,        s.uri);
+        cv.put(PS_NAME,       s.displayName);
+        cv.put(PS_CREATED,    s.createdAt);
+        cv.put(PS_TRANS_LINE, s.lastTransLine);
         return cv;
     }
 
