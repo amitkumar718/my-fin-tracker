@@ -75,6 +75,22 @@
             android:label="@string/label_new_trip"
             android:exported="false" />
 
+        <activity
+            android:name=".ui.StatementImportActivity"
+            android:label="@string/title_statement_import"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.PdfInboxActivity"
+            android:label="@string/title_pdf_inbox"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.PdfLinesActivity"
+            android:label="@string/title_pdf_lines"
+            android:exported="false" />
+
+
     </application>
 
 </manifest>

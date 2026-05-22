@@ -5,18 +5,25 @@ import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.content.DialogInterface;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.Editable;
+import android.text.InputType;
 import android.text.TextWatcher;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.DatePicker;
 import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.TimePicker;
@@ -26,23 +33,35 @@ import com.ldsa.myfintracker.R;
 import com.ldsa.myfintracker.db.Expense;
 import com.ldsa.myfintracker.db.ExpenseDatabase;
 import com.ldsa.myfintracker.db.ExtractionPattern;
+import com.ldsa.myfintracker.db.PdfStatement;
 import com.ldsa.myfintracker.db.SenderConfig;
+import com.ldsa.myfintracker.pdf.PdfDecryptor;
+import com.ldsa.myfintracker.pdf.PdfTextExtractor;
 import com.ldsa.myfintracker.sms.SmsReader;
 
+import java.io.InputStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class SmsMapActivity extends Activity {
 
-    public static final String EXTRA_SMS_ADDRESS = "sms_address";
-    public static final String EXTRA_SMS_BODY    = "sms_body";
-    public static final String EXTRA_SMS_DATE    = "sms_date";
-    public static final String EXTRA_SENDER_ID   = "sender_id";
+    public static final String EXTRA_SMS_ADDRESS   = "sms_address";
+    public static final String EXTRA_SMS_BODY      = "sms_body";
+    public static final String EXTRA_SMS_DATE      = "sms_date";
+    public static final String EXTRA_SENDER_ID     = "sender_id";
+    /** When true the template EditText starts blank instead of pre-filled with the body text. */
+    public static final String EXTRA_BLANK_TEMPLATE = "blank_template";
+    /** When true the saved pattern is tagged as a PDF pattern (is_pdf=1). */
+    public static final String EXTRA_IS_PDF = "is_pdf";
+    /** PDF statement ID — when set, the PDF picker section is shown. */
+    public static final String EXTRA_STATEMENT_ID = "statement_id";
 
     // token labels inserted into the SMS template
     static final String TOK_AMOUNT   = "(/amount/)";
@@ -84,6 +103,37 @@ public class SmsMapActivity extends Activity {
     private long   mSenderId = -1L;
     private ExpenseDatabase    mDb;
     private ExtractionPattern  mCurrentPattern; // non-null when autoExtract found a saved pattern
+
+    // ── PDF inbox mode (set when EXTRA_STATEMENT_ID is provided) ─────────────
+    private long         mStatementId = -1L;
+    private PdfStatement mPdfStatement;
+    private List<PdfLineAdapter.PdfLine> mPdfItems = new ArrayList<PdfLineAdapter.PdfLine>();
+    private boolean      mPdfLoaded;
+    // Pending bulk import triggered when Apply Regex pressed before PDF was loaded
+    private ExtractionPattern mPendingBulkPattern   = null;
+    private long              mPendingBulkPatternId = -1;
+    private boolean           mPendingBulkReApply   = false;
+    private View         mLayoutPdfSection;
+    private TextView     mTvPdfFileName;
+    private EditText     mEtPdfMonth;
+    private Button       mBtnPickFromPdf;
+    // Bank line section (always visible in PDF mode; blank until a line is selected)
+    private TextView mTvBankOrigLine;
+    EditText         mEtBankPattern;
+    private TextView mTvBankPatternPreview;
+    String           mBankOrigLine = "";
+
+    // Month line section (always visible in PDF mode; blank until a line is selected)
+    private TextView mTvMonthOrigLine;
+    EditText         mEtMonthPattern;
+    private TextView mTvMonthPatternPreview;
+    String           mMonthOrigLine = "";
+
+    // Live during dialog only — accessed by static inner listener classes
+    PdfPickerAdapter     mPdfPickerAdapter;
+    Button               mPdfModeBank;
+    Button               mPdfModeMonth;
+    Button               mPdfModeTrans;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -131,11 +181,25 @@ public class SmsMapActivity extends Activity {
             b.setOnClickListener(new TokenButtonListener(this, btnIds_tokens[i]));
         }
 
+        // PDF section views (always bound; section stays GONE unless PDF mode)
+        mLayoutPdfSection = (View)     findViewById(R.id.layoutPdfSection);
+        mTvPdfFileName    = (TextView) findViewById(R.id.tvPdfSectionFileName);
+        mEtPdfMonth       = (EditText) findViewById(R.id.etPdfMonth);
+        mBtnPickFromPdf   = (Button)   findViewById(R.id.btnPickFromPdf);
+
         mTvSmsBody.setText(mSmsBody != null ? mSmsBody : "");
         mEtBank.setText(mSmsAddress != null ? mSmsAddress : "");
         updateDateTimeDisplay();
 
-        mEtTemplate.setText(mSmsBody != null ? mSmsBody : "");
+        mStatementId = getIntent().getLongExtra(EXTRA_STATEMENT_ID, -1L);
+        if (mStatementId >= 0) initPdfMode();
+
+        boolean blankTemplate = getIntent().getBooleanExtra(EXTRA_BLANK_TEMPLATE, false);
+        // PDF mode: if initPdfMode() already restored a trans line, don't wipe the template
+        if (blankTemplate && mStatementId >= 0 && mSmsBody != null && !mSmsBody.isEmpty()) {
+            blankTemplate = false;
+        }
+        mEtTemplate.setText((!blankTemplate && mSmsBody != null) ? mSmsBody : "");
         autoExtract();
         updatePatternHint();
         updateRegexPreview();
@@ -150,13 +214,22 @@ public class SmsMapActivity extends Activity {
     private void autoExtract() {
         if (mSmsBody == null || mSmsBody.isEmpty()) return;
 
+        List<ExtractionPattern> patterns = null;
+
         SenderConfig cfg = null;
         if (mSenderId >= 0) cfg = mDb.getSenderById(mSenderId);
         if (cfg == null && mSmsAddress != null)
             cfg = SmsReader.findConfig(mSmsAddress, mDb.getAllSenders());
-        if (cfg == null) return;
 
-        List<ExtractionPattern> patterns = mDb.getPatternsBySender(cfg.id);
+        if (cfg != null) {
+            patterns = mDb.getPatternsBySender(cfg.id);
+        }
+        if ((patterns == null || patterns.isEmpty()) && mStatementId >= 0) {
+            // PDF mode fallback: try is_pdf=1 or senderId=-1 patterns
+            patterns = mDb.getAllPdfPatterns();
+        }
+
+        if (patterns == null) return;
         for (ExtractionPattern p : patterns) {
             if (!p.matches(mSmsBody)) continue;
             if (p.templateText != null && !p.templateText.isEmpty()) {
@@ -245,10 +318,11 @@ public class SmsMapActivity extends Activity {
 
         // ── Persist pattern (update or insert) ──────────────────────
         long patternId = -1;
+        boolean isPdfMode = (mStatementId >= 0);
         boolean isUpdate = (mCurrentPattern != null
                             && mCurrentPattern.id > 0
-                            && mSenderId >= 0);
-        if (mSenderId >= 0) {
+                            && (mSenderId >= 0 || isPdfMode));
+        if (mSenderId >= 0 || isPdfMode) {
             if (isUpdate) {
                 pattern.id       = mCurrentPattern.id;
                 pattern.senderId = mCurrentPattern.senderId;
@@ -262,7 +336,29 @@ public class SmsMapActivity extends Activity {
         // Count BEFORE inserting the new expense so the dialog count reflects prior entries only
         int priorCount = isUpdate ? mDb.countExpensesByPattern(patternId) : 0;
 
-        // ── Persist expense ──────────────────────────────────────────
+        // ── PDF mode: bulk-import all matching lines ──────────────────
+        if (isPdfMode) {
+            if (mPdfItems.isEmpty()) {
+                // PDF not loaded yet — load it first; bulk import runs in onPdfLinesLoaded
+                mPendingBulkPattern   = pattern;
+                mPendingBulkPatternId = patternId;
+                mPendingBulkReApply   = isUpdate && priorCount > 0;
+                startPdfLoad(null);
+                return;
+            }
+            Toast.makeText(this, "Scanning " + mPdfItems.size() + " lines…", Toast.LENGTH_SHORT).show();
+            new BulkImportThread(this, new ArrayList<PdfLineAdapter.PdfLine>(mPdfItems),
+                    pattern, patternId,
+                    mEtBank.getText().toString().trim(),
+                    mEtReason.getText().toString().trim(),
+                    mEtRemarks.getText().toString().trim(),
+                    mCbOnline.isChecked(), mTxnType, mDb,
+                    isUpdate && priorCount > 0,
+                    new Handler(Looper.getMainLooper())).start();
+            return;
+        }
+
+        // ── SMS mode: single expense ─────────────────────────────────
         Expense expense = new Expense();
         expense.amount          = amount;
         expense.dateMs          = mSelectedDateMs;
@@ -278,6 +374,7 @@ public class SmsMapActivity extends Activity {
         expense.remarks         = mEtRemarks.getText().toString().trim();
         expense.patternId       = patternId;
         expense.createdAt       = System.currentTimeMillis();
+        expense.source          = isPdfMode ? "pdf" : "sms";
         mDb.insertExpense(expense);
 
         // ── Offer re-apply if updating an existing pattern ───────────
@@ -286,7 +383,7 @@ public class SmsMapActivity extends Activity {
             return;
         }
 
-        finishWithSuccess(mSenderId >= 0);
+        finishWithSuccess(mSenderId >= 0 || isPdfMode);
     }
 
     private void showReApplyDialog(ExtractionPattern pattern, int count) {
@@ -314,6 +411,441 @@ public class SmsMapActivity extends Activity {
         finish();
     }
 
+    void onBulkImportDone(int imported, int reApplied, int scanned) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Scanned ").append(scanned).append(" lines — ");
+        if (imported == 0) sb.append("no new expenses found");
+        else sb.append("imported ").append(imported).append(" expense").append(imported == 1 ? "" : "s");
+        if (reApplied > 0) sb.append(", updated ").append(reApplied).append(" existing");
+        Toast.makeText(this, sb.toString(), Toast.LENGTH_LONG).show();
+        finishWithSuccess(true);
+    }
+
+    static long parseDateMs(String raw) {
+        if (raw == null || raw.isEmpty()) return 0;
+        String[] fmts = {"dd/MM/yyyy", "dd-MM-yyyy", "dd/MM/yy", "dd-MM-yy",
+                         "yyyy-MM-dd", "dd MMM yyyy", "dd MMM yy",
+                         "dd-MMM-yyyy", "dd-MMM-yy"};
+        for (String fmt : fmts) {
+            try {
+                java.util.Date d = new SimpleDateFormat(fmt, Locale.US).parse(raw);
+                if (d != null) return d.getTime();
+            } catch (ParseException ignored) {}
+        }
+        return 0;
+    }
+
+    static long applyTimeToMs(long baseMs, String raw) {
+        if (raw == null || raw.isEmpty()) return baseMs;
+        String[] fmts = {"HH:mm:ss", "HH:mm", "hh:mm:ss a", "hh:mm a"};
+        for (String fmt : fmts) {
+            try {
+                java.util.Date d = new SimpleDateFormat(fmt, Locale.US).parse(raw.trim());
+                if (d == null) continue;
+                Calendar tc = Calendar.getInstance();
+                tc.setTime(d);
+                Calendar cal = Calendar.getInstance();
+                cal.setTimeInMillis(baseMs);
+                cal.set(Calendar.HOUR_OF_DAY, tc.get(Calendar.HOUR_OF_DAY));
+                cal.set(Calendar.MINUTE,      tc.get(Calendar.MINUTE));
+                cal.set(Calendar.SECOND,      0);
+                return cal.getTimeInMillis();
+            } catch (ParseException ignored) {}
+        }
+        return baseMs;
+    }
+
+    // ── PDF inbox mode ──────────────────────────────────────────────────────
+
+    void initPdfMode() {
+        mPdfStatement = mDb.getPdfStatementById(mStatementId);
+        if (mPdfStatement == null) return;
+
+        mLayoutPdfSection.setVisibility(View.VISIBLE);
+        mTvPdfFileName.setText(mPdfStatement.displayName != null
+                ? mPdfStatement.displayName : mPdfStatement.uri);
+
+        if (mPdfStatement.bankName != null) mEtBank.setText(mPdfStatement.bankName);
+        if (mPdfStatement.month    != null) mEtPdfMonth.setText(mPdfStatement.month);
+
+        // Relabel the transaction box header in PDF mode
+        TextView tvTransHeader = (TextView) findViewById(R.id.tvTransHeader);
+        if (tvTransHeader != null) tvTransHeader.setText("Transaction Line");
+
+        // Restore last selected transaction line + template
+        if (mPdfStatement.lastTransLine != null && !mPdfStatement.lastTransLine.isEmpty()) {
+            mSmsBody = mPdfStatement.lastTransLine;
+            mTvSmsBody.setText(mSmsBody);
+            mEtTemplate.setText(mSmsBody);
+        }
+
+        mTvBankOrigLine        = (TextView) findViewById(R.id.tvBankOrigLine);
+        mEtBankPattern         = (EditText) findViewById(R.id.etBankPattern);
+        mTvBankPatternPreview  = (TextView) findViewById(R.id.tvBankPatternPreview);
+
+        mTvMonthOrigLine       = (TextView) findViewById(R.id.tvMonthOrigLine);
+        mEtMonthPattern        = (EditText) findViewById(R.id.etMonthPattern);
+        mTvMonthPatternPreview = (TextView) findViewById(R.id.tvMonthPatternPreview);
+
+        // Pre-fill stored patterns (before TextWatcher so no spurious DB writes)
+        String storedBankPat  = mDb.getPdfFieldPattern("bank");
+        String storedMonthPat = mDb.getPdfFieldPattern("month");
+        if (storedBankPat  != null) mEtBankPattern.setText(storedBankPat);
+        if (storedMonthPat != null) mEtMonthPattern.setText(storedMonthPat);
+
+        mEtBankPattern.addTextChangedListener(new BankPatternWatcher(this));
+        mEtMonthPattern.addTextChangedListener(new MonthPatternWatcher(this));
+
+        // Bank pattern snippet buttons
+        int[] bankBtnIds = {
+            R.id.btnBankPatAny, R.id.btnBankPatWord, R.id.btnBankPatWords, R.id.btnBankPatSkip
+        };
+        String[] bankSnippets = { "(.+?)", "(\\w+)", "([\\w ]+?)", ".*?" };
+        for (int i = 0; i < bankBtnIds.length; i++) {
+            Button b = (Button) findViewById(bankBtnIds[i]);
+            if (b != null) b.setOnClickListener(new PatternSnippetListener(mEtBankPattern, bankSnippets[i]));
+        }
+
+        // Month pattern snippet buttons
+        int[] monthBtnIds = {
+            R.id.btnMonthPatMonYYYY, R.id.btnMonthPatYYYYMM,
+            R.id.btnMonthPatMMYYYY, R.id.btnMonthPatAny, R.id.btnMonthPatSkip
+        };
+        String[] monthSnippets = {
+            "(\\w{3,} \\d{4})", "(\\d{4}-\\d{2})", "(\\d{2}/\\d{4})", "(.+?)", ".*?"
+        };
+        for (int i = 0; i < monthBtnIds.length; i++) {
+            Button b = (Button) findViewById(monthBtnIds[i]);
+            if (b != null) b.setOnClickListener(new PatternSnippetListener(mEtMonthPattern, monthSnippets[i]));
+        }
+
+        mBtnPickFromPdf.setOnClickListener(new PdfPickBtnClickListener(this));
+        mBtnPickFromPdf.setEnabled(true);
+    }
+
+    void startPdfLoad(String password) {
+        mPdfLoaded = false;
+        mBtnPickFromPdf.setEnabled(false);
+        TextView tvStatus = (TextView) findViewById(R.id.tvPdfLoadStatus);
+        if (tvStatus != null) { tvStatus.setVisibility(android.view.View.VISIBLE); tvStatus.setText(R.string.status_reading_file); }
+        Uri uri = Uri.parse(mPdfStatement.uri);
+        new PdfLoadThread(this, uri, mPdfStatement.isPdf, password,
+                mPdfStatement.senderId, new Handler(Looper.getMainLooper()), mDb).start();
+    }
+
+    void onPdfLinesLoaded(List<String> lines, List<PdfLineAdapter.PdfLine> items, String status) {
+        TextView tvStatus = (TextView) findViewById(R.id.tvPdfLoadStatus);
+        if (PdfDecryptor.NEEDS_PASSWORD.equals(status)) {
+            showPdfPasswordDialog(false);
+            return;
+        }
+        if (status.startsWith(PdfDecryptor.WRONG_PASSWORD)) {
+            String diag = status.substring(PdfDecryptor.WRONG_PASSWORD.length()).trim();
+            if (!diag.isEmpty()) Toast.makeText(this, diag, Toast.LENGTH_LONG).show();
+            showPdfPasswordDialog(true);
+            return;
+        }
+        if (status.startsWith(PdfTextExtractor.EXTRACT_EMPTY)) {
+            String diag = status.substring(PdfTextExtractor.EXTRACT_EMPTY.length()).trim();
+            if (tvStatus != null) { tvStatus.setVisibility(android.view.View.VISIBLE); tvStatus.setText(getString(R.string.status_extract_failed) + (diag.isEmpty() ? "" : ": " + diag)); }
+            mBtnPickFromPdf.setEnabled(true);
+            return;
+        }
+        mPdfItems = items;
+        if (tvStatus != null) { tvStatus.setVisibility(android.view.View.VISIBLE); tvStatus.setText(status); }
+        mPdfLoaded = !items.isEmpty();
+        mBtnPickFromPdf.setEnabled(true);
+
+        // If Apply Regex triggered the load, run bulk import now instead of showing picker
+        if (mPendingBulkPattern != null && mPdfLoaded) {
+            ExtractionPattern p  = mPendingBulkPattern;
+            long             pid = mPendingBulkPatternId;
+            boolean      reApply = mPendingBulkReApply;
+            mPendingBulkPattern   = null;
+            mPendingBulkPatternId = -1;
+            mPendingBulkReApply   = false;
+            Toast.makeText(this, "Scanning " + mPdfItems.size() + " lines…", Toast.LENGTH_SHORT).show();
+            new BulkImportThread(this, new ArrayList<PdfLineAdapter.PdfLine>(mPdfItems),
+                    p, pid,
+                    mEtBank.getText().toString().trim(),
+                    mEtReason.getText().toString().trim(),
+                    mEtRemarks.getText().toString().trim(),
+                    mCbOnline.isChecked(), mTxnType, mDb, reApply,
+                    new Handler(Looper.getMainLooper())).start();
+            return;
+        }
+
+        if (mPdfLoaded) {
+            autoApplyFieldPatterns();
+            showPdfPicker();
+        }
+    }
+
+    void showPdfPasswordDialog(boolean wrongPassword) {
+        EditText etPass = new EditText(this);
+        etPass.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        etPass.setHint(R.string.hint_pdf_password);
+        new AlertDialog.Builder(this)
+            .setTitle(R.string.pdf_password_title)
+            .setMessage(wrongPassword ? R.string.pdf_password_wrong : R.string.pdf_password_msg)
+            .setView(etPass)
+            .setPositiveButton(android.R.string.ok, new PdfPasswordOkListener(this, etPass))
+            .setNegativeButton(android.R.string.cancel, new PdfPasswordCancelListener(this))
+            .show();
+    }
+
+    void showPdfPicker() {
+        if (!mPdfLoaded || mPdfItems.isEmpty()) return;
+
+        mPdfPickerAdapter = new PdfPickerAdapter(this, mPdfItems);
+        float dp  = getResources().getDisplayMetrics().density;
+        int   pad = (int)(8 * dp);
+
+        LinearLayout root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
+
+        // Mode buttons row
+        LinearLayout modeRow = new LinearLayout(this);
+        modeRow.setOrientation(LinearLayout.HORIZONTAL);
+        modeRow.setPadding(pad, pad, pad, pad / 2);
+
+        mPdfModeBank = new Button(this);
+        mPdfModeBank.setText(R.string.pdf_mode_bank);
+        LinearLayout.LayoutParams blp = new LinearLayout.LayoutParams(
+                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+        blp.setMargins(0, 0, pad / 2, 0);
+        mPdfModeBank.setLayoutParams(blp);
+        mPdfModeBank.setOnClickListener(new PdfModeButtonListener(this, PdfPickerAdapter.MODE_BANK));
+        modeRow.addView(mPdfModeBank);
+
+        mPdfModeMonth = new Button(this);
+        mPdfModeMonth.setText(R.string.pdf_mode_month);
+        LinearLayout.LayoutParams mlp = new LinearLayout.LayoutParams(
+                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+        mlp.setMargins(pad / 2, 0, pad / 2, 0);
+        mPdfModeMonth.setLayoutParams(mlp);
+        mPdfModeMonth.setOnClickListener(new PdfModeButtonListener(this, PdfPickerAdapter.MODE_MONTH));
+        modeRow.addView(mPdfModeMonth);
+
+        mPdfModeTrans = new Button(this);
+        mPdfModeTrans.setText(R.string.pdf_mode_trans);
+        LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(
+                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+        tlp.setMargins(pad / 2, 0, 0, 0);
+        mPdfModeTrans.setLayoutParams(tlp);
+        mPdfModeTrans.setOnClickListener(new PdfModeButtonListener(this, PdfPickerAdapter.MODE_TRANS));
+        modeRow.addView(mPdfModeTrans);
+
+        root.addView(modeRow);
+
+        // Line list
+        ListView lv = new ListView(this);
+        lv.setAdapter(mPdfPickerAdapter);
+        lv.setOnItemClickListener(new PdfPickerLineListener(this));
+        root.addView(lv, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, (int)(400 * dp)));
+
+        // Auto-select matching lines so user can submit without extra taps
+        String bankPat  = mEtBankPattern  != null ? mEtBankPattern.getText().toString().trim()  : "";
+        String monthPat = mEtMonthPattern != null ? mEtMonthPattern.getText().toString().trim() : "";
+        List<ExtractionPattern> pdfPats = mDb.getAllPdfPatterns();
+
+        int autoBank = -1, autoMonth = -1, autoTrans = -1;
+        for (int i = 0; i < mPdfItems.size(); i++) {
+            String text = mPdfItems.get(i).text;
+            if (autoBank  < 0 && !bankPat.isEmpty()  && !applyFieldPattern(bankPat,  text).isEmpty()) autoBank  = i;
+            if (autoMonth < 0 && !monthPat.isEmpty() && !applyFieldPattern(monthPat, text).isEmpty()) autoMonth = i;
+            if (autoTrans < 0) {
+                for (ExtractionPattern p : pdfPats) {
+                    if (p.matches(text)) { autoTrans = i; break; }
+                }
+            }
+        }
+
+        if (autoBank  >= 0) { mPdfPickerAdapter.setMode(PdfPickerAdapter.MODE_BANK);  mPdfPickerAdapter.onItemClick(autoBank);  }
+        if (autoMonth >= 0) { mPdfPickerAdapter.setMode(PdfPickerAdapter.MODE_MONTH); mPdfPickerAdapter.onItemClick(autoMonth); }
+        if (autoTrans >= 0) { mPdfPickerAdapter.setMode(PdfPickerAdapter.MODE_TRANS); mPdfPickerAdapter.onItemClick(autoTrans); }
+
+        // Default active mode = TRANS
+        setPdfPickerMode(PdfPickerAdapter.MODE_TRANS);
+        if (autoTrans >= 0) lv.setSelection(autoTrans);
+
+        new AlertDialog.Builder(this)
+            .setTitle(R.string.pdf_picker_dialog_title)
+            .setView(root)
+            .setPositiveButton(R.string.pdf_picker_submit, new PdfSubmitListener(this))
+            .setNegativeButton(android.R.string.cancel, null)
+            .show();
+    }
+
+    void setPdfPickerMode(int mode) {
+        if (mPdfPickerAdapter != null) mPdfPickerAdapter.setMode(mode);
+        if (mPdfModeBank == null) return;
+        int[] activeBg   = { 0xFF1565C0, 0xFF2E7D32, 0xFFE65100 };
+        int[] inactiveBg = { 0xFFBBDEFB, 0xFFC8E6C9, 0xFFFFE0B2 };
+        int[] inactiveFg = { 0xFF1565C0, 0xFF2E7D32, 0xFFE65100 };
+        Button[] btns    = { mPdfModeBank, mPdfModeMonth, mPdfModeTrans };
+        for (int i = 0; i < btns.length; i++) {
+            if (i == mode) {
+                btns[i].setBackgroundColor(activeBg[i]);
+                btns[i].setTextColor(0xFFFFFFFF);
+            } else {
+                btns[i].setBackgroundColor(inactiveBg[i]);
+                btns[i].setTextColor(inactiveFg[i]);
+            }
+        }
+    }
+
+    void onPdfPickerSubmit(int bankIdx, int monthIdx, int transIdx) {
+        String bankPat  = mEtBankPattern  != null ? mEtBankPattern.getText().toString().trim()  : "";
+        String monthPat = mEtMonthPattern != null ? mEtMonthPattern.getText().toString().trim() : "";
+        if (bankIdx >= 0 && bankIdx < mPdfItems.size()) {
+            String line     = mPdfItems.get(bankIdx).text;
+            String fallback = line.length() > 60 ? line.substring(0, 60).trim() : line.trim();
+            if (!bankPat.isEmpty()) {
+                String extracted = applyFieldPattern(bankPat, line);
+                mEtBank.setText(extracted.isEmpty() ? fallback : extracted);
+            } else {
+                mEtBank.setText(fallback);
+            }
+            showBankLine(line, bankPat);
+        }
+        if (monthIdx >= 0 && monthIdx < mPdfItems.size()) {
+            String line = mPdfItems.get(monthIdx).text;
+            if (!monthPat.isEmpty()) {
+                String extracted = applyFieldPattern(monthPat, line);
+                if (!extracted.isEmpty()) mEtPdfMonth.setText(extracted);
+            } else {
+                String month = extractPdfMonth(line);
+                if (!month.isEmpty()) mEtPdfMonth.setText(month);
+            }
+            showMonthLine(line, monthPat);
+        }
+        if (transIdx >= 0 && transIdx < mPdfItems.size()) {
+            String line = mPdfItems.get(transIdx).text;
+            mSmsBody = line;
+            mTvSmsBody.setText(line);
+            mEtTemplate.setText(line);
+            updateRegexPreview();
+        }
+        // Persist patterns for auto-apply on next file open
+        mDb.setPdfFieldPattern("bank",  bankPat.isEmpty()  ? null : bankPat);
+        mDb.setPdfFieldPattern("month", monthPat.isEmpty() ? null : monthPat);
+        // Persist bank/month/trans back to the statement record
+        if (mPdfStatement != null) {
+            String bank  = mEtBank.getText().toString().trim();
+            String month = mEtPdfMonth.getText().toString().trim();
+            mPdfStatement.bankName     = bank.isEmpty()  ? null : bank;
+            mPdfStatement.month        = month.isEmpty() ? null : month;
+            mPdfStatement.lastTransLine = mSmsBody;
+            mDb.updatePdfStatement(mPdfStatement);
+        }
+    }
+
+    void autoApplyFieldPatterns() {
+        if (mPdfItems.isEmpty()) return;
+        String bankPat  = mDb.getPdfFieldPattern("bank");
+        String monthPat = mDb.getPdfFieldPattern("month");
+        if (bankPat != null && !bankPat.isEmpty()) {
+            for (PdfLineAdapter.PdfLine item : mPdfItems) {
+                String val = applyFieldPattern(bankPat, item.text);
+                if (!val.isEmpty()) {
+                    showBankLine(item.text, bankPat);
+                    if (mEtBank.getText().toString().trim().isEmpty()) mEtBank.setText(val);
+                    break;
+                }
+            }
+        }
+        if (monthPat != null && !monthPat.isEmpty()) {
+            for (PdfLineAdapter.PdfLine item : mPdfItems) {
+                String val = applyFieldPattern(monthPat, item.text);
+                if (!val.isEmpty()) {
+                    showMonthLine(item.text, monthPat);
+                    if (mEtPdfMonth.getText().toString().trim().isEmpty()) mEtPdfMonth.setText(val);
+                    break;
+                }
+            }
+        }
+    }
+
+    void showBankLine(String origLine, String pattern) {
+        mBankOrigLine = origLine;
+        if (mTvBankOrigLine == null) return;
+        mTvBankOrigLine.setText(origLine);
+        mTvBankOrigLine.setVisibility(origLine != null && !origLine.isEmpty() ? View.VISIBLE : View.GONE);
+        if (mEtBankPattern != null && pattern != null) mEtBankPattern.setText(pattern);
+        updateBankPatternPreview();
+    }
+
+    void updateBankPatternPreview() {
+        if (mEtBankPattern == null || mTvBankPatternPreview == null) return;
+        String pattern = mEtBankPattern.getText().toString().trim();
+        if (pattern.isEmpty() || mBankOrigLine.isEmpty()) {
+            mTvBankPatternPreview.setVisibility(View.GONE);
+            return;
+        }
+        String result = applyFieldPattern(pattern, mBankOrigLine);
+        if (!result.isEmpty()) {
+            mTvBankPatternPreview.setText("→ " + result);
+            mTvBankPatternPreview.setVisibility(View.VISIBLE);
+            mEtBank.setText(result);
+        } else {
+            mTvBankPatternPreview.setText("(no match)");
+            mTvBankPatternPreview.setVisibility(View.VISIBLE);
+        }
+    }
+
+    void showMonthLine(String origLine, String pattern) {
+        mMonthOrigLine = origLine;
+        if (mTvMonthOrigLine == null) return;
+        mTvMonthOrigLine.setText(origLine);
+        mTvMonthOrigLine.setVisibility(origLine != null && !origLine.isEmpty() ? View.VISIBLE : View.GONE);
+        if (mEtMonthPattern != null && pattern != null) mEtMonthPattern.setText(pattern);
+        updateMonthPatternPreview();
+    }
+
+    void updateMonthPatternPreview() {
+        if (mEtMonthPattern == null || mTvMonthPatternPreview == null) return;
+        String pattern = mEtMonthPattern.getText().toString().trim();
+        if (pattern.isEmpty() || mMonthOrigLine.isEmpty()) {
+            mTvMonthPatternPreview.setVisibility(View.GONE);
+            return;
+        }
+        String result = applyFieldPattern(pattern, mMonthOrigLine);
+        if (!result.isEmpty()) {
+            mTvMonthPatternPreview.setText("→ " + result);
+            mTvMonthPatternPreview.setVisibility(View.VISIBLE);
+            mEtPdfMonth.setText(result);
+        } else {
+            mTvMonthPatternPreview.setText("(no match)");
+            mTvMonthPatternPreview.setVisibility(View.VISIBLE);
+        }
+    }
+
+    static String applyFieldPattern(String pattern, String line) {
+        try {
+            Matcher m = Pattern.compile(pattern, Pattern.CASE_INSENSITIVE).matcher(line);
+            if (!m.find()) return "";
+            return m.groupCount() > 0 ? m.group(1) : m.group(0);
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
+    private static String extractPdfMonth(String line) {
+        Matcher m1 = Pattern.compile("\\b(20\\d\\d)[\\-/](0[1-9]|1[0-2])\\b").matcher(line);
+        if (m1.find()) return m1.group(1) + "-" + m1.group(2);
+        String[] months = {"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
+        String[] nums   = {"01","02","03","04","05","06","07","08","09","10","11","12"};
+        for (int i = 0; i < months.length; i++) {
+            Matcher m2 = Pattern.compile(
+                    "\\b" + months[i] + "[a-z]*[\\s,\\-]+(20\\d\\d)\\b",
+                    Pattern.CASE_INSENSITIVE).matcher(line);
+            if (m2.find()) return m2.group(1) + "-" + nums[i];
+        }
+        return "";
+    }
+
     void finishWithSuccess(boolean patternSaved) {
         String msg = patternSaved
             ? getString(R.string.msg_expense_and_pattern_saved)
@@ -330,6 +862,7 @@ public class SmsMapActivity extends Activity {
         p.senderId        = mSenderId;
         p.templateText    = template;
         p.transactionType = mTxnType;
+        p.isPdf           = getIntent().getBooleanExtra(EXTRA_IS_PDF, false);
 
         ExtractionPattern tmp = new ExtractionPattern();
         tmp.transactionType = mTxnType;
@@ -637,5 +1170,357 @@ public class SmsMapActivity extends Activity {
         private final SmsMapActivity mA;
         SaveClickListener(SmsMapActivity a) { mA = a; }
         public void onClick(View v) { mA.save(); }
+    }
+
+    // ── PDF picker static listener classes ────────────────────────────────────
+
+    static class PatternSnippetListener implements View.OnClickListener {
+        private final EditText mTarget;
+        private final String   mSnippet;
+        PatternSnippetListener(EditText target, String snippet) { mTarget = target; mSnippet = snippet; }
+        public void onClick(View v) {
+            int cursor = mTarget.getSelectionStart();
+            if (cursor < 0) cursor = mTarget.getText().length();
+            mTarget.getText().insert(cursor, mSnippet);
+        }
+    }
+
+    static class BankPatternWatcher implements TextWatcher {
+        private final SmsMapActivity mA;
+        BankPatternWatcher(SmsMapActivity a) { mA = a; }
+        public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+        public void onTextChanged(CharSequence s, int start, int before, int count) {}
+        public void afterTextChanged(Editable s) {
+            mA.updateBankPatternPreview();
+            String pat = s.toString().trim();
+            mA.mDb.setPdfFieldPattern("bank", pat.isEmpty() ? null : pat);
+        }
+    }
+
+    static class MonthPatternWatcher implements TextWatcher {
+        private final SmsMapActivity mA;
+        MonthPatternWatcher(SmsMapActivity a) { mA = a; }
+        public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+        public void onTextChanged(CharSequence s, int start, int before, int count) {}
+        public void afterTextChanged(Editable s) {
+            mA.updateMonthPatternPreview();
+            String pat = s.toString().trim();
+            mA.mDb.setPdfFieldPattern("month", pat.isEmpty() ? null : pat);
+        }
+    }
+
+    static class PdfPickBtnClickListener implements View.OnClickListener {
+        private final SmsMapActivity mA;
+        PdfPickBtnClickListener(SmsMapActivity a) { mA = a; }
+        public void onClick(View v) {
+            if (mA.mPdfLoaded) {
+                mA.showPdfPicker();
+            } else {
+                mA.startPdfLoad(null);
+            }
+        }
+    }
+
+    static class PdfModeButtonListener implements View.OnClickListener {
+        private final SmsMapActivity mA;
+        private final int            mMode;
+        PdfModeButtonListener(SmsMapActivity a, int mode) { mA = a; mMode = mode; }
+        public void onClick(View v) { mA.setPdfPickerMode(mMode); }
+    }
+
+    static class PdfPickerLineListener implements AdapterView.OnItemClickListener {
+        private final SmsMapActivity mA;
+        PdfPickerLineListener(SmsMapActivity a) { mA = a; }
+        public void onItemClick(AdapterView<?> p, View v, int pos, long id) {
+            if (mA.mPdfPickerAdapter == null) return;
+            int mode = mA.mPdfPickerAdapter.getCurrentMode();
+            // Check if this tap is a selection (not a deselect)
+            boolean wasSelected = (mode == PdfPickerAdapter.MODE_BANK  && mA.mPdfPickerAdapter.getBankIdx()  == pos)
+                                || (mode == PdfPickerAdapter.MODE_MONTH && mA.mPdfPickerAdapter.getMonthIdx() == pos);
+            mA.mPdfPickerAdapter.onItemClick(pos);
+            if (!wasSelected && pos >= 0 && pos < mA.mPdfItems.size()) {
+                String lineText = mA.mPdfItems.get(pos).text;
+                if (mode == PdfPickerAdapter.MODE_BANK && mA.mEtBankPattern != null
+                        && mA.mEtBankPattern.getText().toString().trim().isEmpty()) {
+                    mA.mEtBankPattern.setText(lineText);
+                } else if (mode == PdfPickerAdapter.MODE_MONTH && mA.mEtMonthPattern != null
+                        && mA.mEtMonthPattern.getText().toString().trim().isEmpty()) {
+                    mA.mEtMonthPattern.setText(lineText);
+                }
+            }
+        }
+    }
+
+    static class PdfSubmitListener implements DialogInterface.OnClickListener {
+        private final SmsMapActivity mA;
+        PdfSubmitListener(SmsMapActivity a) { mA = a; }
+        public void onClick(DialogInterface d, int which) {
+            if (mA.mPdfPickerAdapter == null) return;
+            mA.onPdfPickerSubmit(
+                    mA.mPdfPickerAdapter.getBankIdx(),
+                    mA.mPdfPickerAdapter.getMonthIdx(),
+                    mA.mPdfPickerAdapter.getTransIdx());
+        }
+    }
+
+    static class PdfPasswordOkListener implements DialogInterface.OnClickListener {
+        private final SmsMapActivity mA;
+        private final EditText       mEt;
+        PdfPasswordOkListener(SmsMapActivity a, EditText et) { mA = a; mEt = et; }
+        public void onClick(DialogInterface dialog, int which) {
+            mA.startPdfLoad(mEt.getText().toString());
+        }
+    }
+
+    static class PdfPasswordCancelListener implements DialogInterface.OnClickListener {
+        private final SmsMapActivity mA;
+        PdfPasswordCancelListener(SmsMapActivity a) { mA = a; }
+        public void onClick(DialogInterface dialog, int which) {
+            mA.mBtnPickFromPdf.setEnabled(true);
+            mA.mPendingBulkPattern   = null;
+            mA.mPendingBulkPatternId = -1;
+            mA.mPendingBulkReApply   = false;
+        }
+    }
+
+    static class BulkImportThread extends Thread {
+        private final SmsMapActivity               mA;
+        private final List<PdfLineAdapter.PdfLine> mItems;
+        private final ExtractionPattern            mPattern;
+        private final long                         mPatternId;
+        private final String                       mBank;
+        private final String                       mReason;
+        private final String                       mRemarks;
+        private final boolean                      mIsOnline;
+        private final String                       mTxnType;
+        private final ExpenseDatabase              mDb;
+        private final boolean                      mDoReApply;
+        private final Handler                      mHandler;
+
+        BulkImportThread(SmsMapActivity a, List<PdfLineAdapter.PdfLine> items,
+                         ExtractionPattern pattern, long patternId,
+                         String bank, String reason, String remarks,
+                         boolean isOnline, String txnType, ExpenseDatabase db,
+                         boolean doReApply, Handler h) {
+            mA = a; mItems = items; mPattern = pattern; mPatternId = patternId;
+            mBank = bank; mReason = reason; mRemarks = remarks;
+            mIsOnline = isOnline; mTxnType = txnType; mDb = db;
+            mDoReApply = doReApply; mHandler = h;
+        }
+
+        public void run() {
+            Set<String> already = mDb.getAppliedSmsBodies();
+            int imported = 0;
+            int scanned  = mItems.size();
+            for (PdfLineAdapter.PdfLine item : mItems) {
+                if (!mPattern.matches(item.text)) continue;
+                if (already.contains(item.text)) continue;
+                String amtStr = mPattern.extractGroup(item.text, mPattern.amountGroup)
+                                        .replaceAll("[^0-9.]", "");
+                if (amtStr.isEmpty()) continue;
+                double amount;
+                try { amount = Double.parseDouble(amtStr); }
+                catch (NumberFormatException e) { continue; }
+                String balStr = mPattern.extractGroup(item.text, mPattern.balanceGroup)
+                                        .replaceAll("[^0-9.,]", "").replace(",", "");
+                double balance = 0;
+                if (!balStr.isEmpty()) {
+                    try { balance = Double.parseDouble(balStr); }
+                    catch (NumberFormatException ignored) {}
+                }
+                String dateStr = mPattern.extractGroup(item.text, mPattern.dateGroup).trim();
+                String timeStr = mPattern.extractGroup(item.text, mPattern.timeGroup).trim();
+                long dateMs = parseDateMs(dateStr);
+                if (dateMs == 0) dateMs = System.currentTimeMillis();
+                dateMs = applyTimeToMs(dateMs, timeStr);
+
+                Expense e = new Expense();
+                e.amount          = amount;
+                e.dateMs          = dateMs;
+                e.merchant        = mPattern.extractGroup(item.text, mPattern.merchantGroup).trim();
+                e.card            = mPattern.extractGroup(item.text, mPattern.cardGroup).trim();
+                e.accountNumber   = mPattern.extractGroup(item.text, mPattern.accountGroup).trim();
+                e.balance         = balance;
+                e.reason          = mReason;
+                e.isOnline        = mIsOnline;
+                e.bank            = mBank;
+                e.originalSms     = item.text;
+                e.transactionType = mTxnType;
+                e.remarks         = mRemarks;
+                e.patternId       = mPatternId;
+                e.createdAt       = System.currentTimeMillis();
+                e.source          = "pdf";
+                mDb.insertExpense(e);
+                imported++;
+            }
+            int reApplied = mDoReApply ? mDb.reApplyPattern(mPattern) : 0;
+            mHandler.post(new BulkImportDoneRunnable(mA, imported, reApplied, scanned));
+        }
+    }
+
+    static class BulkImportDoneRunnable implements Runnable {
+        private final SmsMapActivity mA;
+        private final int mImported;
+        private final int mReApplied;
+        private final int mScanned;
+        BulkImportDoneRunnable(SmsMapActivity a, int imported, int reApplied, int scanned) {
+            mA = a; mImported = imported; mReApplied = reApplied; mScanned = scanned;
+        }
+        public void run() { if (!mA.isFinishing()) mA.onBulkImportDone(mImported, mReApplied, mScanned); }
+    }
+
+    static class PdfLoadThread extends Thread {
+        private final SmsMapActivity   mA;
+        private final Uri              mUri;
+        private final boolean          mIsPdf;
+        private final String           mPassword;
+        private final long             mSenderId;
+        private final Handler          mHandler;
+        private final ExpenseDatabase  mDb;
+
+        PdfLoadThread(SmsMapActivity a, Uri uri, boolean isPdf, String password,
+                      long senderId, Handler h, ExpenseDatabase db) {
+            mA = a; mUri = uri; mIsPdf = isPdf; mPassword = password;
+            mSenderId = senderId; mHandler = h; mDb = db;
+        }
+
+        public void run() {
+            String raw = "";
+            String uriKey = mUri.toString();
+            String pw = mPassword;
+            if (pw == null && mIsPdf) pw = PdfInboxActivity.sCachedPasswords.get(uriKey);
+            try {
+                InputStream is = mA.getContentResolver().openInputStream(mUri);
+                if (is != null) {
+                    if (mIsPdf) {
+                        raw = PdfTextExtractor.extract(is, pw);
+                    } else {
+                        java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+                        byte[] buf = new byte[8192]; int n;
+                        while ((n = is.read(buf)) >= 0) baos.write(buf, 0, n);
+                        is.close();
+                        raw = baos.toString("UTF-8");
+                    }
+                }
+            } catch (Exception ignored) {}
+
+            if (mIsPdf && pw != null && !PdfDecryptor.NEEDS_PASSWORD.equals(raw)
+                    && !raw.startsWith(PdfDecryptor.WRONG_PASSWORD)
+                    && !raw.startsWith(PdfTextExtractor.EXTRACT_EMPTY)) {
+                PdfInboxActivity.sCachedPasswords.put(uriKey, pw);
+            }
+
+            if (PdfDecryptor.NEEDS_PASSWORD.equals(raw)
+                    || raw.startsWith(PdfDecryptor.WRONG_PASSWORD)
+                    || raw.startsWith(PdfTextExtractor.EXTRACT_EMPTY)) {
+                mHandler.post(new PdfLoadDoneRunnable(mA,
+                        new ArrayList<String>(), new ArrayList<PdfLineAdapter.PdfLine>(), raw));
+                return;
+            }
+
+            List<String> lines = PdfInboxActivity.splitLines(raw);
+            List<ExtractionPattern> patterns = PdfInboxActivity.loadPatterns(mDb, mSenderId);
+            List<PdfLineAdapter.PdfLine> items = PdfInboxActivity.matchLines(lines, patterns);
+
+            String statusMsg;
+            if (raw.isEmpty()) {
+                statusMsg = mA.getString(R.string.status_extract_failed);
+            } else {
+                int matched = 0;
+                for (PdfLineAdapter.PdfLine pl : items) {
+                    if (pl.matchSummary != null) matched++;
+                }
+                statusMsg = mA.getString(R.string.pdf_inbox_status, items.size(), matched);
+            }
+            mHandler.post(new PdfLoadDoneRunnable(mA, lines, items, statusMsg));
+        }
+    }
+
+    static class PdfLoadDoneRunnable implements Runnable {
+        private final SmsMapActivity               mA;
+        private final List<String>                 mLines;
+        private final List<PdfLineAdapter.PdfLine> mItems;
+        private final String                       mStatus;
+        PdfLoadDoneRunnable(SmsMapActivity a, List<String> lines,
+                            List<PdfLineAdapter.PdfLine> items, String status) {
+            mA = a; mLines = lines; mItems = items; mStatus = status;
+        }
+        public void run() { if (!mA.isFinishing()) mA.onPdfLinesLoaded(mLines, mItems, mStatus); }
+    }
+
+    // ── PDF picker list adapter ───────────────────────────────────────────────
+
+    static class PdfPickerAdapter extends BaseAdapter {
+        static final int MODE_BANK  = 0;
+        static final int MODE_MONTH = 1;
+        static final int MODE_TRANS = 2;
+
+        private static final int[] BG_COLORS = { 0xFFBBDEFB, 0xFFC8E6C9, 0xFFFFE0B2 };
+
+        private final LayoutInflater              mInflater;
+        private final List<PdfLineAdapter.PdfLine> mItems;
+        private final int[]                        mSelModes;
+        private int mCurrentMode = MODE_TRANS;
+
+        PdfPickerAdapter(android.content.Context ctx, List<PdfLineAdapter.PdfLine> items) {
+            mInflater = LayoutInflater.from(ctx);
+            mItems    = items;
+            mSelModes = new int[items.size()];
+            for (int i = 0; i < mSelModes.length; i++) mSelModes[i] = -1;
+        }
+
+        void setMode(int mode) { mCurrentMode = mode; }
+        int  getCurrentMode() { return mCurrentMode; }
+
+        void onItemClick(int pos) {
+            if (pos < 0 || pos >= mItems.size()) return;
+            if (mSelModes[pos] == mCurrentMode) {
+                mSelModes[pos] = -1;
+            } else {
+                for (int i = 0; i < mSelModes.length; i++) {
+                    if (mSelModes[i] == mCurrentMode) mSelModes[i] = -1;
+                }
+                mSelModes[pos] = mCurrentMode;
+            }
+            notifyDataSetChanged();
+        }
+
+        private int getSelected(int mode) {
+            for (int i = 0; i < mSelModes.length; i++) {
+                if (mSelModes[i] == mode) return i;
+            }
+            return -1;
+        }
+
+        int getBankIdx()  { return getSelected(MODE_BANK);  }
+        int getMonthIdx() { return getSelected(MODE_MONTH); }
+        int getTransIdx() { return getSelected(MODE_TRANS); }
+
+        @Override public int getCount()          { return mItems.size(); }
+        @Override public Object getItem(int pos) { return mItems.get(pos); }
+        @Override public long getItemId(int pos) { return pos; }
+
+        @Override
+        public View getView(int pos, View convertView, ViewGroup parent) {
+            if (convertView == null) {
+                convertView = mInflater.inflate(R.layout.item_pdf_line, parent, false);
+            }
+            PdfLineAdapter.PdfLine line = mItems.get(pos);
+            TextView tvText  = (TextView) convertView.findViewById(R.id.tvPdfLineText);
+            TextView tvMatch = (TextView) convertView.findViewById(R.id.tvPdfLineMatch);
+
+            tvText.setText(line.text);
+            if (line.matchSummary != null && !line.matchSummary.isEmpty()) {
+                tvMatch.setText(line.matchSummary);
+                tvMatch.setVisibility(View.VISIBLE);
+            } else {
+                tvMatch.setVisibility(View.GONE);
+            }
+
+            int selMode = mSelModes[pos];
+            convertView.setBackgroundColor(
+                    selMode >= 0 && selMode < BG_COLORS.length ? BG_COLORS[selMode] : 0xFFFFFFFF);
+            return convertView;
+        }
     }
 }

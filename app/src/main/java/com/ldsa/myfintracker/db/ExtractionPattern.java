@@ -19,6 +19,7 @@ public class ExtractionPattern {
     public String transactionType;
     public String templateText;    // editable SMS template with tokens
     public String templateRegex;   // single combined regex built from templateText
+    public boolean isPdf;
     public int    amountGroup   = -1;
     public int    balanceGroup  = -1;
     public int    merchantGroup = -1;

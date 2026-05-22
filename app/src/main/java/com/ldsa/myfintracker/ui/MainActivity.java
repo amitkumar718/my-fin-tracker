@@ -11,6 +11,7 @@ import android.view.View;
 import android.widget.PopupMenu;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.graphics.Color;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
@@ -50,6 +51,8 @@ public class MainActivity extends Activity {
     private TextView  mTvEmpty;
     private Spinner   mSpinnerFilter;
     private Spinner   mSpinnerSort;
+    private Button    mBtnTabSms;
+    private Button    mBtnTabPdf;
 
     private ExpenseAdapter  mAdapter;
     private ExpenseDatabase mDb;
@@ -60,6 +63,7 @@ public class MainActivity extends Activity {
     boolean mSortDesc = true;
     int     mSortIdx  = 0;
     boolean mReady    = false;
+    String  mSourceTab = "sms"; // "sms" or "pdf"
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,6 +85,8 @@ public class MainActivity extends Activity {
         mTvEmpty       = (TextView)  findViewById(R.id.tvEmpty);
         mSpinnerFilter = (Spinner)   findViewById(R.id.spinnerFilter);
         mSpinnerSort   = (Spinner)   findViewById(R.id.spinnerSort);
+        mBtnTabSms     = (Button)    findViewById(R.id.btnTabSms);
+        mBtnTabPdf     = (Button)    findViewById(R.id.btnTabPdf);
 
         // Restore saved prefs
         mFilter  = prefs.getString(PREF_FILTER,   "all");
@@ -108,6 +114,9 @@ public class MainActivity extends Activity {
         mEtSearch.addTextChangedListener(new SearchWatcher(this));
         mListView.setOnItemClickListener(new ItemClickListener(this));
 
+        mBtnTabSms.setOnClickListener(new TabClickListener(this, "sms"));
+        mBtnTabPdf.setOnClickListener(new TabClickListener(this, "pdf"));
+
         Button fabAdd = (Button) findViewById(R.id.fabAdd);
         fabAdd.setOnClickListener(new FabClickListener(this));
 
@@ -128,16 +137,30 @@ public class MainActivity extends Activity {
     }
 
     void reload() {
+        updateTabAppearance();
         String search = mEtSearch.getText().toString().trim();
         if (!search.isEmpty()) {
             mExpenses = mDb.searchExpenses(search);
         } else {
-            mExpenses = mDb.getExpenses(mFilter, mSortCol, mSortDesc);
+            mExpenses = mDb.getExpensesBySource(mSourceTab, mFilter, mSortCol, mSortDesc);
         }
         mAdapter.setGroupedItems(buildGroupedList(mExpenses));
         boolean empty = mExpenses.isEmpty();
         mTvEmpty.setVisibility(empty ? View.VISIBLE : View.GONE);
         mListView.setVisibility(empty ? View.GONE : View.VISIBLE);
+    }
+
+    void updateTabAppearance() {
+        boolean smsActive = "sms".equals(mSourceTab);
+        mBtnTabSms.setBackgroundColor(smsActive  ? Color.parseColor("#1976D2") : Color.parseColor("#1565C0"));
+        mBtnTabPdf.setBackgroundColor(!smsActive ? Color.parseColor("#1976D2") : Color.parseColor("#1565C0"));
+        mBtnTabSms.setTextColor(smsActive  ? Color.WHITE : Color.parseColor("#B0BEC5"));
+        mBtnTabPdf.setTextColor(!smsActive ? Color.WHITE : Color.parseColor("#B0BEC5"));
+    }
+
+    void onTabSelected(String src) {
+        mSourceTab = src;
+        reload();
     }
 
     private List<ExpenseAdapter.ListItem> buildGroupedList(List<Expense> expenses) {
@@ -259,6 +282,13 @@ public class MainActivity extends Activity {
         public void onNothingSelected(AdapterView<?> p) {}
     }
 
+    static class TabClickListener implements View.OnClickListener {
+        private final MainActivity mMain;
+        private final String mSrc;
+        TabClickListener(MainActivity m, String src) { mMain = m; mSrc = src; }
+        public void onClick(View v) { mMain.onTabSelected(mSrc); }
+    }
+
     static class FabClickListener implements View.OnClickListener {
         private final MainActivity mMain;
         FabClickListener(MainActivity m) { mMain = m; }
@@ -287,16 +317,16 @@ public class MainActivity extends Activity {
                 mMain.startActivity(new Intent(mMain, SmsInboxActivity.class));
                 return true;
             }
-            if (id == R.id.action_add_expense) {
-                mMain.startActivity(new Intent(mMain, AddExpenseActivity.class));
-                return true;
-            }
             if (id == R.id.action_settings) {
                 mMain.startActivity(new Intent(mMain, SettingsActivity.class));
                 return true;
             }
             if (id == R.id.action_trips) {
                 mMain.startActivity(new Intent(mMain, TripListActivity.class));
+                return true;
+            }
+            if (id == R.id.action_pdf_inbox) {
+                mMain.startActivity(new Intent(mMain, PdfInboxActivity.class));
                 return true;
             }
             return false;

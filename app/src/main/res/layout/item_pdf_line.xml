@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="#FFFFFF"
+    android:paddingLeft="14dp"
+    android:paddingRight="14dp"
+    android:paddingTop="9dp"
+    android:paddingBottom="9dp">
+
+    <!-- Raw text from the PDF line -->
+    <TextView
+        android:id="@+id/tvPdfLineText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="12sp"
+        android:textColor="#37474F"
+        android:fontFamily="monospace"
+        android:maxLines="2"
+        android:ellipsize="end" />
+
+    <!-- Green match summary — shown only when a pattern matched this line -->
+    <TextView
+        android:id="@+id/tvPdfLineMatch"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="3dp"
+        android:textSize="11sp"
+        android:textColor="#2E7D32"
+        android:textStyle="bold"
+        android:singleLine="true"
+        android:ellipsize="end"
+        android:visibility="gone" />
+
+</LinearLayout>

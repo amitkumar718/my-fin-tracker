@@ -133,6 +133,63 @@
     <string name="error_trip_name_required">Trip name is required</string>
     <string name="error_trip_date_range">End date must be after start date</string>
 
+    <!-- Statement import -->
+    <string name="title_statement_import">Import Bank Statement</string>
+    <string name="label_all_banks">All Banks</string>
+    <string name="btn_pick_statement">Pick PDF / TXT</string>
+    <string name="btn_scan_expenses">Scan for Expenses</string>
+    <string name="btn_import_selected">Import Selected</string>
+    <string name="action_import_statement">Import Statement</string>
+    <string name="status_pick_file_hint">Select a bank, then pick a PDF or TXT statement file.</string>
+    <string name="status_reading_file">Reading file…</string>
+    <string name="status_file_ready">File loaded. Tap Scan to find expenses.</string>
+    <string name="status_extract_failed">Could not extract text. Try converting the PDF to TXT first using pdftotext in Termux.</string>
+    <string name="status_extract_garbled">Text looks garbled — PDF may use a non-standard font encoding. Try: pdftotext statement.pdf statement.txt in Termux, then import the .txt file.</string>
+    <string name="status_scanning">Scanning for expense patterns…</string>
+    <string name="status_no_text">No text loaded. Please pick a file first.</string>
+    <string name="status_no_patterns">No extraction patterns found for this bank. Configure patterns in Settings → Sender Patterns.</string>
+    <string name="status_no_matches">No expense matches found. Patterns may not match this statement format.</string>
+    <string name="status_none_selected">No expenses selected.</string>
+    <string name="status_importing">Importing…</string>
+    <string name="status_found_n">Found %d expense(s). Deselect any false matches, then tap Import.</string>
+    <string name="status_imported_n">Imported %d expense(s).</string>
+
+    <!-- PDF Inbox -->
+    <string name="title_pdf_inbox">PDF Statements</string>
+    <string name="title_pdf_lines">PDF Statement</string>
+    <string name="action_pdf_inbox">PDF Inbox</string>
+    <string name="pdf_inbox_hint">Pick a PDF or TXT bank statement to see its lines here.</string>
+    <string name="pdf_inbox_empty">No file loaded yet.\nTap "Pick PDF / TXT" to begin.</string>
+    <string name="pdf_inbox_empty_lib">No statements yet.\nTap + Add to import one.</string>
+    <string name="pdf_inbox_status">%1$d lines  ·  %2$d matched</string>
+    <string name="pdf_password_title">Password Required</string>
+    <string name="pdf_password_msg">This PDF is password-protected. Enter the document password.</string>
+    <string name="pdf_password_wrong">Incorrect password. Please try again.</string>
+    <string name="hint_pdf_password">PDF password</string>
+    <string name="btn_add_statement">+ Add</string>
+    <string name="pdf_dialog_title">Add Statement</string>
+    <string name="label_month">Month</string>
+    <string name="hint_month">YYYY-MM (e.g. 2025-01)</string>
+    <string name="btn_browse_file">Browse…</string>
+    <string name="pdf_no_file">No file selected</string>
+    <string name="pdf_lines_hint">Tap a line to configure a regex pattern for it.</string>
+    <string name="btn_pick_from_pdf">Select PDF Lines</string>
+    <string name="label_bank_line">Bank Line</string>
+    <string name="label_pdf_bank_pattern">Bank pattern:</string>
+    <string name="hint_pdf_bank_pattern">Regex to identify bank name (e.g. HDFC)</string>
+    <string name="label_month_line">Month Line</string>
+    <string name="label_pdf_month_pattern">Month pattern:</string>
+    <string name="hint_pdf_month_pattern">Regex to extract statement month</string>
+    <string name="pdf_mode_bank">Bank</string>
+    <string name="pdf_mode_month">Month</string>
+    <string name="pdf_mode_trans">Transaction</string>
+    <string name="pdf_picker_dialog_title">Select PDF Lines</string>
+    <string name="pdf_picker_submit">Submit</string>
+    <string name="confirm_delete_statement">Remove this statement record?</string>
+    <string name="msg_statement_deleted">Statement removed</string>
+    <string name="label_pdf_patterns">PDF Patterns</string>
+    <string name="pdf_no_patterns">No PDF patterns yet.\nOpen a statement line to create one.</string>
+
     <string-array name="filter_options">
         <item>All</item>
         <item>Online</item>

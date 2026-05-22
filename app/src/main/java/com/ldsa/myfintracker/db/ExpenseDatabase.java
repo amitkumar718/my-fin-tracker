@@ -20,7 +20,7 @@ import java.util.regex.Pattern;
 public class ExpenseDatabase extends SQLiteOpenHelper {
 
     private static final String DB_NAME    = "fin_tracker.db";
-    private static final int    DB_VERSION = 6;
+    private static final int    DB_VERSION = 11;
 
     // ── expenses ──────────────────────────────────────────────────
     static final String T_EXPENSE    = "expenses";
@@ -40,6 +40,7 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
     static final String E_ACCOUNT_NUM = "account_number";
     static final String E_REMARKS    = "remarks";
     static final String E_PATTERN_ID  = "pattern_id";
+    static final String E_SOURCE      = "source";
 
     // ── sender_configs ────────────────────────────────────────────
     static final String T_SENDER   = "sender_configs";
@@ -63,6 +64,7 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
     static final String P_ACCT_GRP   = "account_group";
     static final String P_DATE_GRP   = "date_group";
     static final String P_TIME_GRP   = "time_group";
+    static final String P_IS_PDF     = "is_pdf";
 
     // ── trips ─────────────────────────────────────────────────────
     static final String T_TRIP      = "trips";
@@ -70,6 +72,25 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
     static final String TR_NAME     = "name";
     static final String TR_START    = "start_ms";
     static final String TR_END      = "end_ms";
+
+    // ── pdf_statements ────────────────────────────────────────────
+    static final String T_PDF_STMT  = "pdf_statements";
+    static final String PS_ID       = "_id";
+    static final String PS_SENDER   = "sender_id";
+    static final String PS_BANK     = "bank_name";
+    static final String PS_IS_PDF   = "is_pdf";
+    static final String PS_MONTH    = "month";
+    static final String PS_URI      = "uri";
+    static final String PS_NAME     = "display_name";
+    static final String PS_CREATED   = "created_at";
+    static final String PS_TRANS_LINE = "last_trans_line";
+
+    // ── pdf_field_patterns ────────────────────────────────────────
+    static final String T_PDF_FIELD_PAT = "pdf_field_patterns";
+    static final String PFP_ID          = "_id";
+    static final String PFP_TYPE        = "field_type";
+    static final String PFP_PATTERN     = "pattern";
+    static final String PFP_CREATED     = "created_at";
 
     // ── cards ─────────────────────────────────────────────────────
     static final String T_CARD      = "cards";
@@ -106,7 +127,8 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
             E_TXN_TYPE    + " TEXT," +
             E_ACCOUNT_NUM + " TEXT," +
             E_REMARKS     + " TEXT," +
-            E_PATTERN_ID  + " INTEGER NOT NULL DEFAULT -1" +
+            E_PATTERN_ID  + " INTEGER NOT NULL DEFAULT -1," +
+            E_SOURCE      + " TEXT NOT NULL DEFAULT 'sms'" +
         ")");
         db.execSQL("CREATE INDEX idx_date ON " + T_EXPENSE + "(" + E_DATE_MS + ")");
 
@@ -130,7 +152,19 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
             P_CARD_GRP   + " INTEGER NOT NULL DEFAULT -1," +
             P_ACCT_GRP   + " INTEGER NOT NULL DEFAULT -1," +
             P_DATE_GRP   + " INTEGER NOT NULL DEFAULT -1," +
-            P_TIME_GRP   + " INTEGER NOT NULL DEFAULT -1" +
+            P_TIME_GRP   + " INTEGER NOT NULL DEFAULT -1," +
+            P_IS_PDF     + " INTEGER NOT NULL DEFAULT 0" +
+        ")");
+
+        db.execSQL("CREATE TABLE " + T_PDF_STMT + " (" +
+            PS_ID      + " INTEGER PRIMARY KEY AUTOINCREMENT," +
+            PS_SENDER  + " INTEGER NOT NULL DEFAULT -1," +
+            PS_BANK    + " TEXT," +
+            PS_IS_PDF  + " INTEGER NOT NULL DEFAULT 0," +
+            PS_MONTH   + " TEXT," +
+            PS_URI     + " TEXT NOT NULL," +
+            PS_NAME    + " TEXT," +
+            PS_CREATED + " INTEGER NOT NULL" +
         ")");
 
         db.execSQL("CREATE TABLE " + T_CARD + " (" +
@@ -147,16 +181,61 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
             TR_START + " INTEGER NOT NULL," +
             TR_END   + " INTEGER NOT NULL" +
         ")");
+
+        db.execSQL("CREATE TABLE " + T_PDF_FIELD_PAT + " (" +
+            PFP_ID      + " INTEGER PRIMARY KEY AUTOINCREMENT," +
+            PFP_TYPE    + " TEXT NOT NULL," +
+            PFP_PATTERN + " TEXT NOT NULL," +
+            PFP_CREATED + " INTEGER NOT NULL" +
+        ")");
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        db.execSQL("DROP TABLE IF EXISTS " + T_EXPENSE);
-        db.execSQL("DROP TABLE IF EXISTS " + T_SENDER);
-        db.execSQL("DROP TABLE IF EXISTS " + T_PATTERN);
-        db.execSQL("DROP TABLE IF EXISTS " + T_CARD);
-        db.execSQL("DROP TABLE IF EXISTS " + T_TRIP);
-        onCreate(db);
+        if (oldVersion < 7) {
+            db.execSQL("CREATE TABLE IF NOT EXISTS " + T_PDF_STMT + " (" +
+                PS_ID      + " INTEGER PRIMARY KEY AUTOINCREMENT," +
+                PS_SENDER  + " INTEGER NOT NULL DEFAULT -1," +
+                PS_BANK    + " TEXT," +
+                PS_IS_PDF  + " INTEGER NOT NULL DEFAULT 0," +
+                PS_MONTH   + " TEXT," +
+                PS_URI     + " TEXT NOT NULL," +
+                PS_NAME    + " TEXT," +
+                PS_CREATED + " INTEGER NOT NULL" +
+            ")");
+            db.execSQL("ALTER TABLE " + T_PATTERN +
+                " ADD COLUMN " + P_IS_PDF + " INTEGER NOT NULL DEFAULT 0");
+        }
+        if (oldVersion < 8) {
+            try {
+                db.execSQL("ALTER TABLE " + T_PDF_STMT +
+                    " ADD COLUMN " + PS_BANK + " TEXT");
+            } catch (Exception ignored) {}
+            try {
+                db.execSQL("ALTER TABLE " + T_PDF_STMT +
+                    " ADD COLUMN " + PS_IS_PDF + " INTEGER NOT NULL DEFAULT 0");
+            } catch (Exception ignored) {}
+        }
+        if (oldVersion < 9) {
+            db.execSQL("CREATE TABLE IF NOT EXISTS " + T_PDF_FIELD_PAT + " (" +
+                PFP_ID      + " INTEGER PRIMARY KEY AUTOINCREMENT," +
+                PFP_TYPE    + " TEXT NOT NULL," +
+                PFP_PATTERN + " TEXT NOT NULL," +
+                PFP_CREATED + " INTEGER NOT NULL" +
+            ")");
+        }
+        if (oldVersion < 10) {
+            try {
+                db.execSQL("ALTER TABLE " + T_PDF_STMT +
+                    " ADD COLUMN " + PS_TRANS_LINE + " TEXT");
+            } catch (Exception ignored) {}
+        }
+        if (oldVersion < 11) {
+            try {
+                db.execSQL("ALTER TABLE " + T_EXPENSE +
+                    " ADD COLUMN " + E_SOURCE + " TEXT NOT NULL DEFAULT 'sms'");
+            } catch (Exception ignored) {}
+        }
     }
 
     // ==================== EXPENSE ====================
@@ -197,6 +276,48 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
             cal.set(Calendar.MILLISECOND, 0);
             sel  = E_DATE_MS + ">=?";
             args = new String[]{String.valueOf(cal.getTimeInMillis())};
+        }
+        String col;
+        if ("amount".equals(sortCol))        col = E_AMOUNT;
+        else if ("merchant".equals(sortCol)) col = E_MERCHANT + " COLLATE NOCASE";
+        else                                 col = E_DATE_MS;
+        Cursor c = getReadableDatabase().query(T_EXPENSE, null, sel, args, null, null,
+            col + (sortDesc ? " DESC" : " ASC"));
+        return expenseCursorToList(c);
+    }
+
+    /** Returns expenses where source matches src OR source is 'manual'. */
+    public List<Expense> getExpensesBySource(String src, String filter, String sortCol, boolean sortDesc) {
+        String sourceSel = "(" + E_SOURCE + "=? OR " + E_SOURCE + "='manual')";
+        String[] sourceArgs = new String[]{src};
+        String filterSel = null;
+        String[] filterArgs = null;
+        if ("online".equals(filter)) {
+            filterSel = E_ONLINE + "=1";
+        } else if ("offline".equals(filter)) {
+            filterSel = E_ONLINE + "=0";
+        } else if ("month".equals(filter)) {
+            Calendar cal = Calendar.getInstance();
+            cal.set(Calendar.DAY_OF_MONTH, 1);
+            cal.set(Calendar.HOUR_OF_DAY, 0);
+            cal.set(Calendar.MINUTE, 0);
+            cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.MILLISECOND, 0);
+            filterSel  = E_DATE_MS + ">=?";
+            filterArgs = new String[]{String.valueOf(cal.getTimeInMillis())};
+        }
+        String sel;
+        String[] args;
+        if (filterSel != null) {
+            sel  = sourceSel + " AND " + filterSel;
+            if (filterArgs != null) {
+                args = new String[]{src, filterArgs[0]};
+            } else {
+                args = sourceArgs;
+            }
+        } else {
+            sel  = sourceSel;
+            args = sourceArgs;
         }
         String col;
         if ("amount".equals(sortCol))        col = E_AMOUNT;
@@ -349,6 +470,12 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
         return patternCursorToList(c);
     }
 
+    public List<ExtractionPattern> getAllPdfPatterns() {
+        Cursor c = getReadableDatabase().query(T_PATTERN, null,
+            P_IS_PDF + "=1 OR " + P_SENDER_ID + "=-1", null, null, null, P_ID + " ASC");
+        return patternCursorToList(c);
+    }
+
     public ExtractionPattern getPatternById(long id) {
         Cursor c = getReadableDatabase().query(T_PATTERN, null,
             P_ID + "=?", new String[]{String.valueOf(id)}, null, null, null);
@@ -421,6 +548,70 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
             TR_ID + "=?", new String[]{String.valueOf(id)}, null, null, null);
         List<Trip> list = tripCursorToList(c);
         return list.isEmpty() ? null : list.get(0);
+    }
+
+    // ==================== PDF STATEMENT ====================
+
+    public long insertPdfStatement(PdfStatement s) {
+        return getWritableDatabase().insert(T_PDF_STMT, null, pdfStmtToValues(s));
+    }
+
+    public void updatePdfStatement(PdfStatement s) {
+        getWritableDatabase().update(T_PDF_STMT, pdfStmtToValues(s),
+            PS_ID + "=?", new String[]{String.valueOf(s.id)});
+    }
+
+    /** Replaces the stored pattern for the given field type ('bank' or 'month'). */
+    public void setPdfFieldPattern(String type, String pattern) {
+        SQLiteDatabase db = getWritableDatabase();
+        db.delete(T_PDF_FIELD_PAT, PFP_TYPE + "=?", new String[]{type});
+        if (pattern != null && !pattern.isEmpty()) {
+            ContentValues cv = new ContentValues();
+            cv.put(PFP_TYPE,    type);
+            cv.put(PFP_PATTERN, pattern);
+            cv.put(PFP_CREATED, System.currentTimeMillis());
+            db.insert(T_PDF_FIELD_PAT, null, cv);
+        }
+    }
+
+    /** Returns the stored pattern for the given field type, or null if none. */
+    public String getPdfFieldPattern(String type) {
+        Cursor c = getReadableDatabase().query(T_PDF_FIELD_PAT, new String[]{PFP_PATTERN},
+            PFP_TYPE + "=?", new String[]{type}, null, null, PFP_CREATED + " DESC", "1");
+        try { if (c.moveToFirst()) return c.getString(0); } finally { c.close(); }
+        return null;
+    }
+
+    public void deletePdfStatement(long id) {
+        getWritableDatabase().delete(T_PDF_STMT, PS_ID + "=?", new String[]{String.valueOf(id)});
+    }
+
+    public List<PdfStatement> getAllPdfStatements() {
+        Cursor c = getReadableDatabase().query(T_PDF_STMT, null,
+            null, null, null, null, PS_CREATED + " DESC");
+        return pdfStmtCursorToList(c);
+    }
+
+    public PdfStatement getPdfStatementById(long id) {
+        Cursor c = getReadableDatabase().query(T_PDF_STMT, null,
+            PS_ID + "=?", new String[]{String.valueOf(id)}, null, null, null);
+        List<PdfStatement> list = pdfStmtCursorToList(c);
+        return list.isEmpty() ? null : list.get(0);
+    }
+
+    public List<ExtractionPattern> getPdfPatternsBySender(long senderId) {
+        Cursor c = getReadableDatabase().query(T_PATTERN, null,
+            P_SENDER_ID + "=? AND " + P_IS_PDF + "=1",
+            new String[]{String.valueOf(senderId)}, null, null, P_ID + " ASC");
+        return patternCursorToList(c);
+    }
+
+    public List<SenderConfig> getSendersWithPdfPatterns() {
+        Cursor c = getReadableDatabase().rawQuery(
+            "SELECT DISTINCT s.* FROM " + T_SENDER + " s" +
+            " JOIN " + T_PATTERN + " p ON p." + P_SENDER_ID + "=s." + S_ID +
+            " WHERE p." + P_IS_PDF + "=1 ORDER BY s." + S_NAME + " ASC", null);
+        return senderCursorToList(c);
     }
 
     public List<Expense> getExpensesInRange(long startMs, long endMs) {
@@ -501,6 +692,8 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
         e.accountNumber   = c.getString(c.getColumnIndexOrThrow(E_ACCOUNT_NUM));
         e.remarks         = c.getString(c.getColumnIndexOrThrow(E_REMARKS));
         e.patternId       = c.getLong(c.getColumnIndexOrThrow(E_PATTERN_ID));
+        int srcIdx = c.getColumnIndex(E_SOURCE);
+        e.source = (srcIdx >= 0 && !c.isNull(srcIdx)) ? c.getString(srcIdx) : "sms";
         return e;
     }
 
@@ -521,6 +714,7 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
         cv.put(E_ACCOUNT_NUM,  e.accountNumber);
         cv.put(E_REMARKS,      e.remarks);
         cv.put(E_PATTERN_ID,   e.patternId);
+        cv.put(E_SOURCE,       e.source != null ? e.source : "sms");
         return cv;
     }
 
@@ -568,6 +762,7 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
         p.accountGroup    = c.getInt(c.getColumnIndexOrThrow(P_ACCT_GRP));
         p.dateGroup       = c.getInt(c.getColumnIndexOrThrow(P_DATE_GRP));
         p.timeGroup       = c.getInt(c.getColumnIndexOrThrow(P_TIME_GRP));
+        p.isPdf           = c.getInt(c.getColumnIndexOrThrow(P_IS_PDF)) != 0;
         return p;
     }
 
@@ -585,6 +780,7 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
         cv.put(P_ACCT_GRP,   p.accountGroup);
         cv.put(P_DATE_GRP,   p.dateGroup);
         cv.put(P_TIME_GRP,   p.timeGroup);
+        cv.put(P_IS_PDF,     p.isPdf ? 1 : 0);
         return cv;
     }
 
@@ -639,6 +835,40 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
     private List<Trip> tripCursorToList(Cursor c) {
         List<Trip> list = new ArrayList<Trip>();
         try { while (c.moveToNext()) list.add(fromTripCursor(c)); } finally { c.close(); }
+        return list;
+    }
+
+    private PdfStatement fromPdfStmtCursor(Cursor c) {
+        PdfStatement s = new PdfStatement();
+        s.id            = c.getLong(c.getColumnIndexOrThrow(PS_ID));
+        s.senderId      = c.getLong(c.getColumnIndexOrThrow(PS_SENDER));
+        s.bankName      = c.getString(c.getColumnIndexOrThrow(PS_BANK));
+        s.isPdf         = c.getInt(c.getColumnIndexOrThrow(PS_IS_PDF)) != 0;
+        s.month         = c.getString(c.getColumnIndexOrThrow(PS_MONTH));
+        s.uri           = c.getString(c.getColumnIndexOrThrow(PS_URI));
+        s.displayName   = c.getString(c.getColumnIndexOrThrow(PS_NAME));
+        s.createdAt     = c.getLong(c.getColumnIndexOrThrow(PS_CREATED));
+        int tci = c.getColumnIndex(PS_TRANS_LINE);
+        s.lastTransLine = (tci >= 0 && !c.isNull(tci)) ? c.getString(tci) : null;
+        return s;
+    }
+
+    private ContentValues pdfStmtToValues(PdfStatement s) {
+        ContentValues cv = new ContentValues();
+        cv.put(PS_SENDER,     s.senderId);
+        cv.put(PS_BANK,       s.bankName);
+        cv.put(PS_IS_PDF,     s.isPdf ? 1 : 0);
+        cv.put(PS_MONTH,      s.month);
+        cv.put(PS_URI,        s.uri);
+        cv.put(PS_NAME,       s.displayName);
+        cv.put(PS_CREATED,    s.createdAt);
+        cv.put(PS_TRANS_LINE, s.lastTransLine);
+        return cv;
+    }
+
+    private List<PdfStatement> pdfStmtCursorToList(Cursor c) {
+        List<PdfStatement> list = new ArrayList<PdfStatement>();
+        try { while (c.moveToNext()) list.add(fromPdfStmtCursor(c)); } finally { c.close(); }
         return list;
     }
 }
