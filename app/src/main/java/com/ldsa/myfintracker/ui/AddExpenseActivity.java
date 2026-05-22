@@ -113,6 +113,7 @@ public class AddExpenseActivity extends Activity {
         expense.bank     = mEtBank.getText().toString().trim();
         expense.remarks  = mEtRemarks.getText().toString().trim();
         expense.createdAt = System.currentTimeMillis();
+        expense.source    = "manual";
         String balStr = mEtBalance.getText().toString().trim().replace(",", "");
         if (!balStr.isEmpty()) {
             try { expense.balance = Double.parseDouble(balStr); } catch (NumberFormatException ignored) {}

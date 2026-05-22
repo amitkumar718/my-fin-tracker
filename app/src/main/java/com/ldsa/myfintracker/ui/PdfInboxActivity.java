@@ -21,10 +21,14 @@ import com.ldsa.myfintracker.db.ExtractionPattern;
 import com.ldsa.myfintracker.db.PdfStatement;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 
 public class PdfInboxActivity extends Activity {
+
+    /** Session-scoped password cache: URI string → password. Cleared when process dies. */
+    static final HashMap<String, String> sCachedPasswords = new HashMap<String, String>();
 
     private static final int REQ_PICK = 301;
 

@@ -20,7 +20,7 @@ import java.util.regex.Pattern;
 public class ExpenseDatabase extends SQLiteOpenHelper {
 
     private static final String DB_NAME    = "fin_tracker.db";
-    private static final int    DB_VERSION = 10;
+    private static final int    DB_VERSION = 11;
 
     // ── expenses ──────────────────────────────────────────────────
     static final String T_EXPENSE    = "expenses";
@@ -40,6 +40,7 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
     static final String E_ACCOUNT_NUM = "account_number";
     static final String E_REMARKS    = "remarks";
     static final String E_PATTERN_ID  = "pattern_id";
+    static final String E_SOURCE      = "source";
 
     // ── sender_configs ────────────────────────────────────────────
     static final String T_SENDER   = "sender_configs";
@@ -126,7 +127,8 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
             E_TXN_TYPE    + " TEXT," +
             E_ACCOUNT_NUM + " TEXT," +
             E_REMARKS     + " TEXT," +
-            E_PATTERN_ID  + " INTEGER NOT NULL DEFAULT -1" +
+            E_PATTERN_ID  + " INTEGER NOT NULL DEFAULT -1," +
+            E_SOURCE      + " TEXT NOT NULL DEFAULT 'sms'" +
         ")");
         db.execSQL("CREATE INDEX idx_date ON " + T_EXPENSE + "(" + E_DATE_MS + ")");
 
@@ -228,6 +230,12 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
                     " ADD COLUMN " + PS_TRANS_LINE + " TEXT");
             } catch (Exception ignored) {}
         }
+        if (oldVersion < 11) {
+            try {
+                db.execSQL("ALTER TABLE " + T_EXPENSE +
+                    " ADD COLUMN " + E_SOURCE + " TEXT NOT NULL DEFAULT 'sms'");
+            } catch (Exception ignored) {}
+        }
     }
 
     // ==================== EXPENSE ====================
@@ -268,6 +276,48 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
             cal.set(Calendar.MILLISECOND, 0);
             sel  = E_DATE_MS + ">=?";
             args = new String[]{String.valueOf(cal.getTimeInMillis())};
+        }
+        String col;
+        if ("amount".equals(sortCol))        col = E_AMOUNT;
+        else if ("merchant".equals(sortCol)) col = E_MERCHANT + " COLLATE NOCASE";
+        else                                 col = E_DATE_MS;
+        Cursor c = getReadableDatabase().query(T_EXPENSE, null, sel, args, null, null,
+            col + (sortDesc ? " DESC" : " ASC"));
+        return expenseCursorToList(c);
+    }
+
+    /** Returns expenses where source matches src OR source is 'manual'. */
+    public List<Expense> getExpensesBySource(String src, String filter, String sortCol, boolean sortDesc) {
+        String sourceSel = "(" + E_SOURCE + "=? OR " + E_SOURCE + "='manual')";
+        String[] sourceArgs = new String[]{src};
+        String filterSel = null;
+        String[] filterArgs = null;
+        if ("online".equals(filter)) {
+            filterSel = E_ONLINE + "=1";
+        } else if ("offline".equals(filter)) {
+            filterSel = E_ONLINE + "=0";
+        } else if ("month".equals(filter)) {
+            Calendar cal = Calendar.getInstance();
+            cal.set(Calendar.DAY_OF_MONTH, 1);
+            cal.set(Calendar.HOUR_OF_DAY, 0);
+            cal.set(Calendar.MINUTE, 0);
+            cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.MILLISECOND, 0);
+            filterSel  = E_DATE_MS + ">=?";
+            filterArgs = new String[]{String.valueOf(cal.getTimeInMillis())};
+        }
+        String sel;
+        String[] args;
+        if (filterSel != null) {
+            sel  = sourceSel + " AND " + filterSel;
+            if (filterArgs != null) {
+                args = new String[]{src, filterArgs[0]};
+            } else {
+                args = sourceArgs;
+            }
+        } else {
+            sel  = sourceSel;
+            args = sourceArgs;
         }
         String col;
         if ("amount".equals(sortCol))        col = E_AMOUNT;
@@ -642,6 +692,8 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
         e.accountNumber   = c.getString(c.getColumnIndexOrThrow(E_ACCOUNT_NUM));
         e.remarks         = c.getString(c.getColumnIndexOrThrow(E_REMARKS));
         e.patternId       = c.getLong(c.getColumnIndexOrThrow(E_PATTERN_ID));
+        int srcIdx = c.getColumnIndex(E_SOURCE);
+        e.source = (srcIdx >= 0 && !c.isNull(srcIdx)) ? c.getString(srcIdx) : "sms";
         return e;
     }
 
@@ -662,6 +714,7 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
         cv.put(E_ACCOUNT_NUM,  e.accountNumber);
         cv.put(E_REMARKS,      e.remarks);
         cv.put(E_PATTERN_ID,   e.patternId);
+        cv.put(E_SOURCE,       e.source != null ? e.source : "sms");
         return cv;
     }
 

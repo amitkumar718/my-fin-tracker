@@ -157,11 +157,14 @@ public class PdfLinesActivity extends Activity {
 
         public void run() {
             String raw = "";
+            String uriKey = mUri.toString();
+            String pw = mPassword;
+            if (pw == null && mIsPdf) pw = PdfInboxActivity.sCachedPasswords.get(uriKey);
             try {
                 InputStream is = mA.getContentResolver().openInputStream(mUri);
                 if (is != null) {
                     if (mIsPdf) {
-                        raw = PdfTextExtractor.extract(is, mPassword);
+                        raw = PdfTextExtractor.extract(is, pw);
                     } else {
                         java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
                         byte[] buf = new byte[8192]; int n;
@@ -171,6 +174,12 @@ public class PdfLinesActivity extends Activity {
                     }
                 }
             } catch (Exception ignored) {}
+
+            if (mIsPdf && pw != null && !PdfDecryptor.NEEDS_PASSWORD.equals(raw)
+                    && !raw.startsWith(PdfDecryptor.WRONG_PASSWORD)
+                    && !raw.startsWith(PdfTextExtractor.EXTRACT_EMPTY)) {
+                PdfInboxActivity.sCachedPasswords.put(uriKey, pw);
+            }
 
             if (PdfDecryptor.NEEDS_PASSWORD.equals(raw)
                     || raw.startsWith(PdfDecryptor.WRONG_PASSWORD)
