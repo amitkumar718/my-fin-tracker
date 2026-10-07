@@ -50,11 +50,11 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class SmsMapActivity extends Activity {
+public class MapExpenseActivity extends Activity {
 
-    public static final String EXTRA_SMS_ADDRESS   = "sms_address";
-    public static final String EXTRA_SMS_BODY      = "sms_body";
-    public static final String EXTRA_SMS_DATE      = "sms_date";
+    public static final String EXTRA_SENDER_ADDRESS   = "sms_address";
+    public static final String EXTRA_TRANS_LINE      = "sms_body";
+    public static final String EXTRA_SOURCE_DATE      = "sms_date";
     public static final String EXTRA_SENDER_ID     = "sender_id";
     /** When true the template EditText starts blank instead of pre-filled with the body text. */
     public static final String EXTRA_BLANK_TEMPLATE = "blank_template";
@@ -84,7 +84,7 @@ public class SmsMapActivity extends Activity {
         "NETBANKING_PURCHASE", "NETBANKING_TRANSFER", "ATM"
     };
 
-    private TextView mTvSmsBody;
+    private TextView mTvTransLine;
     private TextView mTvExtractPreview;
     private TextView mTvPatternHint;
     private EditText mEtTemplate;
@@ -98,8 +98,8 @@ public class SmsMapActivity extends Activity {
 
     long   mSelectedDateMs;
     String mTxnType = "";
-    String mSmsBody;
-    private String mSmsAddress;
+    String mTransLine;
+    private String mSenderAddress;
     private long   mSenderId = -1L;
     private ExpenseDatabase    mDb;
     private ExtractionPattern  mCurrentPattern; // non-null when autoExtract found a saved pattern
@@ -140,14 +140,14 @@ public class SmsMapActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sms_map);
 
-        mSmsAddress     = getIntent().getStringExtra(EXTRA_SMS_ADDRESS);
-        mSmsBody        = getIntent().getStringExtra(EXTRA_SMS_BODY);
-        mSelectedDateMs = getIntent().getLongExtra(EXTRA_SMS_DATE, System.currentTimeMillis());
+        mSenderAddress     = getIntent().getStringExtra(EXTRA_SENDER_ADDRESS);
+        mTransLine        = getIntent().getStringExtra(EXTRA_TRANS_LINE);
+        mSelectedDateMs = getIntent().getLongExtra(EXTRA_SOURCE_DATE, System.currentTimeMillis());
         mSenderId       = getIntent().getLongExtra(EXTRA_SENDER_ID, -1L);
 
         mDb = ExpenseDatabase.getInstance(this);
 
-        mTvSmsBody        = (TextView) findViewById(R.id.tvSmsBody);
+        mTvTransLine        = (TextView) findViewById(R.id.tvSmsBody);
         mTvExtractPreview = (TextView) findViewById(R.id.tvExtractPreview);
         mTvPatternHint    = (TextView) findViewById(R.id.tvPatternHint);
         mEtTemplate       = (EditText) findViewById(R.id.etTemplate);
@@ -187,8 +187,8 @@ public class SmsMapActivity extends Activity {
         mEtPdfMonth       = (EditText) findViewById(R.id.etPdfMonth);
         mBtnPickFromPdf   = (Button)   findViewById(R.id.btnPickFromPdf);
 
-        mTvSmsBody.setText(mSmsBody != null ? mSmsBody : "");
-        mEtBank.setText(mSmsAddress != null ? mSmsAddress : "");
+        mTvTransLine.setText(mTransLine != null ? mTransLine : "");
+        mEtBank.setText(mSenderAddress != null ? mSenderAddress : "");
         updateDateTimeDisplay();
 
         mStatementId = getIntent().getLongExtra(EXTRA_STATEMENT_ID, -1L);
@@ -196,10 +196,10 @@ public class SmsMapActivity extends Activity {
 
         boolean blankTemplate = getIntent().getBooleanExtra(EXTRA_BLANK_TEMPLATE, false);
         // PDF mode: if initPdfMode() already restored a trans line, don't wipe the template
-        if (blankTemplate && mStatementId >= 0 && mSmsBody != null && !mSmsBody.isEmpty()) {
+        if (blankTemplate && mStatementId >= 0 && mTransLine != null && !mTransLine.isEmpty()) {
             blankTemplate = false;
         }
-        mEtTemplate.setText((!blankTemplate && mSmsBody != null) ? mSmsBody : "");
+        mEtTemplate.setText((!blankTemplate && mTransLine != null) ? mTransLine : "");
         autoExtract();
         updatePatternHint();
         updateRegexPreview();
@@ -212,14 +212,14 @@ public class SmsMapActivity extends Activity {
     }
 
     private void autoExtract() {
-        if (mSmsBody == null || mSmsBody.isEmpty()) return;
+        if (mTransLine == null || mTransLine.isEmpty()) return;
 
         List<ExtractionPattern> patterns = null;
 
         SenderConfig cfg = null;
         if (mSenderId >= 0) cfg = mDb.getSenderById(mSenderId);
-        if (cfg == null && mSmsAddress != null)
-            cfg = SmsReader.findConfig(mSmsAddress, mDb.getAllSenders());
+        if (cfg == null && mSenderAddress != null)
+            cfg = SmsReader.findConfig(mSenderAddress, mDb.getAllSenders());
 
         if (cfg != null) {
             patterns = mDb.getPatternsBySender(cfg.id);
@@ -231,7 +231,7 @@ public class SmsMapActivity extends Activity {
 
         if (patterns == null) return;
         for (ExtractionPattern p : patterns) {
-            if (!p.matches(mSmsBody)) continue;
+            if (!p.matches(mTransLine)) continue;
             if (p.templateText != null && !p.templateText.isEmpty()) {
                 mEtTemplate.setText(p.templateText);
             }
@@ -240,9 +240,9 @@ public class SmsMapActivity extends Activity {
             for (int i = 0; i < TYPE_VALUES.length; i++) {
                 if (TYPE_VALUES[i].equals(mTxnType)) { mSpinnerTxnType.setSelection(i); break; }
             }
-            String date = p.extractGroup(mSmsBody, p.dateGroup).trim();
+            String date = p.extractGroup(mTransLine, p.dateGroup).trim();
             if (!date.isEmpty()) tryApplyExtractedDate(date);
-            String time = p.extractGroup(mSmsBody, p.timeGroup).trim();
+            String time = p.extractGroup(mTransLine, p.timeGroup).trim();
             if (!time.isEmpty()) tryApplyExtractedTime(time);
             return;
         }
@@ -280,10 +280,10 @@ public class SmsMapActivity extends Activity {
         }
 
         Matcher matcher = null;
-        if (mSmsBody != null && pattern.templateRegex != null) {
+        if (mTransLine != null && pattern.templateRegex != null) {
             try {
                 matcher = Pattern.compile(pattern.templateRegex,
-                    Pattern.CASE_INSENSITIVE | Pattern.MULTILINE).matcher(mSmsBody);
+                    Pattern.CASE_INSENSITIVE | Pattern.MULTILINE).matcher(mTransLine);
                 if (!matcher.find()) matcher = null;
             } catch (Exception ignored) {}
         }
@@ -368,7 +368,7 @@ public class SmsMapActivity extends Activity {
         expense.accountNumber   = account;
         expense.isOnline        = mCbOnline.isChecked();
         expense.bank            = mEtBank.getText().toString().trim();
-        expense.originalSms     = mSmsBody;
+        expense.originalSms     = mTransLine;
         expense.balance         = balance;
         expense.transactionType = mTxnType;
         expense.remarks         = mEtRemarks.getText().toString().trim();
@@ -466,17 +466,17 @@ public class SmsMapActivity extends Activity {
                 ? mPdfStatement.displayName : mPdfStatement.uri);
 
         if (mPdfStatement.bankName != null) mEtBank.setText(mPdfStatement.bankName);
-        if (mPdfStatement.month    != null) mEtPdfMonth.setText(mPdfStatement.month);
+        if (mPdfStatement.statementPeriod    != null) mEtPdfMonth.setText(mPdfStatement.statementPeriod);
 
         // Relabel the transaction box header in PDF mode
         TextView tvTransHeader = (TextView) findViewById(R.id.tvTransHeader);
         if (tvTransHeader != null) tvTransHeader.setText("Transaction Line");
 
         // Restore last selected transaction line + template
-        if (mPdfStatement.lastTransLine != null && !mPdfStatement.lastTransLine.isEmpty()) {
-            mSmsBody = mPdfStatement.lastTransLine;
-            mTvSmsBody.setText(mSmsBody);
-            mEtTemplate.setText(mSmsBody);
+        if (mPdfStatement.sampleTransLine != null && !mPdfStatement.sampleTransLine.isEmpty()) {
+            mTransLine = mPdfStatement.sampleTransLine;
+            mTvTransLine.setText(mTransLine);
+            mEtTemplate.setText(mTransLine);
         }
 
         mTvBankOrigLine        = (TextView) findViewById(R.id.tvBankOrigLine);
@@ -723,8 +723,8 @@ public class SmsMapActivity extends Activity {
         }
         if (transIdx >= 0 && transIdx < mPdfItems.size()) {
             String line = mPdfItems.get(transIdx).text;
-            mSmsBody = line;
-            mTvSmsBody.setText(line);
+            mTransLine = line;
+            mTvTransLine.setText(line);
             mEtTemplate.setText(line);
             updateRegexPreview();
         }
@@ -736,8 +736,8 @@ public class SmsMapActivity extends Activity {
             String bank  = mEtBank.getText().toString().trim();
             String month = mEtPdfMonth.getText().toString().trim();
             mPdfStatement.bankName     = bank.isEmpty()  ? null : bank;
-            mPdfStatement.month        = month.isEmpty() ? null : month;
-            mPdfStatement.lastTransLine = mSmsBody;
+            mPdfStatement.statementPeriod        = month.isEmpty() ? null : month;
+            mPdfStatement.sampleTransLine = mTransLine;
             mDb.updatePdfStatement(mPdfStatement);
         }
     }
@@ -1012,7 +1012,7 @@ public class SmsMapActivity extends Activity {
 
     void updateRegexPreview() {
         String template = mEtTemplate.getText().toString();
-        if (mSmsBody == null || mSmsBody.isEmpty() || template.isEmpty()) {
+        if (mTransLine == null || mTransLine.isEmpty() || template.isEmpty()) {
             mTvExtractPreview.setVisibility(View.GONE);
             return;
         }
@@ -1021,7 +1021,7 @@ public class SmsMapActivity extends Activity {
         Matcher m = null;
         try {
             m = Pattern.compile(p.templateRegex,
-                Pattern.CASE_INSENSITIVE | Pattern.MULTILINE).matcher(mSmsBody);
+                Pattern.CASE_INSENSITIVE | Pattern.MULTILINE).matcher(mTransLine);
             if (!m.find()) m = null;
         } catch (Exception e) {
             mTvExtractPreview.setText("Regex error: " + e.getMessage());
@@ -1054,32 +1054,32 @@ public class SmsMapActivity extends Activity {
     // ============================================================
 
     static class TemplateWatcher implements TextWatcher {
-        private final SmsMapActivity mA;
-        TemplateWatcher(SmsMapActivity a) { mA = a; }
+        private final MapExpenseActivity mA;
+        TemplateWatcher(MapExpenseActivity a) { mA = a; }
         public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
         public void onTextChanged(CharSequence s, int start, int before, int count) {}
         public void afterTextChanged(Editable s) { mA.updateRegexPreview(); }
     }
 
     static class TokenButtonListener implements View.OnClickListener {
-        private final SmsMapActivity mA;
+        private final MapExpenseActivity mA;
         private final String mToken;
-        TokenButtonListener(SmsMapActivity a, String token) { mA = a; mToken = token; }
+        TokenButtonListener(MapExpenseActivity a, String token) { mA = a; mToken = token; }
         public void onClick(View v) { mA.insertToken(mToken); }
     }
 
     static class PatternHintClickListener implements View.OnClickListener {
-        private final SmsMapActivity mA;
-        PatternHintClickListener(SmsMapActivity a) { mA = a; }
+        private final MapExpenseActivity mA;
+        PatternHintClickListener(MapExpenseActivity a) { mA = a; }
         public void onClick(View v) { mA.clearCurrentPattern(); }
     }
 
     static class PatternUpdateDialogListener implements DialogInterface.OnClickListener {
-        private final SmsMapActivity    mA;
+        private final MapExpenseActivity    mA;
         private final ExtractionPattern mPattern;
         private final boolean           mDoReApply;
 
-        PatternUpdateDialogListener(SmsMapActivity a, ExtractionPattern p, boolean doReApply) {
+        PatternUpdateDialogListener(MapExpenseActivity a, ExtractionPattern p, boolean doReApply) {
             mA = a; mPattern = p; mDoReApply = doReApply;
         }
 
@@ -1093,12 +1093,12 @@ public class SmsMapActivity extends Activity {
     }
 
     static class ReApplyThread extends Thread {
-        private final SmsMapActivity    mA;
+        private final MapExpenseActivity    mA;
         private final ExtractionPattern mPattern;
         private final ExpenseDatabase   mDb;
         private final Handler           mHandler;
 
-        ReApplyThread(SmsMapActivity a, ExtractionPattern p, ExpenseDatabase db, Handler h) {
+        ReApplyThread(MapExpenseActivity a, ExtractionPattern p, ExpenseDatabase db, Handler h) {
             mA = a; mPattern = p; mDb = db; mHandler = h;
         }
 
@@ -1109,17 +1109,17 @@ public class SmsMapActivity extends Activity {
     }
 
     static class ReApplyDoneRunnable implements Runnable {
-        private final SmsMapActivity mA;
+        private final MapExpenseActivity mA;
         private final int            mUpdated;
-        ReApplyDoneRunnable(SmsMapActivity a, int updated) { mA = a; mUpdated = updated; }
+        ReApplyDoneRunnable(MapExpenseActivity a, int updated) { mA = a; mUpdated = updated; }
         public void run() {
             if (!mA.isFinishing()) mA.onReApplyDone(mUpdated);
         }
     }
 
     static class TxnTypeSelectedListener implements AdapterView.OnItemSelectedListener {
-        private final SmsMapActivity mA;
-        TxnTypeSelectedListener(SmsMapActivity a) { mA = a; }
+        private final MapExpenseActivity mA;
+        TxnTypeSelectedListener(MapExpenseActivity a) { mA = a; }
         public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
             mA.mTxnType = TYPE_VALUES[pos];
             ExtractionPattern tmp = new ExtractionPattern();
@@ -1130,8 +1130,8 @@ public class SmsMapActivity extends Activity {
     }
 
     static class DateClickListener implements View.OnClickListener {
-        private final SmsMapActivity mA;
-        DateClickListener(SmsMapActivity a) { mA = a; }
+        private final MapExpenseActivity mA;
+        DateClickListener(MapExpenseActivity a) { mA = a; }
         public void onClick(View v) {
             Calendar cal = Calendar.getInstance();
             cal.setTimeInMillis(mA.mSelectedDateMs);
@@ -1142,8 +1142,8 @@ public class SmsMapActivity extends Activity {
     }
 
     static class TimeClickListener implements View.OnClickListener {
-        private final SmsMapActivity mA;
-        TimeClickListener(SmsMapActivity a) { mA = a; }
+        private final MapExpenseActivity mA;
+        TimeClickListener(MapExpenseActivity a) { mA = a; }
         public void onClick(View v) {
             Calendar cal = Calendar.getInstance();
             cal.setTimeInMillis(mA.mSelectedDateMs);
@@ -1153,22 +1153,22 @@ public class SmsMapActivity extends Activity {
     }
 
     static class DateSetListener implements DatePickerDialog.OnDateSetListener {
-        private final SmsMapActivity mA;
-        DateSetListener(SmsMapActivity a) { mA = a; }
+        private final MapExpenseActivity mA;
+        DateSetListener(MapExpenseActivity a) { mA = a; }
         public void onDateSet(DatePicker v, int year, int month, int day) {
             mA.onDateSet(year, month, day);
         }
     }
 
     static class TimeSetListener implements TimePickerDialog.OnTimeSetListener {
-        private final SmsMapActivity mA;
-        TimeSetListener(SmsMapActivity a) { mA = a; }
+        private final MapExpenseActivity mA;
+        TimeSetListener(MapExpenseActivity a) { mA = a; }
         public void onTimeSet(TimePicker v, int hour, int minute) { mA.onTimeSet(hour, minute); }
     }
 
     static class SaveClickListener implements View.OnClickListener {
-        private final SmsMapActivity mA;
-        SaveClickListener(SmsMapActivity a) { mA = a; }
+        private final MapExpenseActivity mA;
+        SaveClickListener(MapExpenseActivity a) { mA = a; }
         public void onClick(View v) { mA.save(); }
     }
 
@@ -1186,8 +1186,8 @@ public class SmsMapActivity extends Activity {
     }
 
     static class BankPatternWatcher implements TextWatcher {
-        private final SmsMapActivity mA;
-        BankPatternWatcher(SmsMapActivity a) { mA = a; }
+        private final MapExpenseActivity mA;
+        BankPatternWatcher(MapExpenseActivity a) { mA = a; }
         public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
         public void onTextChanged(CharSequence s, int start, int before, int count) {}
         public void afterTextChanged(Editable s) {
@@ -1198,8 +1198,8 @@ public class SmsMapActivity extends Activity {
     }
 
     static class MonthPatternWatcher implements TextWatcher {
-        private final SmsMapActivity mA;
-        MonthPatternWatcher(SmsMapActivity a) { mA = a; }
+        private final MapExpenseActivity mA;
+        MonthPatternWatcher(MapExpenseActivity a) { mA = a; }
         public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
         public void onTextChanged(CharSequence s, int start, int before, int count) {}
         public void afterTextChanged(Editable s) {
@@ -1210,8 +1210,8 @@ public class SmsMapActivity extends Activity {
     }
 
     static class PdfPickBtnClickListener implements View.OnClickListener {
-        private final SmsMapActivity mA;
-        PdfPickBtnClickListener(SmsMapActivity a) { mA = a; }
+        private final MapExpenseActivity mA;
+        PdfPickBtnClickListener(MapExpenseActivity a) { mA = a; }
         public void onClick(View v) {
             if (mA.mPdfLoaded) {
                 mA.showPdfPicker();
@@ -1222,15 +1222,15 @@ public class SmsMapActivity extends Activity {
     }
 
     static class PdfModeButtonListener implements View.OnClickListener {
-        private final SmsMapActivity mA;
+        private final MapExpenseActivity mA;
         private final int            mMode;
-        PdfModeButtonListener(SmsMapActivity a, int mode) { mA = a; mMode = mode; }
+        PdfModeButtonListener(MapExpenseActivity a, int mode) { mA = a; mMode = mode; }
         public void onClick(View v) { mA.setPdfPickerMode(mMode); }
     }
 
     static class PdfPickerLineListener implements AdapterView.OnItemClickListener {
-        private final SmsMapActivity mA;
-        PdfPickerLineListener(SmsMapActivity a) { mA = a; }
+        private final MapExpenseActivity mA;
+        PdfPickerLineListener(MapExpenseActivity a) { mA = a; }
         public void onItemClick(AdapterView<?> p, View v, int pos, long id) {
             if (mA.mPdfPickerAdapter == null) return;
             int mode = mA.mPdfPickerAdapter.getCurrentMode();
@@ -1252,8 +1252,8 @@ public class SmsMapActivity extends Activity {
     }
 
     static class PdfSubmitListener implements DialogInterface.OnClickListener {
-        private final SmsMapActivity mA;
-        PdfSubmitListener(SmsMapActivity a) { mA = a; }
+        private final MapExpenseActivity mA;
+        PdfSubmitListener(MapExpenseActivity a) { mA = a; }
         public void onClick(DialogInterface d, int which) {
             if (mA.mPdfPickerAdapter == null) return;
             mA.onPdfPickerSubmit(
@@ -1264,17 +1264,17 @@ public class SmsMapActivity extends Activity {
     }
 
     static class PdfPasswordOkListener implements DialogInterface.OnClickListener {
-        private final SmsMapActivity mA;
+        private final MapExpenseActivity mA;
         private final EditText       mEt;
-        PdfPasswordOkListener(SmsMapActivity a, EditText et) { mA = a; mEt = et; }
+        PdfPasswordOkListener(MapExpenseActivity a, EditText et) { mA = a; mEt = et; }
         public void onClick(DialogInterface dialog, int which) {
             mA.startPdfLoad(mEt.getText().toString());
         }
     }
 
     static class PdfPasswordCancelListener implements DialogInterface.OnClickListener {
-        private final SmsMapActivity mA;
-        PdfPasswordCancelListener(SmsMapActivity a) { mA = a; }
+        private final MapExpenseActivity mA;
+        PdfPasswordCancelListener(MapExpenseActivity a) { mA = a; }
         public void onClick(DialogInterface dialog, int which) {
             mA.mBtnPickFromPdf.setEnabled(true);
             mA.mPendingBulkPattern   = null;
@@ -1284,7 +1284,7 @@ public class SmsMapActivity extends Activity {
     }
 
     static class BulkImportThread extends Thread {
-        private final SmsMapActivity               mA;
+        private final MapExpenseActivity               mA;
         private final List<PdfLineAdapter.PdfLine> mItems;
         private final ExtractionPattern            mPattern;
         private final long                         mPatternId;
@@ -1297,7 +1297,7 @@ public class SmsMapActivity extends Activity {
         private final boolean                      mDoReApply;
         private final Handler                      mHandler;
 
-        BulkImportThread(SmsMapActivity a, List<PdfLineAdapter.PdfLine> items,
+        BulkImportThread(MapExpenseActivity a, List<PdfLineAdapter.PdfLine> items,
                          ExtractionPattern pattern, long patternId,
                          String bank, String reason, String remarks,
                          boolean isOnline, String txnType, ExpenseDatabase db,
@@ -1359,18 +1359,18 @@ public class SmsMapActivity extends Activity {
     }
 
     static class BulkImportDoneRunnable implements Runnable {
-        private final SmsMapActivity mA;
+        private final MapExpenseActivity mA;
         private final int mImported;
         private final int mReApplied;
         private final int mScanned;
-        BulkImportDoneRunnable(SmsMapActivity a, int imported, int reApplied, int scanned) {
+        BulkImportDoneRunnable(MapExpenseActivity a, int imported, int reApplied, int scanned) {
             mA = a; mImported = imported; mReApplied = reApplied; mScanned = scanned;
         }
         public void run() { if (!mA.isFinishing()) mA.onBulkImportDone(mImported, mReApplied, mScanned); }
     }
 
     static class PdfLoadThread extends Thread {
-        private final SmsMapActivity   mA;
+        private final MapExpenseActivity   mA;
         private final Uri              mUri;
         private final boolean          mIsPdf;
         private final String           mPassword;
@@ -1378,7 +1378,7 @@ public class SmsMapActivity extends Activity {
         private final Handler          mHandler;
         private final ExpenseDatabase  mDb;
 
-        PdfLoadThread(SmsMapActivity a, Uri uri, boolean isPdf, String password,
+        PdfLoadThread(MapExpenseActivity a, Uri uri, boolean isPdf, String password,
                       long senderId, Handler h, ExpenseDatabase db) {
             mA = a; mUri = uri; mIsPdf = isPdf; mPassword = password;
             mSenderId = senderId; mHandler = h; mDb = db;
@@ -1437,11 +1437,11 @@ public class SmsMapActivity extends Activity {
     }
 
     static class PdfLoadDoneRunnable implements Runnable {
-        private final SmsMapActivity               mA;
+        private final MapExpenseActivity               mA;
         private final List<String>                 mLines;
         private final List<PdfLineAdapter.PdfLine> mItems;
         private final String                       mStatus;
-        PdfLoadDoneRunnable(SmsMapActivity a, List<String> lines,
+        PdfLoadDoneRunnable(MapExpenseActivity a, List<String> lines,
                             List<PdfLineAdapter.PdfLine> items, String status) {
             mA = a; mLines = lines; mItems = items; mStatus = status;
         }

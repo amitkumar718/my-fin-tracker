@@ -31,7 +31,7 @@
             android:exported="false" />
 
         <activity
-            android:name=".ui.SmsMapActivity"
+            android:name=".ui.MapExpenseActivity"
             android:label="@string/title_sms_map"
             android:exported="false" />
 

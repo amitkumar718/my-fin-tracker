@@ -87,11 +87,11 @@ public class SmsInboxActivity extends Activity {
     }
 
     void openSmsMap(SmsAdapter.ListItem item) {
-        Intent i = new Intent(this, SmsMapActivity.class);
-        i.putExtra(SmsMapActivity.EXTRA_SMS_ADDRESS, item.sms.address);
-        i.putExtra(SmsMapActivity.EXTRA_SMS_BODY,    item.sms.body);
-        i.putExtra(SmsMapActivity.EXTRA_SMS_DATE,    item.sms.date);
-        i.putExtra(SmsMapActivity.EXTRA_SENDER_ID,   item.senderConfig.id);
+        Intent i = new Intent(this, MapExpenseActivity.class);
+        i.putExtra(MapExpenseActivity.EXTRA_SENDER_ADDRESS, item.sms.address);
+        i.putExtra(MapExpenseActivity.EXTRA_TRANS_LINE,    item.sms.body);
+        i.putExtra(MapExpenseActivity.EXTRA_SOURCE_DATE,    item.sms.date);
+        i.putExtra(MapExpenseActivity.EXTRA_SENDER_ID,   item.senderConfig.id);
         startActivity(i);
     }
 

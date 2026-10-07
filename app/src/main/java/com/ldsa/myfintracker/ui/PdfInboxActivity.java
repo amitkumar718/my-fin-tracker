@@ -82,10 +82,10 @@ public class PdfInboxActivity extends Activity {
 
     void openStatement(int pos) {
         PdfStatement s = mAdapter.getStatement(pos);
-        Intent intent = new Intent(this, SmsMapActivity.class);
-        intent.putExtra(SmsMapActivity.EXTRA_STATEMENT_ID, s.id);
-        intent.putExtra(SmsMapActivity.EXTRA_BLANK_TEMPLATE, true);
-        intent.putExtra(SmsMapActivity.EXTRA_IS_PDF,         true);
+        Intent intent = new Intent(this, MapExpenseActivity.class);
+        intent.putExtra(MapExpenseActivity.EXTRA_STATEMENT_ID, s.id);
+        intent.putExtra(MapExpenseActivity.EXTRA_BLANK_TEMPLATE, true);
+        intent.putExtra(MapExpenseActivity.EXTRA_IS_PDF,         true);
         startActivity(intent);
     }
 
@@ -173,7 +173,7 @@ public class PdfInboxActivity extends Activity {
         s.senderId    = -1L;
         s.bankName    = null;
         s.isPdf       = mPendingIsPdf;
-        s.month       = null;
+        s.statementPeriod       = null;
         s.uri         = mPendingUri.toString();
         s.displayName = mPendingDisplayName;
         s.createdAt   = System.currentTimeMillis();
@@ -182,10 +182,10 @@ public class PdfInboxActivity extends Activity {
 
         reload();
 
-        Intent intent = new Intent(this, SmsMapActivity.class);
-        intent.putExtra(SmsMapActivity.EXTRA_STATEMENT_ID, newId);
-        intent.putExtra(SmsMapActivity.EXTRA_BLANK_TEMPLATE, true);
-        intent.putExtra(SmsMapActivity.EXTRA_IS_PDF,         true);
+        Intent intent = new Intent(this, MapExpenseActivity.class);
+        intent.putExtra(MapExpenseActivity.EXTRA_STATEMENT_ID, newId);
+        intent.putExtra(MapExpenseActivity.EXTRA_BLANK_TEMPLATE, true);
+        intent.putExtra(MapExpenseActivity.EXTRA_IS_PDF,         true);
         startActivity(intent);
     }
 

@@ -67,7 +67,7 @@ public class PdfLinesActivity extends Activity {
 
         String bank  = (mStatement.bankName != null && !mStatement.bankName.isEmpty())
                 ? mStatement.bankName : getString(R.string.title_pdf_lines);
-        String month = mStatement.month != null ? mStatement.month : "";
+        String month = mStatement.statementPeriod != null ? mStatement.statementPeriod : "";
         mTvHeader.setText(bank + (month.isEmpty() ? "" : "  ·  " + month));
 
         mUri   = Uri.parse(mStatement.uri);
@@ -131,11 +131,11 @@ public class PdfLinesActivity extends Activity {
     void openLine(int pos) {
         String line = mAdapter.getLineText(pos);
         if (line.isEmpty()) return;
-        Intent intent = new Intent(this, SmsMapActivity.class);
-        intent.putExtra(SmsMapActivity.EXTRA_SMS_BODY,       line);
-        intent.putExtra(SmsMapActivity.EXTRA_SENDER_ID,      mStatement.senderId);
-        intent.putExtra(SmsMapActivity.EXTRA_BLANK_TEMPLATE, true);
-        intent.putExtra(SmsMapActivity.EXTRA_IS_PDF,         true);
+        Intent intent = new Intent(this, MapExpenseActivity.class);
+        intent.putExtra(MapExpenseActivity.EXTRA_TRANS_LINE,       line);
+        intent.putExtra(MapExpenseActivity.EXTRA_SENDER_ID,      mStatement.senderId);
+        intent.putExtra(MapExpenseActivity.EXTRA_BLANK_TEMPLATE, true);
+        intent.putExtra(MapExpenseActivity.EXTRA_IS_PDF,         true);
         startActivity(intent);
     }
 

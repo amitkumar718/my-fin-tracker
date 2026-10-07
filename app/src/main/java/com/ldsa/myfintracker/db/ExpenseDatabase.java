@@ -368,7 +368,7 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
         return expenseCursorToList(c);
     }
 
-    /** Re-runs the pattern's combined regex against each linked expense's originalSms.
+    /** Re-runs the pattern's combined regex against each linked expense's transLine.
      *  Updates derived fields; leaves date, reason, remarks and labels untouched.
      *  Returns the number of expenses actually updated. */
     public int reApplyPattern(ExtractionPattern p) {
@@ -684,7 +684,7 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
         e.card            = c.getString(c.getColumnIndexOrThrow(E_CARD));
         e.isOnline        = c.getInt(c.getColumnIndexOrThrow(E_ONLINE)) != 0;
         e.bank            = c.getString(c.getColumnIndexOrThrow(E_BANK));
-        e.originalSms     = c.getString(c.getColumnIndexOrThrow(E_SMS));
+        e.originalSms       = c.getString(c.getColumnIndexOrThrow(E_SMS));
         e.labelsJson      = c.getString(c.getColumnIndexOrThrow(E_LABELS));
         e.createdAt       = c.getLong(c.getColumnIndexOrThrow(E_CREATED));
         e.balance         = c.getDouble(c.getColumnIndexOrThrow(E_BALANCE));
@@ -844,12 +844,12 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
         s.senderId      = c.getLong(c.getColumnIndexOrThrow(PS_SENDER));
         s.bankName      = c.getString(c.getColumnIndexOrThrow(PS_BANK));
         s.isPdf         = c.getInt(c.getColumnIndexOrThrow(PS_IS_PDF)) != 0;
-        s.month         = c.getString(c.getColumnIndexOrThrow(PS_MONTH));
-        s.uri           = c.getString(c.getColumnIndexOrThrow(PS_URI));
-        s.displayName   = c.getString(c.getColumnIndexOrThrow(PS_NAME));
-        s.createdAt     = c.getLong(c.getColumnIndexOrThrow(PS_CREATED));
+        s.statementPeriod = c.getString(c.getColumnIndexOrThrow(PS_MONTH));
+        s.uri             = c.getString(c.getColumnIndexOrThrow(PS_URI));
+        s.displayName     = c.getString(c.getColumnIndexOrThrow(PS_NAME));
+        s.createdAt       = c.getLong(c.getColumnIndexOrThrow(PS_CREATED));
         int tci = c.getColumnIndex(PS_TRANS_LINE);
-        s.lastTransLine = (tci >= 0 && !c.isNull(tci)) ? c.getString(tci) : null;
+        s.sampleTransLine = (tci >= 0 && !c.isNull(tci)) ? c.getString(tci) : null;
         return s;
     }
 
@@ -858,11 +858,11 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
         cv.put(PS_SENDER,     s.senderId);
         cv.put(PS_BANK,       s.bankName);
         cv.put(PS_IS_PDF,     s.isPdf ? 1 : 0);
-        cv.put(PS_MONTH,      s.month);
+        cv.put(PS_MONTH,      s.statementPeriod);
         cv.put(PS_URI,        s.uri);
         cv.put(PS_NAME,       s.displayName);
         cv.put(PS_CREATED,    s.createdAt);
-        cv.put(PS_TRANS_LINE, s.lastTransLine);
+        cv.put(PS_TRANS_LINE, s.sampleTransLine);
         return cv;
     }
 

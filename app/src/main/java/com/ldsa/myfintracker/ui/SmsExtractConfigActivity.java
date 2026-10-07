@@ -19,7 +19,7 @@ public class SmsExtractConfigActivity extends Activity {
 
     public static final String EXTRA_SENDER_ID  = "sender_id";
     public static final String EXTRA_PATTERN_ID = "pattern_id";
-    public static final String EXTRA_SMS_BODY   = "sms_body";
+    public static final String EXTRA_TRANS_LINE   = "sms_body";
 
     static final String[] TYPE_VALUES = {
         ExtractionPattern.TYPE_OTHER,
@@ -57,7 +57,7 @@ public class SmsExtractConfigActivity extends Activity {
 
         mSenderId  = getIntent().getLongExtra(EXTRA_SENDER_ID,  -1L);
         mPatternId = getIntent().getLongExtra(EXTRA_PATTERN_ID, -1L);
-        mSmsBody   = getIntent().getStringExtra(EXTRA_SMS_BODY);
+        mSmsBody   = getIntent().getStringExtra(EXTRA_TRANS_LINE);
         mDb        = ExpenseDatabase.getInstance(this);
 
         LinearLayout cardSmsBody = (LinearLayout) findViewById(R.id.cardSmsBody);

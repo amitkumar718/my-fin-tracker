@@ -43,7 +43,7 @@ public class PdfStatementAdapter extends BaseAdapter {
         TextView tvFile  = (TextView) convertView.findViewById(R.id.tvStmtFile);
 
         tvBank.setText(s.bankName != null ? s.bankName : "—");
-        tvMonth.setText(s.month   != null ? s.month    : "");
+        tvMonth.setText(s.statementPeriod   != null ? s.statementPeriod    : "");
         tvFile.setText(s.displayName != null ? s.displayName : s.uri);
 
         return convertView;
