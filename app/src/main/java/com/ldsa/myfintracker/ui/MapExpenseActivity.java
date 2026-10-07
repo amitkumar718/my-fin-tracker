@@ -11,8 +11,13 @@ import android.os.Handler;
 import android.os.Looper;
 import android.text.Editable;
 import android.text.InputType;
+import android.text.SpannableString;
+import android.text.Spanned;
 import android.text.TextWatcher;
+import android.text.style.BackgroundColorSpan;
+import android.text.style.ForegroundColorSpan;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -178,7 +183,12 @@ public class MapExpenseActivity extends Activity {
         };
         for (int i = 0; i < btnIds.length; i++) {
             Button b = (Button) findViewById(btnIds[i]);
+            b.setFocusable(false);
             b.setOnClickListener(new TokenButtonListener(this, btnIds_tokens[i]));
+        }
+        Button btnClearTags = (Button) findViewById(R.id.btnClearTags);
+        if (btnClearTags != null) {
+            btnClearTags.setOnClickListener(new ClearTagsListener(this));
         }
 
         // PDF section views (always bound; section stays GONE unless PDF mode)
@@ -187,6 +197,7 @@ public class MapExpenseActivity extends Activity {
         mEtPdfMonth       = (EditText) findViewById(R.id.etPdfMonth);
         mBtnPickFromPdf   = (Button)   findViewById(R.id.btnPickFromPdf);
 
+        mTvTransLine.setOnTouchListener(new SaveSelectionListener(this));
         mTvTransLine.setText(mTransLine != null ? mTransLine : "");
         mEtBank.setText(mSenderAddress != null ? mSenderAddress : "");
         updateDateTimeDisplay();
@@ -201,6 +212,11 @@ public class MapExpenseActivity extends Activity {
         }
         mEtTemplate.setText((!blankTemplate && mTransLine != null) ? mTransLine : "");
         autoExtract();
+        if (mTransLine != null) {
+            mTaggedSpans.clear();
+            mTaggedSpans.addAll(parseSpansFromTemplate(mTransLine, mEtTemplate.getText().toString()));
+            renderTaggedSpans();
+        }
         updatePatternHint();
         updateRegexPreview();
 
@@ -209,6 +225,10 @@ public class MapExpenseActivity extends Activity {
         mEtTime.setOnClickListener(new TimeClickListener(this));
         mTvPatternHint.setOnClickListener(new PatternHintClickListener(this));
         btnSave.setOnClickListener(new SaveClickListener(this));
+
+        if (mStatementId >= 0 && mPdfStatement != null && !mPdfLoaded) {
+            startPdfLoad(null);
+        }
     }
 
     private void autoExtract() {
@@ -234,6 +254,9 @@ public class MapExpenseActivity extends Activity {
             if (!p.matches(mTransLine)) continue;
             if (p.templateText != null && !p.templateText.isEmpty()) {
                 mEtTemplate.setText(p.templateText);
+                mTaggedSpans.clear();
+                mTaggedSpans.addAll(parseSpansFromTemplate(mTransLine, p.templateText));
+                renderTaggedSpans();
             }
             mCurrentPattern = p;
             mTxnType = p.transactionType != null ? p.transactionType : "";
@@ -264,10 +287,153 @@ public class MapExpenseActivity extends Activity {
         updatePatternHint();
     }
 
+    // ── Point-and-label tagging (replaces regex template editing) ────────────
+
+    static class TagSpan {
+        int start, end;
+        String token;
+        TagSpan(int s, int e, String t) { start = s; end = e; token = t; }
+    }
+
+    private final List<TagSpan> mTaggedSpans = new ArrayList<TagSpan>();
+    int mLastSelStart = -1;
+    int mLastSelEnd   = -1;
+
+    /** Called when user selects a span in tvSmsBody and taps a label chip. */
+    void tagSelection(String token) {
+        if (mTransLine == null || mTransLine.isEmpty()) return;
+        // Prefer live selection; fall back to saved if focus was already lost
+        int s = mTvTransLine.getSelectionStart();
+        int e = mTvTransLine.getSelectionEnd();
+        if (s < 0 || e < 0 || s == e) { s = mLastSelStart; e = mLastSelEnd; }
+        if (s < 0 || e < 0 || s == e) {
+            Toast.makeText(this, R.string.msg_select_text_first, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (s > e) { int tmp = s; s = e; e = tmp; }
+        if (e > mTransLine.length()) e = mTransLine.length();
+
+        // Remove any existing spans that overlap the new one
+        List<TagSpan> kept = new ArrayList<TagSpan>();
+        for (TagSpan ts : mTaggedSpans) {
+            if (ts.end <= s || ts.start >= e) kept.add(ts);
+        }
+        kept.add(new TagSpan(s, e, token));
+        // Sort by start
+        for (int i = 1; i < kept.size(); i++) {
+            TagSpan k = kept.get(i); int j = i - 1;
+            while (j >= 0 && kept.get(j).start > k.start) { kept.set(j + 1, kept.get(j)); j--; }
+            kept.set(j + 1, k);
+        }
+        mTaggedSpans.clear();
+        mTaggedSpans.addAll(kept);
+        mLastSelStart = -1;
+        mLastSelEnd   = -1;
+        renderTaggedSpans();
+    }
+
+    void clearAllTags() {
+        mTaggedSpans.clear();
+        renderTaggedSpans();
+    }
+
+    /** Rebuilds the inline-highlighted sms body and the derived template. */
+    void renderTaggedSpans() {
+        if (mTransLine == null) return;
+        SpannableString ss = new SpannableString(mTransLine);
+        for (TagSpan ts : mTaggedSpans) {
+            int color = tokenColor(ts.token);
+            ss.setSpan(new BackgroundColorSpan(color), ts.start, ts.end,
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            ss.setSpan(new ForegroundColorSpan(0xFFFFFFFF), ts.start, ts.end,
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+        mTvTransLine.setText(ss);
+        // Remove selection highlight so chip colors are immediately visible
+        CharSequence cur = mTvTransLine.getText();
+        if (cur instanceof android.text.Spannable) {
+            android.text.Selection.removeSelection((android.text.Spannable) cur);
+        }
+        mEtTemplate.setText(deriveTemplate());
+    }
+
+    private String deriveTemplate() {
+        if (mTransLine == null) return "";
+        if (mTaggedSpans.isEmpty()) return mTransLine;
+        StringBuilder sb = new StringBuilder();
+        int pos = 0;
+        for (TagSpan ts : mTaggedSpans) {
+            if (ts.start > pos) sb.append(mTransLine, pos, ts.start);
+            sb.append(ts.token);
+            pos = ts.end;
+        }
+        if (pos < mTransLine.length()) sb.append(mTransLine, pos, mTransLine.length());
+        return sb.toString();
+    }
+
+    /** Reverse-engineer tag spans from an existing template + original body. */
+    private List<TagSpan> parseSpansFromTemplate(String body, String template) {
+        List<TagSpan> out = new ArrayList<TagSpan>();
+        if (body == null || template == null) return out;
+        // buildPatternFromTemplate() trims the template; mirror that here so literal
+        // lookups don't miss on trailing whitespace in the body.
+        template = template.trim();
+        int tmplPos = 0, bodyPos = 0;
+        while (tmplPos < template.length()) {
+            int tokStart = -1;
+            String foundTok = null;
+            for (String tok : ALL_TOKENS) {
+                int idx = template.indexOf(tok, tmplPos);
+                if (idx >= 0 && (tokStart < 0 || idx < tokStart)) {
+                    tokStart = idx; foundTok = tok;
+                }
+            }
+            if (foundTok == null) break;
+            String literal = template.substring(tmplPos, tokStart);
+            int litInBody = body.indexOf(literal, bodyPos);
+            if (litInBody < 0) return new ArrayList<TagSpan>();
+            bodyPos = litInBody + literal.length();
+
+            int nextTokStart = -1;
+            for (String tok : ALL_TOKENS) {
+                int idx = template.indexOf(tok, tokStart + foundTok.length());
+                if (idx >= 0 && (nextTokStart < 0 || idx < nextTokStart)) nextTokStart = idx;
+            }
+            String nextLit = (nextTokStart < 0)
+                ? template.substring(tokStart + foundTok.length())
+                : template.substring(tokStart + foundTok.length(), nextTokStart);
+
+            int tagEnd;
+            if (nextLit.isEmpty()) {
+                tagEnd = body.length();
+            } else {
+                tagEnd = body.indexOf(nextLit, bodyPos);
+                if (tagEnd < 0) return new ArrayList<TagSpan>();
+            }
+            out.add(new TagSpan(bodyPos, tagEnd, foundTok));
+            bodyPos = tagEnd;
+            tmplPos = tokStart + foundTok.length();
+        }
+        return out;
+    }
+
+    private static int tokenColor(String token) {
+        // Okabe-Ito colorblind-safe palette
+        if (TOK_AMOUNT.equals(token))   return 0xFF009E73; // bluish green
+        if (TOK_BALANCE.equals(token))  return 0xFF56B4E9; // sky blue
+        if (TOK_MERCHANT.equals(token)) return 0xFF0072B2; // blue
+        if (TOK_CARD.equals(token))     return 0xFF0072B2;
+        if (TOK_ACNO.equals(token))     return 0xFF0072B2;
+        if (TOK_UPI.equals(token))      return 0xFF0072B2;
+        if (TOK_DATE.equals(token))     return 0xFFD55E00; // vermilion
+        if (TOK_TIME.equals(token))     return 0xFFCC79A7; // reddish purple
+        if (TOK_IGNORE.equals(token))   return 0xFF999999; // grey
+        return 0xFF999999;
+    }
+
+    // Legacy entry point (template-text insert). Routes to tagSelection.
     void insertToken(String token) {
-        int cursor = mEtTemplate.getSelectionStart();
-        if (cursor < 0) cursor = mEtTemplate.getText().length();
-        mEtTemplate.getText().insert(cursor, token);
+        tagSelection(token);
     }
 
     void save() {
@@ -322,6 +488,32 @@ public class MapExpenseActivity extends Activity {
         boolean isUpdate = (mCurrentPattern != null
                             && mCurrentPattern.id > 0
                             && (mSenderId >= 0 || isPdfMode));
+
+        // Persist the current trans line so Edit/re-setup can restore it
+        if (isPdfMode && mPdfStatement != null && mTransLine != null && !mTransLine.isEmpty()) {
+            if (!mTransLine.equals(mPdfStatement.sampleTransLine)) {
+                mPdfStatement.sampleTransLine = mTransLine;
+                mDb.updatePdfStatement(mPdfStatement);
+            }
+        }
+
+        // Auto-create a SenderConfig for a new PDF bank so the pattern isn't orphaned
+        if (!isUpdate && isPdfMode && mSenderId < 0) {
+            String bankName = mEtBank.getText().toString().trim();
+            if (!bankName.isEmpty()) {
+                SenderConfig newSender = new SenderConfig();
+                newSender.pattern     = bankName;
+                newSender.displayName = bankName;
+                newSender.isRegex     = false;
+                mSenderId = mDb.insertSender(newSender);
+                pattern.senderId = mSenderId;
+                if (mPdfStatement != null) {
+                    mPdfStatement.senderId = mSenderId;
+                    mDb.updatePdfStatement(mPdfStatement);
+                }
+            }
+        }
+
         if (mSenderId >= 0 || isPdfMode) {
             if (isUpdate) {
                 pattern.id       = mCurrentPattern.id;
@@ -461,6 +653,8 @@ public class MapExpenseActivity extends Activity {
         mPdfStatement = mDb.getPdfStatementById(mStatementId);
         if (mPdfStatement == null) return;
 
+        if (mPdfStatement.senderId > 0) mSenderId = mPdfStatement.senderId;
+
         mLayoutPdfSection.setVisibility(View.VISIBLE);
         mTvPdfFileName.setText(mPdfStatement.displayName != null
                 ? mPdfStatement.displayName : mPdfStatement.uri);
@@ -477,6 +671,8 @@ public class MapExpenseActivity extends Activity {
             mTransLine = mPdfStatement.sampleTransLine;
             mTvTransLine.setText(mTransLine);
             mEtTemplate.setText(mTransLine);
+            mTaggedSpans.clear();
+            renderTaggedSpans();
         }
 
         mTvBankOrigLine        = (TextView) findViewById(R.id.tvBankOrigLine);
@@ -496,6 +692,14 @@ public class MapExpenseActivity extends Activity {
         mEtBankPattern.addTextChangedListener(new BankPatternWatcher(this));
         mEtMonthPattern.addTextChangedListener(new MonthPatternWatcher(this));
 
+        // Restore saved orig lines (so re-edit shows highlighted bank/month text up-front)
+        if (mPdfStatement.bankOrigLine != null && !mPdfStatement.bankOrigLine.isEmpty()) {
+            showBankLine(mPdfStatement.bankOrigLine, storedBankPat != null ? storedBankPat : "");
+        }
+        if (mPdfStatement.monthOrigLine != null && !mPdfStatement.monthOrigLine.isEmpty()) {
+            showMonthLine(mPdfStatement.monthOrigLine, storedMonthPat != null ? storedMonthPat : "");
+        }
+
         // Bank pattern snippet buttons
         int[] bankBtnIds = {
             R.id.btnBankPatAny, R.id.btnBankPatWord, R.id.btnBankPatWords, R.id.btnBankPatSkip
@@ -512,12 +716,17 @@ public class MapExpenseActivity extends Activity {
             R.id.btnMonthPatMMYYYY, R.id.btnMonthPatAny, R.id.btnMonthPatSkip
         };
         String[] monthSnippets = {
-            "(\\w{3,} \\d{4})", "(\\d{4}-\\d{2})", "(\\d{2}/\\d{4})", "(.+?)", ".*?"
+            "(\\w{3,} \\d{4})", "(\\d{4}-\\d{2})", "(\\d{2}[-/]\\d{4})", "(.+?)", ".*?"
         };
         for (int i = 0; i < monthBtnIds.length; i++) {
             Button b = (Button) findViewById(monthBtnIds[i]);
             if (b != null) b.setOnClickListener(new PatternSnippetListener(mEtMonthPattern, monthSnippets[i]));
         }
+
+        Button btnMarkBank = (Button) findViewById(R.id.btnMarkBank);
+        if (btnMarkBank != null) btnMarkBank.setOnClickListener(new MarkBankListener(this));
+        Button btnMarkMonth = (Button) findViewById(R.id.btnMarkMonth);
+        if (btnMarkMonth != null) btnMarkMonth.setOnClickListener(new MarkMonthListener(this));
 
         mBtnPickFromPdf.setOnClickListener(new PdfPickBtnClickListener(this));
         mBtnPickFromPdf.setEnabled(true);
@@ -556,6 +765,35 @@ public class MapExpenseActivity extends Activity {
         mPdfLoaded = !items.isEmpty();
         mBtnPickFromPdf.setEnabled(true);
 
+        // Recovery: no stored trans line yet. Iterate saved patterns to pick first match.
+        if ((mTransLine == null || mTransLine.isEmpty()) && mPdfLoaded) {
+            List<ExtractionPattern> candidates = null;
+            if (mSenderId > 0) candidates = mDb.getPatternsBySender(mSenderId);
+            if (candidates == null || candidates.isEmpty())
+                candidates = mDb.getAllPdfPatterns();
+            if (candidates != null) {
+                for (ExtractionPattern p : candidates) {
+                    boolean matched = false;
+                    for (PdfLineAdapter.PdfLine item : mPdfItems) {
+                        if (p.matches(item.text)) {
+                            mTransLine = item.text;
+                            mCurrentPattern = p;
+                            mTvTransLine.setText(mTransLine);
+                            mEtTemplate.setText(p.templateText != null
+                                ? p.templateText : mTransLine);
+                            mTaggedSpans.clear();
+                            mTaggedSpans.addAll(parseSpansFromTemplate(mTransLine,
+                                mEtTemplate.getText().toString()));
+                            renderTaggedSpans();
+                            matched = true;
+                            break;
+                        }
+                    }
+                    if (matched) break;
+                }
+            }
+        }
+
         // If Apply Regex triggered the load, run bulk import now instead of showing picker
         if (mPendingBulkPattern != null && mPdfLoaded) {
             ExtractionPattern p  = mPendingBulkPattern;
@@ -577,7 +815,9 @@ public class MapExpenseActivity extends Activity {
 
         if (mPdfLoaded) {
             autoApplyFieldPatterns();
-            showPdfPicker();
+            if (mTransLine == null || mTransLine.isEmpty()) {
+                showPdfPicker();
+            }
         }
     }
 
@@ -699,6 +939,7 @@ public class MapExpenseActivity extends Activity {
     void onPdfPickerSubmit(int bankIdx, int monthIdx, int transIdx) {
         String bankPat  = mEtBankPattern  != null ? mEtBankPattern.getText().toString().trim()  : "";
         String monthPat = mEtMonthPattern != null ? mEtMonthPattern.getText().toString().trim() : "";
+        String bankOrigLine = null, monthOrigLine = null;
         if (bankIdx >= 0 && bankIdx < mPdfItems.size()) {
             String line     = mPdfItems.get(bankIdx).text;
             String fallback = line.length() > 60 ? line.substring(0, 60).trim() : line.trim();
@@ -708,6 +949,7 @@ public class MapExpenseActivity extends Activity {
             } else {
                 mEtBank.setText(fallback);
             }
+            bankOrigLine = line;
             showBankLine(line, bankPat);
         }
         if (monthIdx >= 0 && monthIdx < mPdfItems.size()) {
@@ -719,6 +961,7 @@ public class MapExpenseActivity extends Activity {
                 String month = extractPdfMonth(line);
                 if (!month.isEmpty()) mEtPdfMonth.setText(month);
             }
+            monthOrigLine = line;
             showMonthLine(line, monthPat);
         }
         if (transIdx >= 0 && transIdx < mPdfItems.size()) {
@@ -726,6 +969,8 @@ public class MapExpenseActivity extends Activity {
             mTransLine = line;
             mTvTransLine.setText(line);
             mEtTemplate.setText(line);
+            mTaggedSpans.clear();
+            renderTaggedSpans();
             updateRegexPreview();
         }
         // Persist patterns for auto-apply on next file open
@@ -736,8 +981,10 @@ public class MapExpenseActivity extends Activity {
             String bank  = mEtBank.getText().toString().trim();
             String month = mEtPdfMonth.getText().toString().trim();
             mPdfStatement.bankName     = bank.isEmpty()  ? null : bank;
-            mPdfStatement.statementPeriod        = month.isEmpty() ? null : month;
+            mPdfStatement.statementPeriod = month.isEmpty() ? null : month;
             mPdfStatement.sampleTransLine = mTransLine;
+            if (bankOrigLine  != null) mPdfStatement.bankOrigLine  = bankOrigLine;
+            if (monthOrigLine != null) mPdfStatement.monthOrigLine = monthOrigLine;
             mDb.updatePdfStatement(mPdfStatement);
         }
     }
@@ -771,15 +1018,39 @@ public class MapExpenseActivity extends Activity {
     void showBankLine(String origLine, String pattern) {
         mBankOrigLine = origLine;
         if (mTvBankOrigLine == null) return;
-        mTvBankOrigLine.setText(origLine);
-        mTvBankOrigLine.setVisibility(origLine != null && !origLine.isEmpty() ? View.VISIBLE : View.GONE);
+        mTvBankOrigLine.setText(highlightMatch(origLine, pattern, 0xFF0072B2));
+        boolean hasLine = origLine != null && !origLine.isEmpty();
+        mTvBankOrigLine.setVisibility(hasLine ? View.VISIBLE : View.GONE);
+        Button btnMark = (Button) findViewById(R.id.btnMarkBank);
+        if (btnMark != null) btnMark.setVisibility(hasLine ? View.VISIBLE : View.GONE);
         if (mEtBankPattern != null && pattern != null) mEtBankPattern.setText(pattern);
         updateBankPatternPreview();
+    }
+
+    static CharSequence highlightMatch(String line, String pattern, int bgColor) {
+        if (line == null) return "";
+        if (pattern == null || pattern.isEmpty()) return line;
+        try {
+            Matcher m = Pattern.compile(pattern, Pattern.CASE_INSENSITIVE).matcher(line);
+            if (!m.find()) return line;
+            int s = m.groupCount() > 0 ? m.start(1) : m.start();
+            int e = m.groupCount() > 0 ? m.end(1)   : m.end();
+            if (s < 0 || e <= s) return line;
+            android.text.SpannableString ss = new android.text.SpannableString(line);
+            ss.setSpan(new android.text.style.BackgroundColorSpan(bgColor), s, e, 0);
+            ss.setSpan(new android.text.style.ForegroundColorSpan(0xFFFFFFFF), s, e, 0);
+            return ss;
+        } catch (Exception ex) {
+            return line;
+        }
     }
 
     void updateBankPatternPreview() {
         if (mEtBankPattern == null || mTvBankPatternPreview == null) return;
         String pattern = mEtBankPattern.getText().toString().trim();
+        if (mTvBankOrigLine != null && mBankOrigLine != null && !mBankOrigLine.isEmpty()) {
+            mTvBankOrigLine.setText(highlightMatch(mBankOrigLine, pattern, 0xFF0072B2));
+        }
         if (pattern.isEmpty() || mBankOrigLine.isEmpty()) {
             mTvBankPatternPreview.setVisibility(View.GONE);
             return;
@@ -798,8 +1069,11 @@ public class MapExpenseActivity extends Activity {
     void showMonthLine(String origLine, String pattern) {
         mMonthOrigLine = origLine;
         if (mTvMonthOrigLine == null) return;
-        mTvMonthOrigLine.setText(origLine);
-        mTvMonthOrigLine.setVisibility(origLine != null && !origLine.isEmpty() ? View.VISIBLE : View.GONE);
+        mTvMonthOrigLine.setText(highlightMatch(origLine, pattern, 0xFF009E73));
+        boolean hasLine = origLine != null && !origLine.isEmpty();
+        mTvMonthOrigLine.setVisibility(hasLine ? View.VISIBLE : View.GONE);
+        Button btnMark = (Button) findViewById(R.id.btnMarkMonth);
+        if (btnMark != null) btnMark.setVisibility(hasLine ? View.VISIBLE : View.GONE);
         if (mEtMonthPattern != null && pattern != null) mEtMonthPattern.setText(pattern);
         updateMonthPatternPreview();
     }
@@ -807,6 +1081,9 @@ public class MapExpenseActivity extends Activity {
     void updateMonthPatternPreview() {
         if (mEtMonthPattern == null || mTvMonthPatternPreview == null) return;
         String pattern = mEtMonthPattern.getText().toString().trim();
+        if (mTvMonthOrigLine != null && mMonthOrigLine != null && !mMonthOrigLine.isEmpty()) {
+            mTvMonthOrigLine.setText(highlightMatch(mMonthOrigLine, pattern, 0xFF009E73));
+        }
         if (pattern.isEmpty() || mMonthOrigLine.isEmpty()) {
             mTvMonthPatternPreview.setVisibility(View.GONE);
             return;
@@ -835,6 +1112,8 @@ public class MapExpenseActivity extends Activity {
     private static String extractPdfMonth(String line) {
         Matcher m1 = Pattern.compile("\\b(20\\d\\d)[\\-/](0[1-9]|1[0-2])\\b").matcher(line);
         if (m1.find()) return m1.group(1) + "-" + m1.group(2);
+        Matcher m3 = Pattern.compile("\\b(0[1-9]|1[0-2])[\\-/](20\\d\\d)\\b").matcher(line);
+        if (m3.find()) return m3.group(2) + "-" + m3.group(1);
         String[] months = {"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
         String[] nums   = {"01","02","03","04","05","06","07","08","09","10","11","12"};
         for (int i = 0; i < months.length; i++) {
@@ -1068,6 +1347,24 @@ public class MapExpenseActivity extends Activity {
         public void onClick(View v) { mA.insertToken(mToken); }
     }
 
+    static class ClearTagsListener implements View.OnClickListener {
+        private final MapExpenseActivity mA;
+        ClearTagsListener(MapExpenseActivity a) { mA = a; }
+        public void onClick(View v) { mA.clearAllTags(); }
+    }
+
+    static class SaveSelectionListener implements View.OnTouchListener {
+        private final MapExpenseActivity mA;
+        SaveSelectionListener(MapExpenseActivity a) { mA = a; }
+        public boolean onTouch(View v, MotionEvent event) {
+            if (event.getAction() == MotionEvent.ACTION_UP) {
+                mA.mLastSelStart = mA.mTvTransLine.getSelectionStart();
+                mA.mLastSelEnd   = mA.mTvTransLine.getSelectionEnd();
+            }
+            return false;
+        }
+    }
+
     static class PatternHintClickListener implements View.OnClickListener {
         private final MapExpenseActivity mA;
         PatternHintClickListener(MapExpenseActivity a) { mA = a; }
@@ -1174,6 +1471,18 @@ public class MapExpenseActivity extends Activity {
 
     // ── PDF picker static listener classes ────────────────────────────────────
 
+    static class MarkBankListener implements View.OnClickListener {
+        private final MapExpenseActivity mA;
+        MarkBankListener(MapExpenseActivity a) { mA = a; }
+        public void onClick(View v) { mA.markBankSelection(); }
+    }
+
+    static class MarkMonthListener implements View.OnClickListener {
+        private final MapExpenseActivity mA;
+        MarkMonthListener(MapExpenseActivity a) { mA = a; }
+        public void onClick(View v) { mA.markMonthSelection(); }
+    }
+
     static class PatternSnippetListener implements View.OnClickListener {
         private final EditText mTarget;
         private final String   mSnippet;
@@ -1183,6 +1492,34 @@ public class MapExpenseActivity extends Activity {
             if (cursor < 0) cursor = mTarget.getText().length();
             mTarget.getText().insert(cursor, mSnippet);
         }
+    }
+
+    void markBankSelection() {
+        if (mBankOrigLine == null || mBankOrigLine.isEmpty() || mTvBankOrigLine == null) return;
+        int s = mTvBankOrigLine.getSelectionStart();
+        int e = mTvBankOrigLine.getSelectionEnd();
+        if (s < 0 || e < 0 || s == e) {
+            Toast.makeText(this, R.string.msg_select_text_first, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (s > e) { int tmp = s; s = e; e = tmp; }
+        String prefix = java.util.regex.Pattern.quote(mBankOrigLine.substring(0, s));
+        String suffix = java.util.regex.Pattern.quote(mBankOrigLine.substring(e));
+        mEtBankPattern.setText(prefix + "(.+?)" + suffix);
+    }
+
+    void markMonthSelection() {
+        if (mMonthOrigLine == null || mMonthOrigLine.isEmpty() || mTvMonthOrigLine == null) return;
+        int s = mTvMonthOrigLine.getSelectionStart();
+        int e = mTvMonthOrigLine.getSelectionEnd();
+        if (s < 0 || e < 0 || s == e) {
+            Toast.makeText(this, R.string.msg_select_text_first, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (s > e) { int tmp = s; s = e; e = tmp; }
+        String prefix = java.util.regex.Pattern.quote(mMonthOrigLine.substring(0, s));
+        String suffix = java.util.regex.Pattern.quote(mMonthOrigLine.substring(e));
+        mEtMonthPattern.setText(prefix + "(.+?)" + suffix);
     }
 
     static class BankPatternWatcher implements TextWatcher {

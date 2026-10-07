@@ -97,70 +97,46 @@
                     android:textIsSelectable="true"
                     android:visibility="gone" />
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/label_pdf_bank_pattern"
-                        android:textSize="12sp"
-                        android:textColor="#1565C0"
-                        android:layout_marginRight="6dp" />
-                    <com.ldsa.myfintracker.ui.FlowLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1">
-                        <Button android:id="@+id/btnBankPatAny"
-                            android:layout_width="wrap_content" android:layout_height="22dp"
-                            android:text="Any" android:textSize="12sp" android:textColor="#1565C0"
-                            android:background="@drawable/bg_button_secondary"
-                            android:paddingLeft="8dp" android:paddingRight="8dp"
-                            android:minWidth="0dp" />
-                        <Button android:id="@+id/btnBankPatWord"
-                            android:layout_width="wrap_content" android:layout_height="22dp"
-                            android:text="Word" android:textSize="12sp" android:textColor="#1565C0"
-                            android:background="@drawable/bg_button_secondary"
-                            android:paddingLeft="8dp" android:paddingRight="8dp"
-                            android:minWidth="0dp" />
-                        <Button android:id="@+id/btnBankPatWords"
-                            android:layout_width="wrap_content" android:layout_height="22dp"
-                            android:text="Words" android:textSize="12sp" android:textColor="#1565C0"
-                            android:background="@drawable/bg_button_secondary"
-                            android:paddingLeft="8dp" android:paddingRight="8dp"
-                            android:minWidth="0dp" />
-                        <Button android:id="@+id/btnBankPatSkip"
-                            android:layout_width="wrap_content" android:layout_height="22dp"
-                            android:text="Skip" android:textSize="12sp" android:textColor="#757575"
-                            android:background="@drawable/bg_button_secondary"
-                            android:paddingLeft="8dp" android:paddingRight="8dp"
-                            android:minWidth="0dp" />
-                    </com.ldsa.myfintracker.ui.FlowLayout>
-                </LinearLayout>
+                <Button
+                    android:id="@+id/btnMarkBank"
+                    android:layout_width="wrap_content"
+                    android:layout_height="22dp"
+                    android:text="Mark as Bank Name"
+                    android:textSize="12sp"
+                    android:textColor="#FFFFFF"
+                    android:background="@drawable/bg_button_secondary"
+                    android:backgroundTint="#0072B2"
+                    android:paddingLeft="10dp"
+                    android:paddingRight="10dp"
+                    android:minWidth="0dp"
+                    android:layout_marginTop="4dp"
+                    android:visibility="gone" />
 
+                <!-- hidden; holds derived regex for DB save -->
                 <EditText
                     android:id="@+id/etBankPattern"
                     android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:hint="@string/hint_pdf_bank_pattern"
+                    android:layout_height="wrap_content"
                     android:textSize="13sp"
                     android:inputType="textNoSuggestions"
-                    android:background="@drawable/bg_edittext_outlined"
-                    android:paddingLeft="12dp"
-                    android:paddingRight="12dp"
-                    android:singleLine="true" />
+                    android:singleLine="true"
+                    android:visibility="gone" />
 
                 <TextView
                     android:id="@+id/tvBankPatternPreview"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:textSize="12sp"
-                    android:textColor="#37474F"
+                    android:textColor="#0072B2"
                     android:typeface="monospace"
                     android:layout_marginTop="2dp"
                     android:visibility="gone" />
+
+                <!-- hidden snippet buttons kept for code compatibility -->
+                <Button android:id="@+id/btnBankPatAny"   android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone" />
+                <Button android:id="@+id/btnBankPatWord"  android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone" />
+                <Button android:id="@+id/btnBankPatWords" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone" />
+                <Button android:id="@+id/btnBankPatSkip"  android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone" />
 
             </LinearLayout>
 
@@ -193,77 +169,47 @@
                     android:textIsSelectable="true"
                     android:visibility="gone" />
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:layout_marginBottom="2dp">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/label_pdf_month_pattern"
-                        android:textSize="12sp"
-                        android:textColor="#2E7D32"
-                        android:layout_marginRight="6dp" />
-                    <com.ldsa.myfintracker.ui.FlowLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1">
-                        <Button android:id="@+id/btnMonthPatMonYYYY"
-                            android:layout_width="wrap_content" android:layout_height="22dp"
-                            android:text="Mon YYYY" android:textSize="12sp" android:textColor="#2E7D32"
-                            android:background="@drawable/bg_button_secondary"
-                            android:paddingLeft="8dp" android:paddingRight="8dp"
-                            android:minWidth="0dp" />
-                        <Button android:id="@+id/btnMonthPatYYYYMM"
-                            android:layout_width="wrap_content" android:layout_height="22dp"
-                            android:text="YYYY-MM" android:textSize="12sp" android:textColor="#2E7D32"
-                            android:background="@drawable/bg_button_secondary"
-                            android:paddingLeft="8dp" android:paddingRight="8dp"
-                            android:minWidth="0dp" />
-                        <Button android:id="@+id/btnMonthPatMMYYYY"
-                            android:layout_width="wrap_content" android:layout_height="22dp"
-                            android:text="MM/YYYY" android:textSize="12sp" android:textColor="#2E7D32"
-                            android:background="@drawable/bg_button_secondary"
-                            android:paddingLeft="8dp" android:paddingRight="8dp"
-                            android:minWidth="0dp" />
-                        <Button android:id="@+id/btnMonthPatAny"
-                            android:layout_width="wrap_content" android:layout_height="22dp"
-                            android:text="Any" android:textSize="12sp" android:textColor="#2E7D32"
-                            android:background="@drawable/bg_button_secondary"
-                            android:paddingLeft="8dp" android:paddingRight="8dp"
-                            android:minWidth="0dp" />
-                        <Button android:id="@+id/btnMonthPatSkip"
-                            android:layout_width="wrap_content" android:layout_height="22dp"
-                            android:text="Skip" android:textSize="12sp" android:textColor="#757575"
-                            android:background="@drawable/bg_button_secondary"
-                            android:paddingLeft="8dp" android:paddingRight="8dp"
-                            android:minWidth="0dp" />
-                    </com.ldsa.myfintracker.ui.FlowLayout>
-                </LinearLayout>
+                <Button
+                    android:id="@+id/btnMarkMonth"
+                    android:layout_width="wrap_content"
+                    android:layout_height="22dp"
+                    android:text="Mark as Month"
+                    android:textSize="12sp"
+                    android:textColor="#FFFFFF"
+                    android:background="@drawable/bg_button_secondary"
+                    android:backgroundTint="#009E73"
+                    android:paddingLeft="10dp"
+                    android:paddingRight="10dp"
+                    android:minWidth="0dp"
+                    android:layout_marginTop="4dp"
+                    android:visibility="gone" />
 
+                <!-- hidden; holds derived regex for DB save -->
                 <EditText
                     android:id="@+id/etMonthPattern"
                     android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:hint="@string/hint_pdf_month_pattern"
+                    android:layout_height="wrap_content"
                     android:textSize="13sp"
                     android:inputType="textNoSuggestions"
-                    android:background="@drawable/bg_edittext_outlined"
-                    android:paddingLeft="12dp"
-                    android:paddingRight="12dp"
-                    android:singleLine="true" />
+                    android:singleLine="true"
+                    android:visibility="gone" />
 
                 <TextView
                     android:id="@+id/tvMonthPatternPreview"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:textSize="12sp"
-                    android:textColor="#37474F"
+                    android:textColor="#009E73"
                     android:typeface="monospace"
                     android:layout_marginTop="2dp"
                     android:visibility="gone" />
+
+                <!-- hidden snippet buttons kept for code compatibility -->
+                <Button android:id="@+id/btnMonthPatMonYYYY" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone" />
+                <Button android:id="@+id/btnMonthPatYYYYMM"  android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone" />
+                <Button android:id="@+id/btnMonthPatMMYYYY"  android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone" />
+                <Button android:id="@+id/btnMonthPatAny"     android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone" />
+                <Button android:id="@+id/btnMonthPatSkip"    android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -348,60 +294,70 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="3dp">
+                <!-- Okabe-Ito colorblind-safe palette -->
                 <Button android:id="@+id/btnTokAmount"
                     android:layout_width="wrap_content" android:layout_height="22dp"
-                    android:text="Amt" android:textSize="12sp" android:textColor="#2E7D32"
+                    android:text="Amt" android:textSize="12sp" android:textColor="#FFFFFF"
                     android:background="@drawable/bg_button_secondary"
+                    android:backgroundTint="#009E73"
                     android:paddingLeft="8dp" android:paddingRight="8dp"
-                            android:minWidth="0dp" />
+                    android:minWidth="0dp" />
                 <Button android:id="@+id/btnTokMerchant"
                     android:layout_width="wrap_content" android:layout_height="22dp"
-                    android:text="Merchant" android:textSize="12sp" android:textColor="#1565C0"
+                    android:text="Merchant" android:textSize="12sp" android:textColor="#FFFFFF"
                     android:background="@drawable/bg_button_secondary"
+                    android:backgroundTint="#0072B2"
                     android:paddingLeft="8dp" android:paddingRight="8dp"
-                            android:minWidth="0dp" />
+                    android:minWidth="0dp" />
                 <Button android:id="@+id/btnTokCard"
                     android:layout_width="wrap_content" android:layout_height="22dp"
-                    android:text="Card" android:textSize="12sp" android:textColor="#1565C0"
+                    android:text="Card" android:textSize="12sp" android:textColor="#FFFFFF"
                     android:background="@drawable/bg_button_secondary"
+                    android:backgroundTint="#0072B2"
                     android:paddingLeft="8dp" android:paddingRight="8dp"
-                            android:minWidth="0dp" />
+                    android:minWidth="0dp" />
                 <Button android:id="@+id/btnTokAcNo"
                     android:layout_width="wrap_content" android:layout_height="22dp"
-                    android:text="Ac.No" android:textSize="12sp" android:textColor="#1565C0"
+                    android:text="Ac.No" android:textSize="12sp" android:textColor="#FFFFFF"
                     android:background="@drawable/bg_button_secondary"
+                    android:backgroundTint="#0072B2"
                     android:paddingLeft="8dp" android:paddingRight="8dp"
-                            android:minWidth="0dp" />
+                    android:minWidth="0dp" />
                 <Button android:id="@+id/btnTokUpi"
                     android:layout_width="wrap_content" android:layout_height="22dp"
-                    android:text="UPI" android:textSize="12sp" android:textColor="#1565C0"
+                    android:text="UPI" android:textSize="12sp" android:textColor="#FFFFFF"
                     android:background="@drawable/bg_button_secondary"
+                    android:backgroundTint="#0072B2"
                     android:paddingLeft="8dp" android:paddingRight="8dp"
-                            android:minWidth="0dp" />
+                    android:minWidth="0dp" />
                 <Button android:id="@+id/btnTokDate"
                     android:layout_width="wrap_content" android:layout_height="22dp"
-                    android:text="Date" android:textSize="12sp" android:textColor="#6A1B9A"
+                    android:text="Date" android:textSize="12sp" android:textColor="#FFFFFF"
                     android:background="@drawable/bg_button_secondary"
+                    android:backgroundTint="#D55E00"
                     android:paddingLeft="8dp" android:paddingRight="8dp"
-                            android:minWidth="0dp" />
+                    android:minWidth="0dp" />
                 <Button android:id="@+id/btnTokTime"
                     android:layout_width="wrap_content" android:layout_height="22dp"
-                    android:text="Time" android:textSize="12sp" android:textColor="#6A1B9A"
+                    android:text="Time" android:textSize="12sp" android:textColor="#FFFFFF"
                     android:background="@drawable/bg_button_secondary"
+                    android:backgroundTint="#CC79A7"
                     android:paddingLeft="8dp" android:paddingRight="8dp"
-                            android:minWidth="0dp" />
+                    android:minWidth="0dp" />
                 <Button android:id="@+id/btnTokBalance"
                     android:layout_width="wrap_content" android:layout_height="22dp"
-                    android:text="Bal" android:textSize="12sp" android:textColor="#2E7D32"
+                    android:text="Bal" android:textSize="12sp" android:textColor="#FFFFFF"
                     android:background="@drawable/bg_button_secondary"
+                    android:backgroundTint="#56B4E9"
                     android:paddingLeft="8dp" android:paddingRight="8dp"
-                            android:minWidth="0dp" />
+                    android:minWidth="0dp" />
                 <Button android:id="@+id/btnTokIgnore"
                     android:layout_width="wrap_content" android:layout_height="22dp"
-                    android:text="Skip" android:textSize="12sp" android:textColor="#757575"
+                    android:text="Skip" android:textSize="12sp" android:textColor="#FFFFFF"
                     android:background="@drawable/bg_button_secondary"
+                    android:backgroundTint="#999999"
                     android:paddingLeft="8dp" android:paddingRight="8dp"
-                            android:minWidth="0dp" />
+                    android:minWidth="0dp" />
             </com.ldsa.myfintracker.ui.FlowLayout>
 
             <EditText
@@ -413,12 +369,23 @@
                 android:inputType="textMultiLine|textNoSuggestions"
                 android:textSize="14sp"
                 android:textColor="#212121"
-                android:background="@drawable/bg_edittext_outlined"
-                android:paddingLeft="12dp"
-                android:paddingRight="12dp"
-                android:paddingTop="10dp"
-                android:paddingBottom="10dp"
-                android:typeface="monospace" />
+                android:background="#FAFAFA"
+                android:padding="6dp"
+                android:typeface="monospace"
+                android:visibility="gone" />
+
+            <Button
+                android:id="@+id/btnClearTags"
+                android:layout_width="wrap_content"
+                android:layout_height="24dp"
+                android:text="Clear tags"
+                android:textSize="11sp"
+                android:textColor="#757575"
+                android:background="@drawable/bg_button_secondary"
+                android:paddingLeft="10dp"
+                android:paddingRight="10dp"
+                android:minWidth="0dp"
+                android:layout_marginTop="2dp" />
 
             <TextView
                 android:id="@+id/tvExtractPreview"

@@ -108,8 +108,9 @@
     <string name="hint_account_number">e.g. XX1234 or user@upi</string>
     <string name="btn_save_and_create_pattern">Apply Regex</string>
     <string name="msg_expense_and_pattern_saved">Expense &amp; extraction pattern saved</string>
-    <string name="label_pattern_template">Pattern Template</string>
-    <string name="hint_pattern_template">Select text and replace with tokens — use Skip for transaction IDs or ref numbers</string>
+    <string name="label_pattern_template">Label parts of the line</string>
+    <string name="hint_pattern_template">Select text in the line above, then tap a chip to label it. Use Skip for transaction IDs or ref numbers.</string>
+    <string name="msg_select_text_first">Select text in the line first</string>
     <string name="label_expense_details">Expense Details</string>
     <string name="error_template_needs_amount">Template must contain an (/amount/) token</string>
 
@@ -157,35 +158,6 @@
     <!-- PDF Inbox -->
     <string name="title_pdf_inbox">PDF Statements</string>
     <string name="title_pdf_lines">PDF Statement</string>
-    <string name="title_dropbox_pdf_inbox">Dropbox PDFs</string>
-    <string name="title_statement_scan">Scan Statement</string>
-    <string name="pdf_source_title">Add Statement</string>
-    <string name="pdf_source_local">From device storage</string>
-    <string name="pdf_source_dropbox">From Dropbox</string>
-
-    <!-- Common actions -->
-    <string name="cancel">Cancel</string>
-    <string name="save">Save</string>
-
-    <!-- Statement scan -->
-    <string name="btn_setup_template">Set Up Extraction Template</string>
-    <string name="btn_edit_template">Edit Template</string>
-    <string name="error_statement_not_found">Statement not found</string>
-
-    <!-- Dropbox import -->
-    <string name="dropbox_token_title">Dropbox Access Token</string>
-    <string name="dropbox_token_message">Paste your Dropbox API access token to list PDF files.</string>
-    <string name="dropbox_token_hint">Access token</string>
-    <string name="dropbox_token_empty">Please enter an access token</string>
-    <string name="dropbox_token_invalid">Invalid token — check and try again</string>
-    <string name="dbx_pdf_listing">Listing Dropbox PDFs…</string>
-    <string name="dbx_pdf_empty">No PDF files found in your Dropbox.</string>
-    <string name="dbx_pdf_empty_short">No PDFs found</string>
-    <string name="dbx_pdf_found_fmt">%d PDF(s) found</string>
-    <string name="dbx_pdf_list_failed">Failed to list Dropbox files</string>
-    <string name="dbx_pdf_download">Download Selected</string>
-    <string name="dbx_pdf_dl_fmt">Downloading %1$d / %2$d…</string>
-    <string name="dbx_pdf_dl_partial_fmt">Downloaded %1$d, failed %2$d</string>
     <string name="action_pdf_inbox">PDF Inbox</string>
     <string name="pdf_inbox_hint">Pick a PDF or TXT bank statement to see its lines here.</string>
     <string name="pdf_inbox_empty">No file loaded yet.\nTap "Pick PDF / TXT" to begin.</string>
@@ -243,6 +215,32 @@
         <item>Netbanking Transfer</item>
         <item>ATM Withdrawal</item>
     </string-array>
+
+    <!-- Dropbox PDF import -->
+    <string name="title_dropbox_pdf_inbox">Dropbox PDFs</string>
+    <string name="dropbox_token_title">Dropbox access token</string>
+    <string name="dropbox_token_message">Paste a Dropbox access token generated in the App Console (App Folder scope, files.content.read + files.metadata.read).</string>
+    <string name="dropbox_token_hint">sl.xxx…</string>
+    <string name="dropbox_token_empty">Token cannot be empty</string>
+    <string name="dropbox_token_invalid">Token invalid — paste a new one</string>
+    <string name="dbx_pdf_listing">Listing PDFs in Dropbox…</string>
+    <string name="dbx_pdf_empty">No PDFs found under /Apps/myfintracker.\nUpload some bank statements and retry.</string>
+    <string name="dbx_pdf_empty_short">No PDFs found</string>
+    <string name="dbx_pdf_found_fmt">%1$d PDFs — tap to select, grey rows are already imported</string>
+    <string name="dbx_pdf_list_failed">List failed</string>
+    <string name="dbx_pdf_download">Import</string>
+    <string name="dbx_pdf_dl_fmt">Downloading %1$d / %2$d…</string>
+    <string name="dbx_pdf_dl_ok_fmt">%1$d PDFs downloaded</string>
+    <string name="dbx_pdf_dl_partial_fmt">%1$d downloaded, %2$d failed</string>
+    <string name="pdf_source_local">Local file</string>
+    <string name="pdf_source_dropbox">Dropbox</string>
+    <string name="pdf_source_title">Add statement from…</string>
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="title_statement_scan">Scan Statement</string>
+    <string name="btn_setup_template">Set up template for this bank</string>
+    <string name="btn_edit_template">Edit / re-setup template</string>
+    <string name="error_statement_not_found">Statement not found</string>
 
     <string-array name="landing_page_labels">
         <item>Expenses (default)</item>
