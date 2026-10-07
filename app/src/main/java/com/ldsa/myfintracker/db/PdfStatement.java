@@ -10,4 +10,6 @@ public class PdfStatement {
     public String displayName;
     public long   createdAt;
     public String sampleTransLine; // representative transaction line used to build the extraction template
+    public String bankOrigLine;   // raw PDF line the bank name was extracted from
+    public String monthOrigLine;  // raw PDF line the month was extracted from
 }

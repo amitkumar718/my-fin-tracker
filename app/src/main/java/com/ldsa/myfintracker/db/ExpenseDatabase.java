@@ -20,7 +20,7 @@ import java.util.regex.Pattern;
 public class ExpenseDatabase extends SQLiteOpenHelper {
 
     private static final String DB_NAME    = "fin_tracker.db";
-    private static final int    DB_VERSION = 11;
+    private static final int    DB_VERSION = 14;
 
     // ── expenses ──────────────────────────────────────────────────
     static final String T_EXPENSE    = "expenses";
@@ -40,6 +40,7 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
     static final String E_ACCOUNT_NUM = "account_number";
     static final String E_REMARKS    = "remarks";
     static final String E_PATTERN_ID  = "pattern_id";
+    static final String E_STMT_ID     = "pdf_statement_id";
     static final String E_SOURCE      = "source";
 
     // ── sender_configs ────────────────────────────────────────────
@@ -83,7 +84,9 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
     static final String PS_URI      = "uri";
     static final String PS_NAME     = "display_name";
     static final String PS_CREATED   = "created_at";
-    static final String PS_TRANS_LINE = "last_trans_line";
+    static final String PS_TRANS_LINE  = "last_trans_line";
+    static final String PS_BANK_LINE   = "bank_orig_line";
+    static final String PS_MONTH_LINE  = "month_orig_line";
 
     // ── pdf_field_patterns ────────────────────────────────────────
     static final String T_PDF_FIELD_PAT = "pdf_field_patterns";
@@ -128,6 +131,7 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
             E_ACCOUNT_NUM + " TEXT," +
             E_REMARKS     + " TEXT," +
             E_PATTERN_ID  + " INTEGER NOT NULL DEFAULT -1," +
+            E_STMT_ID     + " INTEGER NOT NULL DEFAULT -1," +
             E_SOURCE      + " TEXT NOT NULL DEFAULT 'sms'" +
         ")");
         db.execSQL("CREATE INDEX idx_date ON " + T_EXPENSE + "(" + E_DATE_MS + ")");
@@ -157,14 +161,17 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
         ")");
 
         db.execSQL("CREATE TABLE " + T_PDF_STMT + " (" +
-            PS_ID      + " INTEGER PRIMARY KEY AUTOINCREMENT," +
-            PS_SENDER  + " INTEGER NOT NULL DEFAULT -1," +
-            PS_BANK    + " TEXT," +
-            PS_IS_PDF  + " INTEGER NOT NULL DEFAULT 0," +
-            PS_MONTH   + " TEXT," +
-            PS_URI     + " TEXT NOT NULL," +
-            PS_NAME    + " TEXT," +
-            PS_CREATED + " INTEGER NOT NULL" +
+            PS_ID         + " INTEGER PRIMARY KEY AUTOINCREMENT," +
+            PS_SENDER     + " INTEGER NOT NULL DEFAULT -1," +
+            PS_BANK       + " TEXT," +
+            PS_IS_PDF     + " INTEGER NOT NULL DEFAULT 0," +
+            PS_MONTH      + " TEXT," +
+            PS_URI        + " TEXT NOT NULL," +
+            PS_NAME       + " TEXT," +
+            PS_CREATED    + " INTEGER NOT NULL," +
+            PS_TRANS_LINE  + " TEXT," +
+            PS_BANK_LINE   + " TEXT," +
+            PS_MONTH_LINE  + " TEXT" +
         ")");
 
         db.execSQL("CREATE TABLE " + T_CARD + " (" +
@@ -234,6 +241,28 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
             try {
                 db.execSQL("ALTER TABLE " + T_EXPENSE +
                     " ADD COLUMN " + E_SOURCE + " TEXT NOT NULL DEFAULT 'sms'");
+            } catch (Exception ignored) {}
+        }
+        if (oldVersion < 12) {
+            try {
+                db.execSQL("ALTER TABLE " + T_EXPENSE +
+                    " ADD COLUMN " + E_STMT_ID + " INTEGER NOT NULL DEFAULT -1");
+            } catch (Exception ignored) {}
+        }
+        if (oldVersion < 13) {
+            try {
+                db.execSQL("ALTER TABLE " + T_PDF_STMT +
+                    " ADD COLUMN " + PS_TRANS_LINE + " TEXT");
+            } catch (Exception ignored) {}
+        }
+        if (oldVersion < 14) {
+            try {
+                db.execSQL("ALTER TABLE " + T_PDF_STMT +
+                    " ADD COLUMN " + PS_BANK_LINE + " TEXT");
+            } catch (Exception ignored) {}
+            try {
+                db.execSQL("ALTER TABLE " + T_PDF_STMT +
+                    " ADD COLUMN " + PS_MONTH_LINE + " TEXT");
             } catch (Exception ignored) {}
         }
     }
@@ -352,6 +381,14 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
             E_BANK + " LIKE ? OR " + E_CARD + " LIKE ?",
             new String[]{like, like, like, like}, null, null, E_DATE_MS + " DESC");
         return expenseCursorToList(c);
+    }
+
+    public int countExpensesByStatement(long stmtId) {
+        if (stmtId < 0) return 0;
+        Cursor c = getReadableDatabase().query(T_EXPENSE, new String[]{"COUNT(*)"},
+            E_STMT_ID + "=?", new String[]{String.valueOf(stmtId)}, null, null, null);
+        try { if (c.moveToFirst()) return c.getInt(0); } finally { c.close(); }
+        return 0;
     }
 
     public int countExpensesByPattern(long patternId) {
@@ -582,6 +619,17 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
         return null;
     }
 
+    /** Updates only senderId and bankName — never touches lastTransLine. */
+    public void updatePdfStatementMeta(long id, long senderId, String bankName) {
+        ContentValues cv = new ContentValues();
+        if (senderId > 0) cv.put(PS_SENDER, senderId);
+        if (bankName != null) cv.put(PS_BANK, bankName);
+        if (cv.size() > 0) {
+            getWritableDatabase().update(T_PDF_STMT, cv,
+                PS_ID + "=?", new String[]{String.valueOf(id)});
+        }
+    }
+
     public void deletePdfStatement(long id) {
         getWritableDatabase().delete(T_PDF_STMT, PS_ID + "=?", new String[]{String.valueOf(id)});
     }
@@ -692,6 +740,8 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
         e.accountNumber   = c.getString(c.getColumnIndexOrThrow(E_ACCOUNT_NUM));
         e.remarks         = c.getString(c.getColumnIndexOrThrow(E_REMARKS));
         e.patternId       = c.getLong(c.getColumnIndexOrThrow(E_PATTERN_ID));
+        int stmtIdx = c.getColumnIndex(E_STMT_ID);
+        e.pdfStatementId = (stmtIdx >= 0 && !c.isNull(stmtIdx)) ? c.getLong(stmtIdx) : -1L;
         int srcIdx = c.getColumnIndex(E_SOURCE);
         e.source = (srcIdx >= 0 && !c.isNull(srcIdx)) ? c.getString(srcIdx) : "sms";
         return e;
@@ -714,6 +764,7 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
         cv.put(E_ACCOUNT_NUM,  e.accountNumber);
         cv.put(E_REMARKS,      e.remarks);
         cv.put(E_PATTERN_ID,   e.patternId);
+        cv.put(E_STMT_ID,      e.pdfStatementId);
         cv.put(E_SOURCE,       e.source != null ? e.source : "sms");
         return cv;
     }
@@ -850,6 +901,10 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
         s.createdAt       = c.getLong(c.getColumnIndexOrThrow(PS_CREATED));
         int tci = c.getColumnIndex(PS_TRANS_LINE);
         s.sampleTransLine = (tci >= 0 && !c.isNull(tci)) ? c.getString(tci) : null;
+        int bci = c.getColumnIndex(PS_BANK_LINE);
+        s.bankOrigLine  = (bci >= 0 && !c.isNull(bci)) ? c.getString(bci) : null;
+        int mci = c.getColumnIndex(PS_MONTH_LINE);
+        s.monthOrigLine = (mci >= 0 && !c.isNull(mci)) ? c.getString(mci) : null;
         return s;
     }
 
@@ -862,7 +917,9 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
         cv.put(PS_URI,        s.uri);
         cv.put(PS_NAME,       s.displayName);
         cv.put(PS_CREATED,    s.createdAt);
-        cv.put(PS_TRANS_LINE, s.sampleTransLine);
+        cv.put(PS_TRANS_LINE,  s.sampleTransLine);
+        cv.put(PS_BANK_LINE,   s.bankOrigLine);
+        cv.put(PS_MONTH_LINE,  s.monthOrigLine);
         return cv;
     }
 
