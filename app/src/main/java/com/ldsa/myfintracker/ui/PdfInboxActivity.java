@@ -70,7 +70,9 @@ public class PdfInboxActivity extends Activity {
 
     private void reload() {
         List<PdfStatement> stmts = mDb.getAllPdfStatements();
-        mAdapter.setData(stmts);
+        List<Integer> counts = new ArrayList<Integer>();
+        for (PdfStatement s : stmts) counts.add(mDb.countExpensesByStatement(s.id));
+        mAdapter.setData(stmts, counts);
         if (stmts.isEmpty()) {
             mTvEmpty.setVisibility(View.VISIBLE);
             mListView.setVisibility(View.GONE);
@@ -81,6 +83,13 @@ public class PdfInboxActivity extends Activity {
     }
 
     void openStatement(int pos) {
+        PdfStatement s = mAdapter.getStatement(pos);
+        Intent intent = new Intent(this, StatementScanActivity.class);
+        intent.putExtra(StatementScanActivity.EXTRA_STATEMENT_ID, s.id);
+        startActivity(intent);
+    }
+
+    void openTemplateEditor(int pos) {
         PdfStatement s = mAdapter.getStatement(pos);
         Intent intent = new Intent(this, MapExpenseActivity.class);
         intent.putExtra(MapExpenseActivity.EXTRA_STATEMENT_ID, s.id);
@@ -108,7 +117,18 @@ public class PdfInboxActivity extends Activity {
     }
 
     void showPickDialog() {
-        pickFile();
+        CharSequence[] items = new CharSequence[] {
+            getString(R.string.pdf_source_local),
+            getString(R.string.pdf_source_dropbox)
+        };
+        new AlertDialog.Builder(this, R.style.RoundedDialog)
+            .setTitle(R.string.pdf_source_title)
+            .setItems(items, new SourceChoiceListener(this))
+            .show();
+    }
+
+    void openDropboxInbox() {
+        startActivity(new Intent(this, DropboxPdfInboxActivity.class));
     }
 
     void pickFile() {
@@ -182,10 +202,8 @@ public class PdfInboxActivity extends Activity {
 
         reload();
 
-        Intent intent = new Intent(this, MapExpenseActivity.class);
-        intent.putExtra(MapExpenseActivity.EXTRA_STATEMENT_ID, newId);
-        intent.putExtra(MapExpenseActivity.EXTRA_BLANK_TEMPLATE, true);
-        intent.putExtra(MapExpenseActivity.EXTRA_IS_PDF,         true);
+        Intent intent = new Intent(this, StatementScanActivity.class);
+        intent.putExtra(StatementScanActivity.EXTRA_STATEMENT_ID, newId);
         startActivity(intent);
     }
 
@@ -267,5 +285,14 @@ public class PdfInboxActivity extends Activity {
         private final PdfInboxActivity mA;
         DeleteConfirmListener(PdfInboxActivity a) { mA = a; }
         public void onClick(DialogInterface d, int which) { mA.deleteStatement(); }
+    }
+
+    static class SourceChoiceListener implements DialogInterface.OnClickListener {
+        private final PdfInboxActivity mA;
+        SourceChoiceListener(PdfInboxActivity a) { mA = a; }
+        public void onClick(DialogInterface d, int which) {
+            if (which == 0) mA.pickFile();
+            else mA.openDropboxInbox();
+        }
     }
 }

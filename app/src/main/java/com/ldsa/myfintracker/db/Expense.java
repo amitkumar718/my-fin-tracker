@@ -21,6 +21,7 @@ public class Expense {
     public String accountNumber;
     public String remarks;
     public long   patternId = -1;
+    public long   pdfStatementId = -1;
     public String source;   // "sms", "pdf", or "manual"
 
     public List<String> getLabels() {

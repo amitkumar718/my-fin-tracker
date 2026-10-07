@@ -157,6 +157,35 @@
     <!-- PDF Inbox -->
     <string name="title_pdf_inbox">PDF Statements</string>
     <string name="title_pdf_lines">PDF Statement</string>
+    <string name="title_dropbox_pdf_inbox">Dropbox PDFs</string>
+    <string name="title_statement_scan">Scan Statement</string>
+    <string name="pdf_source_title">Add Statement</string>
+    <string name="pdf_source_local">From device storage</string>
+    <string name="pdf_source_dropbox">From Dropbox</string>
+
+    <!-- Common actions -->
+    <string name="cancel">Cancel</string>
+    <string name="save">Save</string>
+
+    <!-- Statement scan -->
+    <string name="btn_setup_template">Set Up Extraction Template</string>
+    <string name="btn_edit_template">Edit Template</string>
+    <string name="error_statement_not_found">Statement not found</string>
+
+    <!-- Dropbox import -->
+    <string name="dropbox_token_title">Dropbox Access Token</string>
+    <string name="dropbox_token_message">Paste your Dropbox API access token to list PDF files.</string>
+    <string name="dropbox_token_hint">Access token</string>
+    <string name="dropbox_token_empty">Please enter an access token</string>
+    <string name="dropbox_token_invalid">Invalid token — check and try again</string>
+    <string name="dbx_pdf_listing">Listing Dropbox PDFs…</string>
+    <string name="dbx_pdf_empty">No PDF files found in your Dropbox.</string>
+    <string name="dbx_pdf_empty_short">No PDFs found</string>
+    <string name="dbx_pdf_found_fmt">%d PDF(s) found</string>
+    <string name="dbx_pdf_list_failed">Failed to list Dropbox files</string>
+    <string name="dbx_pdf_download">Download Selected</string>
+    <string name="dbx_pdf_dl_fmt">Downloading %1$d / %2$d…</string>
+    <string name="dbx_pdf_dl_partial_fmt">Downloaded %1$d, failed %2$d</string>
     <string name="action_pdf_inbox">PDF Inbox</string>
     <string name="pdf_inbox_hint">Pick a PDF or TXT bank statement to see its lines here.</string>
     <string name="pdf_inbox_empty">No file loaded yet.\nTap "Pick PDF / TXT" to begin.</string>

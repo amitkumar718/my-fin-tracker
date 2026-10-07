@@ -247,7 +247,51 @@ public class SettingsActivity extends Activity {
             }
         }
 
-        boolean hasPdfPatterns = !pdfSenders.isEmpty();
+        // Show orphan PDF patterns (sender_id = -1) under an "Unassigned" header
+        List<com.ldsa.myfintracker.db.ExtractionPattern> orphans =
+                mDb.getPdfPatternsBySender(-1L);
+        if (!orphans.isEmpty()) {
+            if (!pdfSenders.isEmpty()) {
+                View spacer = new android.view.View(this);
+                spacer.setLayoutParams(new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, (int)(dp * 8)));
+                mContainerPdfPatterns.addView(spacer);
+            }
+            TextView tvOrphan = new TextView(this);
+            tvOrphan.setText("Unassigned");
+            tvOrphan.setTextColor(0xFF757575);
+            tvOrphan.setTextSize(13);
+            tvOrphan.setTypeface(null, android.graphics.Typeface.BOLD);
+            LinearLayout.LayoutParams olp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+            olp.bottomMargin = (int)(dp * 4);
+            tvOrphan.setLayoutParams(olp);
+            mContainerPdfPatterns.addView(tvOrphan);
+            for (com.ldsa.myfintracker.db.ExtractionPattern p : orphans) {
+                View pRow = inflater.inflate(R.layout.item_extraction_pattern,
+                    mContainerPdfPatterns, false);
+                String label = (p.name != null && !p.name.isEmpty()) ? p.name : "Pattern #" + p.id;
+                ((TextView) pRow.findViewById(R.id.tvPatternName)).setText(label);
+                android.widget.TextView badge =
+                    (android.widget.TextView) pRow.findViewById(R.id.tvPatternTypeBadge);
+                if (p.transactionType != null && !p.transactionType.isEmpty()) {
+                    badge.setVisibility(View.VISIBLE);
+                    badge.setText(p.getTypeLabel());
+                } else {
+                    badge.setVisibility(View.GONE);
+                }
+                LinearLayout.LayoutParams plp = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+                plp.leftMargin   = (int)(dp * 8);
+                plp.bottomMargin = (int)(dp * 4);
+                pRow.setLayoutParams(plp);
+                pRow.setOnClickListener(new PatternRowClickListener(this, p.id, -1L));
+                pRow.setOnLongClickListener(new PatternRowLongClickListener(this, p.id));
+                mContainerPdfPatterns.addView(pRow);
+            }
+        }
+
+        boolean hasPdfPatterns = !pdfSenders.isEmpty() || !orphans.isEmpty();
         mTvNoPdfPatterns.setVisibility(hasPdfPatterns ? View.GONE : View.VISIBLE);
         mContainerPdfPatterns.setVisibility(hasPdfPatterns ? View.VISIBLE : View.GONE);
     }

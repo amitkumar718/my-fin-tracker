@@ -16,14 +16,16 @@ import java.util.List;
 public class PdfStatementAdapter extends BaseAdapter {
 
     private final LayoutInflater mInflater;
-    private List<PdfStatement>   mItems = new ArrayList<PdfStatement>();
+    private List<PdfStatement>   mItems  = new ArrayList<PdfStatement>();
+    private List<Integer>        mCounts = new ArrayList<Integer>();
 
     PdfStatementAdapter(Context ctx) {
         mInflater = LayoutInflater.from(ctx);
     }
 
-    void setData(List<PdfStatement> items) {
-        mItems = items;
+    void setData(List<PdfStatement> items, List<Integer> counts) {
+        mItems  = items;
+        mCounts = counts;
         notifyDataSetChanged();
     }
 
@@ -37,14 +39,23 @@ public class PdfStatementAdapter extends BaseAdapter {
             convertView = mInflater.inflate(R.layout.item_pdf_statement, parent, false);
         }
         PdfStatement s = mItems.get(pos);
+        int count = (pos < mCounts.size()) ? mCounts.get(pos) : 0;
 
         TextView tvBank  = (TextView) convertView.findViewById(R.id.tvStmtBank);
         TextView tvMonth = (TextView) convertView.findViewById(R.id.tvStmtMonth);
         TextView tvFile  = (TextView) convertView.findViewById(R.id.tvStmtFile);
+        TextView tvCount = (TextView) convertView.findViewById(R.id.tvStmtCount);
 
         tvBank.setText(s.bankName != null ? s.bankName : "—");
         tvMonth.setText(s.statementPeriod   != null ? s.statementPeriod    : "");
         tvFile.setText(s.displayName != null ? s.displayName : s.uri);
+
+        if (count > 0) {
+            tvCount.setText(count + " expenses");
+            tvCount.setVisibility(View.VISIBLE);
+        } else {
+            tvCount.setVisibility(View.GONE);
+        }
 
         return convertView;
     }

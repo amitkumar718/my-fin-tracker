@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#F0F4F8">
+
+    <!-- Header -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="#1976D2"
+        android:paddingLeft="12dp"
+        android:paddingRight="8dp"
+        android:paddingTop="7dp"
+        android:paddingBottom="7dp"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/tvScanTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/title_statement_scan"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/btnScanClose"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:text="@string/cancel"
+            android:textSize="12sp"
+            android:textColor="#1976D2"
+            android:background="@drawable/bg_spinner_white"
+            android:paddingLeft="14dp"
+            android:paddingRight="14dp" />
+
+    </LinearLayout>
+
+    <!-- Status / progress row -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="#FFFFFF"
+        android:paddingLeft="12dp"
+        android:paddingRight="12dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/tvScanStatus"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textSize="13sp"
+            android:textColor="#424242" />
+
+        <ProgressBar
+            android:id="@+id/scanProgress"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:visibility="gone" />
+
+    </LinearLayout>
+
+    <!-- No-patterns prompt -->
+    <Button
+        android:id="@+id/btnSetupTemplate"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/btn_setup_template"
+        android:textSize="13sp"
+        android:background="#FF8F00"
+        android:textColor="#FFFFFF"
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp"
+        android:visibility="gone" />
+
+    <!-- Candidate list -->
+    <ListView
+        android:id="@+id/listScanCandidates"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:divider="#E0E0E0"
+        android:dividerHeight="1dp"
+        android:clipToPadding="false"
+        android:paddingBottom="8dp"
+        android:scrollbarStyle="outsideOverlay"
+        android:visibility="gone" />
+
+    <!-- Import button -->
+    <Button
+        android:id="@+id/btnImportSelected"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/btn_import_selected"
+        android:textSize="14sp"
+        android:background="#1976D2"
+        android:textColor="#FFFFFF"
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp"
+        android:visibility="gone" />
+
+</LinearLayout>
