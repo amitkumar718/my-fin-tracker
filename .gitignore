@@ -1,5 +1,33 @@
+# Gradle
+.gradle/
 build/
+app/build/
+
+# Local config
+local.properties
+build-env.sh
+*.properties.local
+
+# Android Studio
+.idea/
+*.iml
+.DS_Store
+
+# Keystore
 .local-keystore/
+*.jks
+*.keystore
+
+# Build outputs
 *.apk
+*.aab
 *.dex
 *.class
+
+# Logs
+build.log
+build-run.log
+*.log
+
+# Backups
+*.bak

@@ -1,0 +1,31 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.ldsa.myfintracker'
+    compileSdk 34
+    buildToolsVersion "36.1.0"
+
+    defaultConfig {
+        applicationId "com.ldsa.myfintracker"
+        minSdk 21
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+    }
+
+    buildTypes {
+        debug { debuggable true }
+        release { minifyEnabled false }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+}
+
+dependencies {
+    // App uses only the Android framework (framework Material theme, no AppCompat/AndroidX).
+}
