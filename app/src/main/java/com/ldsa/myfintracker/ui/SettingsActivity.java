@@ -13,7 +13,6 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
-import android.widget.RadioGroup;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -43,10 +42,12 @@ public class SettingsActivity extends Activity {
     private long mPendingDeleteCardId    = -1;
 
     // card edit dialog state
-    long   mEditCardSenderId = -1;
-    long   mEditCardId       = -1;
-    EditText  mCardNameEdit;
-    RadioGroup mCardTypeGroup;
+    long     mEditCardSenderId  = -1;
+    long     mEditCardId        = -1;
+    EditText mCardNameEdit;
+    int      mSelectedCardType  = Card.TYPE_DEBIT;
+    Button   mBtnCardDebit;
+    Button   mBtnCardCredit;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -273,7 +274,7 @@ public class SettingsActivity extends Activity {
 
     void confirmDeleteSender(long id) {
         mPendingDeleteSenderId = id;
-        new AlertDialog.Builder(this)
+        new AlertDialog.Builder(this, R.style.RoundedDialog)
             .setMessage(R.string.confirm_delete_sender)
             .setPositiveButton(android.R.string.ok, new DeleteSenderConfirmListener(this))
             .setNegativeButton(android.R.string.cancel, null)
@@ -291,7 +292,7 @@ public class SettingsActivity extends Activity {
 
     void confirmDeletePattern(long id) {
         mPendingDeletePatternId = id;
-        new AlertDialog.Builder(this)
+        new AlertDialog.Builder(this, R.style.RoundedDialog)
             .setMessage(R.string.confirm_delete_pattern)
             .setPositiveButton(android.R.string.ok, new DeletePatternConfirmListener(this))
             .setNegativeButton(android.R.string.cancel, null)
@@ -312,21 +313,25 @@ public class SettingsActivity extends Activity {
         mEditCardSenderId = senderId;
 
         View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_edit_card, null);
-        mCardNameEdit  = (EditText)   dialogView.findViewById(R.id.etCardName);
-        mCardTypeGroup = (RadioGroup) dialogView.findViewById(R.id.rgCardType);
+        mCardNameEdit  = (EditText) dialogView.findViewById(R.id.etCardName);
+        mBtnCardDebit  = (Button)   dialogView.findViewById(R.id.btnCardDebit);
+        mBtnCardCredit = (Button)   dialogView.findViewById(R.id.btnCardCredit);
         EditText etLast4 = (EditText) dialogView.findViewById(R.id.etCardLast4);
 
+        mSelectedCardType = Card.TYPE_DEBIT;
         if (cardId >= 0) {
             Card existing = mDb.getCardById(cardId);
             if (existing != null) {
                 if (existing.displayName != null) mCardNameEdit.setText(existing.displayName);
                 if (existing.last4 != null)       etLast4.setText(existing.last4);
-                mCardTypeGroup.check(existing.cardType == Card.TYPE_CREDIT
-                    ? R.id.rbCredit : R.id.rbDebit);
+                mSelectedCardType = existing.cardType;
             }
         }
+        updateCardChips();
+        mBtnCardDebit.setOnClickListener(new CardTypeChipListener(this, Card.TYPE_DEBIT));
+        mBtnCardCredit.setOnClickListener(new CardTypeChipListener(this, Card.TYPE_CREDIT));
 
-        new AlertDialog.Builder(this)
+        new AlertDialog.Builder(this, R.style.RoundedDialog)
             .setTitle(cardId >= 0 ? "Edit Card" : "Add Card")
             .setView(dialogView)
             .setPositiveButton(android.R.string.ok,
@@ -346,8 +351,7 @@ public class SettingsActivity extends Activity {
         card.senderId    = mEditCardSenderId;
         card.last4       = etLast4.getText().toString().trim();
         card.displayName = mCardNameEdit.getText().toString().trim();
-        card.cardType    = (mCardTypeGroup.getCheckedRadioButtonId() == R.id.rbCredit)
-            ? Card.TYPE_CREDIT : Card.TYPE_DEBIT;
+        card.cardType    = mSelectedCardType;
 
         if (mEditCardId >= 0 && card.id > 0) {
             mDb.updateCard(card);
@@ -360,7 +364,7 @@ public class SettingsActivity extends Activity {
 
     void confirmDeleteCard(long id) {
         mPendingDeleteCardId = id;
-        new AlertDialog.Builder(this)
+        new AlertDialog.Builder(this, R.style.RoundedDialog)
             .setMessage(R.string.confirm_delete_card)
             .setPositiveButton(android.R.string.ok, new DeleteCardConfirmListener(this))
             .setNegativeButton(android.R.string.cancel, null)
@@ -379,6 +383,25 @@ public class SettingsActivity extends Activity {
     // ============================================================
     // Static listener classes — D8 constraints
     // ============================================================
+
+    void updateCardChips() {
+        mBtnCardDebit.setBackgroundResource(mSelectedCardType == Card.TYPE_DEBIT
+            ? R.drawable.bg_chip_active : R.drawable.bg_chip);
+        mBtnCardDebit.setTextColor(mSelectedCardType == Card.TYPE_DEBIT ? 0xFFFFFFFF : 0xFF1976D2);
+        mBtnCardCredit.setBackgroundResource(mSelectedCardType == Card.TYPE_CREDIT
+            ? R.drawable.bg_chip_active : R.drawable.bg_chip);
+        mBtnCardCredit.setTextColor(mSelectedCardType == Card.TYPE_CREDIT ? 0xFFFFFFFF : 0xFF1976D2);
+    }
+
+    static class CardTypeChipListener implements View.OnClickListener {
+        private final SettingsActivity mA;
+        private final int mType;
+        CardTypeChipListener(SettingsActivity a, int type) { mA = a; mType = type; }
+        @Override public void onClick(View v) {
+            mA.mSelectedCardType = mType;
+            mA.updateCardChips();
+        }
+    }
 
     static class LandingSelectedListener implements AdapterView.OnItemSelectedListener {
         private final SettingsActivity mA;

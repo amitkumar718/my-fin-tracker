@@ -70,6 +70,9 @@
                 android:text="Pattern Name" android:textColor="#757575" android:textSize="12sp" />
             <EditText
                 android:id="@+id/etPatternName"
+                android:background="@drawable/bg_edittext_outlined"
+                android:paddingLeft="12dp"
+                android:paddingRight="12dp"
                 android:layout_width="match_parent"
                 android:layout_height="44dp"
                 android:hint="@string/hint_pattern_name"

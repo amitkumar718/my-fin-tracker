@@ -138,7 +138,7 @@ public class ExpenseDetailActivity extends Activity {
             return true;
         }
         if (item.getItemId() == MENU_DELETE) {
-            new AlertDialog.Builder(this)
+            new AlertDialog.Builder(this, R.style.RoundedDialog)
                 .setMessage(R.string.confirm_delete_expense)
                 .setPositiveButton(android.R.string.ok, new DeleteConfirmListener(this))
                 .setNegativeButton(android.R.string.cancel, null)

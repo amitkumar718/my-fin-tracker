@@ -47,7 +47,7 @@ public class PdfInboxActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_pdf_inbox);
-
+        getWindow().setStatusBarColor(0xFF1976D2);
         mDb = ExpenseDatabase.getInstance(this);
 
         mTvEmpty  = (TextView) findViewById(R.id.tvStatementsEmpty);
@@ -91,7 +91,7 @@ public class PdfInboxActivity extends Activity {
 
     void confirmDelete(int pos) {
         mPendingDeleteId = mAdapter.getStatement(pos).id;
-        new AlertDialog.Builder(this)
+        new AlertDialog.Builder(this, R.style.RoundedDialog)
             .setMessage(R.string.confirm_delete_statement)
             .setPositiveButton(android.R.string.ok, new DeleteConfirmListener(this))
             .setNegativeButton(android.R.string.cancel, null)

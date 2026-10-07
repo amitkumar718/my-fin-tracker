@@ -29,6 +29,9 @@
 
             <EditText
                 android:id="@+id/etTripName"
+                android:background="@drawable/bg_edittext_outlined"
+                android:paddingLeft="12dp"
+                android:paddingRight="12dp"
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
                 android:hint="@string/hint_trip_name"

@@ -78,6 +78,7 @@ public class MainActivity extends Activity {
         }
 
         setContentView(R.layout.activity_main);
+        getWindow().setStatusBarColor(0xFF1976D2);
         mDb = ExpenseDatabase.getInstance(this);
 
         mEtSearch      = (EditText)  findViewById(R.id.etSearch);
@@ -152,8 +153,8 @@ public class MainActivity extends Activity {
 
     void updateTabAppearance() {
         boolean smsActive = "sms".equals(mSourceTab);
-        mBtnTabSms.setBackgroundColor(smsActive  ? Color.parseColor("#1976D2") : Color.parseColor("#1565C0"));
-        mBtnTabPdf.setBackgroundColor(!smsActive ? Color.parseColor("#1976D2") : Color.parseColor("#1565C0"));
+        mBtnTabSms.setBackgroundResource(smsActive  ? R.drawable.bg_tab_active : R.drawable.bg_tab_inactive);
+        mBtnTabPdf.setBackgroundResource(!smsActive ? R.drawable.bg_tab_active : R.drawable.bg_tab_inactive);
         mBtnTabSms.setTextColor(smsActive  ? Color.WHITE : Color.parseColor("#B0BEC5"));
         mBtnTabPdf.setTextColor(!smsActive ? Color.WHITE : Color.parseColor("#B0BEC5"));
     }

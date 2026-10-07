@@ -71,7 +71,7 @@ public class TripListActivity extends Activity {
     }
 
     void confirmDelete(final long tripId, final String tripName) {
-        new AlertDialog.Builder(this)
+        new AlertDialog.Builder(this, R.style.RoundedDialog)
             .setTitle(R.string.label_delete_trip)
             .setMessage(tripName)
             .setPositiveButton(android.R.string.ok, new DeleteConfirmListener(this, tripId))

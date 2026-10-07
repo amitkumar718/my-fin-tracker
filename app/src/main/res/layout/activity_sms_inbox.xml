@@ -63,6 +63,8 @@
         android:layout_height="0dp"
         android:layout_weight="1"
         android:gravity="center"
+        android:drawableTop="@drawable/ic_empty"
+        android:drawablePadding="12dp"
         android:text="@string/empty_sms"
         android:textColor="#9E9E9E"
         android:textSize="15sp"

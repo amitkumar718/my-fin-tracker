@@ -28,6 +28,7 @@
         <activity
             android:name=".ui.SmsInboxActivity"
             android:label="@string/title_sms_inbox"
+            android:theme="@android:style/Theme.Material.Light.NoActionBar"
             android:exported="false" />
 
         <activity
@@ -78,16 +79,19 @@
         <activity
             android:name=".ui.StatementImportActivity"
             android:label="@string/title_statement_import"
+            android:theme="@android:style/Theme.Material.Light.NoActionBar"
             android:exported="false" />
 
         <activity
             android:name=".ui.PdfInboxActivity"
             android:label="@string/title_pdf_inbox"
+            android:theme="@android:style/Theme.Material.Light.NoActionBar"
             android:exported="false" />
 
         <activity
             android:name=".ui.PdfLinesActivity"
             android:label="@string/title_pdf_lines"
+            android:theme="@android:style/Theme.Material.Light.NoActionBar"
             android:exported="false" />
 
 

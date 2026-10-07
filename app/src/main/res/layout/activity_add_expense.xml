@@ -35,7 +35,8 @@
                 android:layout_height="wrap_content"
                 android:text="@string/label_amount"
                 android:textColor="#757575"
-                android:textSize="12sp" />
+                android:textSize="12sp"
+                android:layout_marginBottom="4dp" />
 
             <EditText
                 android:id="@+id/etAmount"
@@ -45,6 +46,9 @@
                 android:inputType="numberDecimal"
                 android:textSize="16sp"
                 android:textColor="#212121"
+                android:background="@drawable/bg_edittext_outlined"
+                android:paddingLeft="12dp"
+                android:paddingRight="12dp"
                 android:layout_marginBottom="10dp" />
 
             <LinearLayout
@@ -65,7 +69,8 @@
                         android:layout_height="wrap_content"
                         android:text="@string/label_date"
                         android:textColor="#757575"
-                        android:textSize="12sp" />
+                        android:textSize="12sp"
+                        android:layout_marginBottom="4dp" />
 
                     <EditText
                         android:id="@+id/etDate"
@@ -76,7 +81,10 @@
                         android:focusable="false"
                         android:clickable="true"
                         android:textSize="14sp"
-                        android:textColor="#212121" />
+                        android:textColor="#212121"
+                        android:background="@drawable/bg_edittext_outlined"
+                        android:paddingLeft="12dp"
+                        android:paddingRight="12dp" />
 
                 </LinearLayout>
 
@@ -91,7 +99,8 @@
                         android:layout_height="wrap_content"
                         android:text="@string/label_time"
                         android:textColor="#757575"
-                        android:textSize="12sp" />
+                        android:textSize="12sp"
+                        android:layout_marginBottom="4dp" />
 
                     <EditText
                         android:id="@+id/etTime"
@@ -102,7 +111,10 @@
                         android:focusable="false"
                         android:clickable="true"
                         android:textSize="14sp"
-                        android:textColor="#212121" />
+                        android:textColor="#212121"
+                        android:background="@drawable/bg_edittext_outlined"
+                        android:paddingLeft="12dp"
+                        android:paddingRight="12dp" />
 
                 </LinearLayout>
 
@@ -113,7 +125,8 @@
                 android:layout_height="wrap_content"
                 android:text="@string/label_merchant"
                 android:textColor="#757575"
-                android:textSize="12sp" />
+                android:textSize="12sp"
+                android:layout_marginBottom="4dp" />
 
             <EditText
                 android:id="@+id/etMerchant"
@@ -123,6 +136,9 @@
                 android:inputType="textCapWords"
                 android:textSize="14sp"
                 android:textColor="#212121"
+                android:background="@drawable/bg_edittext_outlined"
+                android:paddingLeft="12dp"
+                android:paddingRight="12dp"
                 android:layout_marginBottom="10dp" />
 
             <TextView
@@ -130,7 +146,8 @@
                 android:layout_height="wrap_content"
                 android:text="@string/label_reason"
                 android:textColor="#757575"
-                android:textSize="12sp" />
+                android:textSize="12sp"
+                android:layout_marginBottom="4dp" />
 
             <EditText
                 android:id="@+id/etReason"
@@ -140,6 +157,9 @@
                 android:inputType="textCapSentences"
                 android:textSize="14sp"
                 android:textColor="#212121"
+                android:background="@drawable/bg_edittext_outlined"
+                android:paddingLeft="12dp"
+                android:paddingRight="12dp"
                 android:layout_marginBottom="10dp" />
 
             <TextView
@@ -147,7 +167,8 @@
                 android:layout_height="wrap_content"
                 android:text="@string/label_card"
                 android:textColor="#757575"
-                android:textSize="12sp" />
+                android:textSize="12sp"
+                android:layout_marginBottom="4dp" />
 
             <EditText
                 android:id="@+id/etCard"
@@ -157,6 +178,9 @@
                 android:inputType="text"
                 android:textSize="14sp"
                 android:textColor="#212121"
+                android:background="@drawable/bg_edittext_outlined"
+                android:paddingLeft="12dp"
+                android:paddingRight="12dp"
                 android:layout_marginBottom="10dp" />
 
             <TextView
@@ -164,7 +188,8 @@
                 android:layout_height="wrap_content"
                 android:text="@string/label_balance_after"
                 android:textColor="#757575"
-                android:textSize="12sp" />
+                android:textSize="12sp"
+                android:layout_marginBottom="4dp" />
 
             <EditText
                 android:id="@+id/etBalance"
@@ -174,6 +199,9 @@
                 android:inputType="numberDecimal"
                 android:textSize="14sp"
                 android:textColor="#212121"
+                android:background="@drawable/bg_edittext_outlined"
+                android:paddingLeft="12dp"
+                android:paddingRight="12dp"
                 android:layout_marginBottom="10dp" />
 
             <CheckBox
@@ -190,7 +218,8 @@
                 android:layout_height="wrap_content"
                 android:text="@string/label_bank"
                 android:textColor="#757575"
-                android:textSize="12sp" />
+                android:textSize="12sp"
+                android:layout_marginBottom="4dp" />
 
             <EditText
                 android:id="@+id/etBank"
@@ -200,6 +229,9 @@
                 android:inputType="text"
                 android:textSize="14sp"
                 android:textColor="#212121"
+                android:background="@drawable/bg_edittext_outlined"
+                android:paddingLeft="12dp"
+                android:paddingRight="12dp"
                 android:layout_marginBottom="10dp" />
 
             <TextView
@@ -207,7 +239,8 @@
                 android:layout_height="wrap_content"
                 android:text="@string/label_remarks"
                 android:textColor="#757575"
-                android:textSize="12sp" />
+                android:textSize="12sp"
+                android:layout_marginBottom="4dp" />
 
             <EditText
                 android:id="@+id/etRemarks"
@@ -219,6 +252,11 @@
                 android:gravity="top"
                 android:textSize="14sp"
                 android:textColor="#212121"
+                android:background="@drawable/bg_edittext_outlined"
+                android:paddingLeft="12dp"
+                android:paddingRight="12dp"
+                android:paddingTop="10dp"
+                android:paddingBottom="10dp"
                 android:layout_marginBottom="16dp" />
 
             <Button

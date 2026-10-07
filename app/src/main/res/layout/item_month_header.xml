@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:background="#ECEFF1"
+    android:background="@drawable/bg_month_header"
     android:paddingLeft="12dp"
     android:paddingRight="12dp"
     android:paddingTop="4dp"

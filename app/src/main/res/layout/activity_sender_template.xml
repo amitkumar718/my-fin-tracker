@@ -43,6 +43,9 @@
                 android:text="Friendly Name" android:textColor="#757575" android:textSize="12sp" />
             <EditText
                 android:id="@+id/etDisplayName"
+            android:background="@drawable/bg_edittext_outlined"
+            android:paddingLeft="12dp"
+            android:paddingRight="12dp"
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
                 android:hint="@string/hint_display_name"
@@ -55,6 +58,9 @@
                 android:text="Sender Pattern" android:textColor="#757575" android:textSize="12sp" />
             <EditText
                 android:id="@+id/etPattern"
+            android:background="@drawable/bg_edittext_outlined"
+            android:paddingLeft="12dp"
+            android:paddingRight="12dp"
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
                 android:hint="@string/hint_sender_pattern"
@@ -79,7 +85,7 @@
             android:layout_height="50dp"
             android:text="@string/btn_save_sender"
             android:textColor="#FFFFFF"
-            android:textSize="16sp"
+            android:textSize="15sp"
             android:background="@drawable/bg_button_primary" />
 
     </LinearLayout>

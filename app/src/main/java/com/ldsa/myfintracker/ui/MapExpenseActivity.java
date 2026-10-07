@@ -387,7 +387,7 @@ public class MapExpenseActivity extends Activity {
     }
 
     private void showReApplyDialog(ExtractionPattern pattern, int count) {
-        new AlertDialog.Builder(this)
+        new AlertDialog.Builder(this, R.style.RoundedDialog)
             .setTitle("Pattern updated")
             .setMessage("Re-apply to " + count + " existing expense"
                 + (count == 1 ? "" : "s") + "?\n\nAmount, merchant, card and balance will be "
@@ -582,13 +582,13 @@ public class MapExpenseActivity extends Activity {
     }
 
     void showPdfPasswordDialog(boolean wrongPassword) {
-        EditText etPass = new EditText(this);
-        etPass.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        android.view.View v = getLayoutInflater().inflate(R.layout.dialog_password, null);
+        EditText etPass = (EditText) v.findViewById(R.id.etDialogPassword);
         etPass.setHint(R.string.hint_pdf_password);
-        new AlertDialog.Builder(this)
+        new AlertDialog.Builder(this, R.style.RoundedDialog)
             .setTitle(R.string.pdf_password_title)
             .setMessage(wrongPassword ? R.string.pdf_password_wrong : R.string.pdf_password_msg)
-            .setView(etPass)
+            .setView(v)
             .setPositiveButton(android.R.string.ok, new PdfPasswordOkListener(this, etPass))
             .setNegativeButton(android.R.string.cancel, new PdfPasswordCancelListener(this))
             .show();
@@ -670,7 +670,7 @@ public class MapExpenseActivity extends Activity {
         setPdfPickerMode(PdfPickerAdapter.MODE_TRANS);
         if (autoTrans >= 0) lv.setSelection(autoTrans);
 
-        new AlertDialog.Builder(this)
+        new AlertDialog.Builder(this, R.style.RoundedDialog)
             .setTitle(R.string.pdf_picker_dialog_title)
             .setView(root)
             .setPositiveButton(R.string.pdf_picker_submit, new PdfSubmitListener(this))

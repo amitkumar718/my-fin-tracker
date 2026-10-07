@@ -3,8 +3,8 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:paddingLeft="20dp"
-    android:paddingRight="20dp"
+    android:paddingLeft="24dp"
+    android:paddingRight="24dp"
     android:paddingTop="16dp"
     android:paddingBottom="8dp">
 
@@ -13,7 +13,8 @@
         android:layout_height="wrap_content"
         android:text="@string/hint_card_last4"
         android:textColor="#757575"
-        android:textSize="12sp" />
+        android:textSize="12sp"
+        android:layout_marginBottom="4dp" />
 
     <EditText
         android:id="@+id/etCardLast4"
@@ -24,14 +25,18 @@
         android:maxLength="4"
         android:textSize="16sp"
         android:textColor="#212121"
-        android:layout_marginBottom="12dp" />
+        android:background="@drawable/bg_edittext_outlined"
+        android:paddingLeft="12dp"
+        android:paddingRight="12dp"
+        android:layout_marginBottom="14dp" />
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/hint_card_name"
         android:textColor="#757575"
-        android:textSize="12sp" />
+        android:textSize="12sp"
+        android:layout_marginBottom="4dp" />
 
     <EditText
         android:id="@+id/etCardName"
@@ -41,7 +46,10 @@
         android:inputType="textCapWords"
         android:textSize="14sp"
         android:textColor="#212121"
-        android:layout_marginBottom="12dp" />
+        android:background="@drawable/bg_edittext_outlined"
+        android:paddingLeft="12dp"
+        android:paddingRight="12dp"
+        android:layout_marginBottom="14dp" />
 
     <TextView
         android:layout_width="match_parent"
@@ -49,29 +57,37 @@
         android:text="@string/label_card_type"
         android:textColor="#757575"
         android:textSize="12sp"
-        android:layout_marginBottom="4dp" />
+        android:layout_marginBottom="8dp" />
 
-    <RadioGroup
-        android:id="@+id/rgCardType"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:layout_marginBottom="8dp">
 
-        <RadioButton
-            android:id="@+id/rbDebit"
+        <Button
+            android:id="@+id/btnCardDebit"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="36dp"
             android:layout_weight="1"
             android:text="@string/label_debit"
-            android:checked="true" />
+            android:textSize="13sp"
+            android:textAllCaps="false"
+            android:background="@drawable/bg_chip_active"
+            android:textColor="#FFFFFF"
+            android:layout_marginRight="8dp" />
 
-        <RadioButton
-            android:id="@+id/rbCredit"
+        <Button
+            android:id="@+id/btnCardCredit"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="36dp"
             android:layout_weight="1"
-            android:text="@string/label_credit" />
+            android:text="@string/label_credit"
+            android:textSize="13sp"
+            android:textAllCaps="false"
+            android:background="@drawable/bg_chip"
+            android:textColor="#1976D2" />
 
-    </RadioGroup>
+    </LinearLayout>
 
 </LinearLayout>

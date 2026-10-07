@@ -47,7 +47,7 @@ public class PdfLinesActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_pdf_lines);
-
+        getWindow().setStatusBarColor(0xFF1976D2);
         mDb = ExpenseDatabase.getInstance(this);
 
         mTvHeader = (TextView) findViewById(R.id.tvPdfLinesHeader);
@@ -116,13 +116,13 @@ public class PdfLinesActivity extends Activity {
     }
 
     void showPasswordDialog(boolean wrongPassword) {
-        EditText etPass = new EditText(this);
-        etPass.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        android.view.View v = getLayoutInflater().inflate(R.layout.dialog_password, null);
+        EditText etPass = (EditText) v.findViewById(R.id.etDialogPassword);
         etPass.setHint(R.string.hint_pdf_password);
-        new AlertDialog.Builder(this)
+        new AlertDialog.Builder(this, R.style.RoundedDialog)
             .setTitle(R.string.pdf_password_title)
             .setMessage(wrongPassword ? R.string.pdf_password_wrong : R.string.pdf_password_msg)
-            .setView(etPass)
+            .setView(v)
             .setPositiveButton(android.R.string.ok, new PasswordOkListener(this, etPass))
             .setNegativeButton(android.R.string.cancel, null)
             .show();
