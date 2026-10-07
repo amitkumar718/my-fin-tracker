@@ -118,7 +118,11 @@ public class MapExpenseActivity extends Activity {
     private ExtractionPattern mPendingBulkPattern   = null;
     private long              mPendingBulkPatternId = -1;
     private boolean           mPendingBulkReApply   = false;
-    private View         mLayoutPdfSection;
+    private View         mLayoutTab1;
+    private View         mLayoutTab2;
+    private View         mLayoutTabBar;
+    private Button       mBtnTabStatement;
+    private Button       mBtnTabTransaction;
     private TextView     mTvPdfFileName;
     private EditText     mEtPdfMonth;
     private Button       mBtnPickFromPdf;
@@ -144,6 +148,7 @@ public class MapExpenseActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sms_map);
+        getWindow().setStatusBarColor(0xFF1976D2);
 
         mSenderAddress     = getIntent().getStringExtra(EXTRA_SENDER_ADDRESS);
         mTransLine        = getIntent().getStringExtra(EXTRA_TRANS_LINE);
@@ -191,11 +196,18 @@ public class MapExpenseActivity extends Activity {
             btnClearTags.setOnClickListener(new ClearTagsListener(this));
         }
 
-        // PDF section views (always bound; section stays GONE unless PDF mode)
-        mLayoutPdfSection = (View)     findViewById(R.id.layoutPdfSection);
-        mTvPdfFileName    = (TextView) findViewById(R.id.tvPdfSectionFileName);
-        mEtPdfMonth       = (EditText) findViewById(R.id.etPdfMonth);
-        mBtnPickFromPdf   = (Button)   findViewById(R.id.btnPickFromPdf);
+        // Tab layout views (always bound; tab bar + tab1 stay GONE unless PDF mode)
+        mLayoutTab1        = (View)   findViewById(R.id.layoutTab1);
+        mLayoutTab2        = (View)   findViewById(R.id.layoutTab2);
+        mLayoutTabBar      = (View)   findViewById(R.id.layoutTabBar);
+        mBtnTabStatement   = (Button) findViewById(R.id.btnTabStatement);
+        mBtnTabTransaction = (Button) findViewById(R.id.btnTabTransaction);
+        mTvPdfFileName     = (TextView) findViewById(R.id.tvPdfSectionFileName);
+        mEtPdfMonth        = (EditText) findViewById(R.id.etPdfMonth);
+        mBtnPickFromPdf    = (Button)   findViewById(R.id.btnPickFromPdf);
+
+        if (mBtnTabStatement   != null) mBtnTabStatement.setOnClickListener(new TabListener(this, 0));
+        if (mBtnTabTransaction != null) mBtnTabTransaction.setOnClickListener(new TabListener(this, 1));
 
         mTvTransLine.setOnTouchListener(new SaveSelectionListener(this));
         mTvTransLine.setText(mTransLine != null ? mTransLine : "");
@@ -655,7 +667,8 @@ public class MapExpenseActivity extends Activity {
 
         if (mPdfStatement.senderId > 0) mSenderId = mPdfStatement.senderId;
 
-        mLayoutPdfSection.setVisibility(View.VISIBLE);
+        mLayoutTabBar.setVisibility(View.VISIBLE);
+        switchToTab(0);
         mTvPdfFileName.setText(mPdfStatement.displayName != null
                 ? mPdfStatement.displayName : mPdfStatement.uri);
 
@@ -1328,6 +1341,19 @@ public class MapExpenseActivity extends Activity {
         if (!value.isEmpty()) sb.append(label).append(": ").append(value).append("\n");
     }
 
+    void switchToTab(int tab) {
+        if (mLayoutTab1 != null)
+            mLayoutTab1.setVisibility(tab == 0 ? View.VISIBLE : View.GONE);
+        if (mLayoutTab2 != null)
+            mLayoutTab2.setVisibility(tab == 1 ? View.VISIBLE : View.GONE);
+        if (mBtnTabStatement != null)
+            mBtnTabStatement.setBackgroundResource(
+                tab == 0 ? R.drawable.bg_tab_active : R.drawable.bg_tab_inactive);
+        if (mBtnTabTransaction != null)
+            mBtnTabTransaction.setBackgroundResource(
+                tab == 1 ? R.drawable.bg_tab_active : R.drawable.bg_tab_inactive);
+    }
+
     // ============================================================
     // Static listener classes — D8 constraints
     // ============================================================
@@ -1351,6 +1377,13 @@ public class MapExpenseActivity extends Activity {
         private final MapExpenseActivity mA;
         ClearTagsListener(MapExpenseActivity a) { mA = a; }
         public void onClick(View v) { mA.clearAllTags(); }
+    }
+
+    static class TabListener implements View.OnClickListener {
+        private final MapExpenseActivity mA;
+        private final int mTab;
+        TabListener(MapExpenseActivity a, int tab) { mA = a; mTab = tab; }
+        public void onClick(View v) { mA.switchToTab(mTab); }
     }
 
     static class SaveSelectionListener implements View.OnTouchListener {

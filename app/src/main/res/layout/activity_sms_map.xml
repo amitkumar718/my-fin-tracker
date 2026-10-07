@@ -1,514 +1,667 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     android:background="#F0F4F8">
 
+    <!-- ── Header ── -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:paddingLeft="12dp"
-        android:paddingRight="12dp"
-        android:paddingTop="8dp"
-        android:paddingBottom="16dp">
+        android:background="#1976D2"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp">
 
-        <!-- PDF section: hidden by default, shown when opened from PDF Inbox -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Map Expense"
+            android:textColor="#FFFFFF"
+            android:textSize="17sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvPdfSectionFileName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#BBDEFB"
+            android:textSize="13sp"
+            android:singleLine="true"
+            android:ellipsize="middle"
+            android:visibility="gone" />
+
+    </LinearLayout>
+
+    <!-- ── Tab bar (PDF mode only) ── -->
+    <LinearLayout
+        android:id="@+id/layoutTabBar"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:orientation="horizontal"
+        android:background="#1976D2"
+        android:visibility="gone">
+
+        <Button
+            android:id="@+id/btnTabStatement"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:text="Statement Details"
+            android:textSize="13sp"
+            android:textColor="#FFFFFF"
+            android:background="@drawable/bg_tab_active"
+            android:textAllCaps="false" />
+
+        <Button
+            android:id="@+id/btnTabTransaction"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:text="Transaction"
+            android:textSize="13sp"
+            android:textColor="#FFFFFF"
+            android:background="@drawable/bg_tab_inactive"
+            android:textAllCaps="false" />
+
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
         <LinearLayout
-            android:id="@+id/layoutPdfSection"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:background="#E3F2FD"
-            android:padding="8dp"
-            android:layout_marginBottom="6dp"
-            android:visibility="gone">
+            android:paddingLeft="12dp"
+            android:paddingRight="12dp"
+            android:paddingTop="10dp"
+            android:paddingBottom="16dp">
 
-            <!-- PDF File: [filename] -->
+            <!-- ══════════════════════════════════════
+                 TAB 1 — Statement Details  (PDF only)
+                 ══════════════════════════════════════ -->
             <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:layout_marginBottom="4dp">
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="PDF File: "
-                    android:textSize="14sp"
-                    android:textColor="#1565C0"
-                    android:textStyle="bold" />
-                <TextView
-                    android:id="@+id/tvPdfSectionFileName"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:textSize="14sp"
-                    android:textColor="#0D47A1"
-                    android:fontFamily="monospace"
-                    android:singleLine="true"
-                    android:ellipsize="middle" />
-            </LinearLayout>
-
-            <Button
-                android:id="@+id/btnPickFromPdf"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/btn_pick_from_pdf"
-                android:textSize="14sp"
-                android:textAllCaps="false"
-                android:enabled="false" />
-
-            <TextView
-                android:id="@+id/tvPdfLoadStatus"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textSize="12sp"
-                android:textColor="#1565C0"
-                android:layout_marginBottom="4dp"
-                android:visibility="gone" />
-
-            <!-- Bank box -->
-            <LinearLayout
-                android:id="@+id/layoutBankLineSection"
+                android:id="@+id/layoutTab1"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:background="#DDEEFF"
-                android:padding="6dp"
-                android:layout_marginBottom="4dp">
+                android:background="@drawable/bg_card"
+                android:elevation="2dp"
+                android:layout_marginBottom="8dp"
+                android:visibility="gone">
 
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/label_bank_line"
-                    android:textSize="13sp"
-                    android:textColor="#1565C0"
-                    android:textStyle="bold"
-                    android:layout_marginBottom="2dp" />
-
-                <TextView
-                    android:id="@+id/tvBankOrigLine"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:textSize="13sp"
-                    android:textColor="#212121"
-                    android:typeface="monospace"
-                    android:textIsSelectable="true"
-                    android:visibility="gone" />
-
-                <Button
-                    android:id="@+id/btnMarkBank"
-                    android:layout_width="wrap_content"
-                    android:layout_height="22dp"
-                    android:text="Mark as Bank Name"
-                    android:textSize="12sp"
-                    android:textColor="#FFFFFF"
-                    android:background="@drawable/bg_button_secondary"
-                    android:backgroundTint="#0072B2"
-                    android:paddingLeft="10dp"
-                    android:paddingRight="10dp"
-                    android:minWidth="0dp"
-                    android:layout_marginTop="4dp"
-                    android:visibility="gone" />
-
-                <!-- hidden; holds derived regex for DB save -->
-                <EditText
-                    android:id="@+id/etBankPattern"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:textSize="13sp"
-                    android:inputType="textNoSuggestions"
-                    android:singleLine="true"
-                    android:visibility="gone" />
-
-                <TextView
-                    android:id="@+id/tvBankPatternPreview"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:textSize="12sp"
-                    android:textColor="#0072B2"
-                    android:typeface="monospace"
-                    android:layout_marginTop="2dp"
-                    android:visibility="gone" />
-
-                <!-- hidden snippet buttons kept for code compatibility -->
-                <Button android:id="@+id/btnBankPatAny"   android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone" />
-                <Button android:id="@+id/btnBankPatWord"  android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone" />
-                <Button android:id="@+id/btnBankPatWords" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone" />
-                <Button android:id="@+id/btnBankPatSkip"  android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone" />
-
-            </LinearLayout>
-
-            <!-- Month box -->
-            <LinearLayout
-                android:id="@+id/layoutMonthLineSection"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:background="#DDEEDD"
-                android:padding="6dp"
-                android:layout_marginBottom="2dp">
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/label_month_line"
-                    android:textSize="13sp"
-                    android:textColor="#2E7D32"
-                    android:textStyle="bold"
-                    android:layout_marginBottom="2dp" />
-
-                <TextView
-                    android:id="@+id/tvMonthOrigLine"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:textSize="13sp"
-                    android:textColor="#212121"
-                    android:typeface="monospace"
-                    android:textIsSelectable="true"
-                    android:visibility="gone" />
-
-                <Button
-                    android:id="@+id/btnMarkMonth"
-                    android:layout_width="wrap_content"
-                    android:layout_height="22dp"
-                    android:text="Mark as Month"
-                    android:textSize="12sp"
-                    android:textColor="#FFFFFF"
-                    android:background="@drawable/bg_button_secondary"
-                    android:backgroundTint="#009E73"
-                    android:paddingLeft="10dp"
-                    android:paddingRight="10dp"
-                    android:minWidth="0dp"
-                    android:layout_marginTop="4dp"
-                    android:visibility="gone" />
-
-                <!-- hidden; holds derived regex for DB save -->
-                <EditText
-                    android:id="@+id/etMonthPattern"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:textSize="13sp"
-                    android:inputType="textNoSuggestions"
-                    android:singleLine="true"
-                    android:visibility="gone" />
-
-                <TextView
-                    android:id="@+id/tvMonthPatternPreview"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:textSize="12sp"
-                    android:textColor="#009E73"
-                    android:typeface="monospace"
-                    android:layout_marginTop="2dp"
-                    android:visibility="gone" />
-
-                <!-- hidden snippet buttons kept for code compatibility -->
-                <Button android:id="@+id/btnMonthPatMonYYYY" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone" />
-                <Button android:id="@+id/btnMonthPatYYYYMM"  android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone" />
-                <Button android:id="@+id/btnMonthPatMMYYYY"  android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone" />
-                <Button android:id="@+id/btnMonthPatAny"     android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone" />
-                <Button android:id="@+id/btnMonthPatSkip"    android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone" />
-
+                <!-- Pick button row -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:layout_marginTop="3dp">
+                    android:paddingLeft="16dp"
+                    android:paddingRight="12dp"
+                    android:paddingTop="10dp"
+                    android:paddingBottom="10dp">
+
                     <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/label_month"
-                        android:textSize="12sp"
-                        android:textColor="#2E7D32"
-                        android:textStyle="bold"
-                        android:layout_marginRight="8dp" />
-                    <EditText
-                        android:id="@+id/etPdfMonth"
+                        android:id="@+id/tvPdfLoadStatus"
                         android:layout_width="0dp"
-                        android:layout_height="40dp"
+                        android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:hint="@string/hint_month"
-                        android:textSize="13sp"
-                        android:inputType="text"
-                        android:background="@drawable/bg_edittext_outlined"
+                        android:textSize="12sp"
+                        android:textColor="#1565C0"
+                        android:visibility="gone" />
+
+                    <Button
+                        android:id="@+id/btnPickFromPdf"
+                        android:layout_width="wrap_content"
+                        android:layout_height="32dp"
+                        android:text="@string/btn_pick_from_pdf"
+                        android:textSize="12sp"
+                        android:textColor="#1976D2"
+                        android:background="@drawable/bg_spinner_white"
+                        android:paddingLeft="14dp"
+                        android:paddingRight="14dp"
+                        android:enabled="false" />
+
+                </LinearLayout>
+
+                <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#E0E0E0" />
+
+                <!-- ── Bank row ── -->
+                <LinearLayout
+                    android:id="@+id/layoutBankLineSection"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingTop="12dp"
+                    android:paddingBottom="12dp"
+                    android:paddingRight="12dp">
+
+                    <View
+                        android:layout_width="3dp"
+                        android:layout_height="match_parent"
+                        android:background="#1976D2"
+                        android:layout_marginRight="12dp" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="BANK"
+                            android:textSize="11sp"
+                            android:textColor="#1976D2"
+                            android:textStyle="bold"
+                            android:layout_marginBottom="3dp" />
+
+                        <TextView
+                            android:id="@+id/tvBankOrigLine"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:textSize="13sp"
+                            android:textColor="#212121"
+                            android:typeface="monospace"
+                            android:textIsSelectable="true"
+                            android:layout_marginBottom="2dp"
+                            android:visibility="gone" />
+
+                        <TextView
+                            android:id="@+id/tvBankPatternPreview"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:textSize="11sp"
+                            android:textColor="#1976D2"
+                            android:typeface="monospace"
+                            android:visibility="gone" />
+
+                        <EditText android:id="@+id/etBankPattern"
+                            android:layout_width="match_parent" android:layout_height="wrap_content"
+                            android:textSize="13sp" android:inputType="textNoSuggestions"
+                            android:singleLine="true" android:visibility="gone" />
+                        <Button android:id="@+id/btnBankPatAny"   android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone" />
+                        <Button android:id="@+id/btnBankPatWord"  android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone" />
+                        <Button android:id="@+id/btnBankPatWords" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone" />
+                        <Button android:id="@+id/btnBankPatSkip"  android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone" />
+
+                    </LinearLayout>
+
+                    <Button
+                        android:id="@+id/btnMarkBank"
+                        android:layout_width="wrap_content"
+                        android:layout_height="32dp"
+                        android:text="Mark"
+                        android:textSize="12sp"
+                        android:textColor="#FFFFFF"
+                        android:background="@drawable/bg_button_secondary"
+                        android:backgroundTint="#1976D2"
                         android:paddingLeft="12dp"
                         android:paddingRight="12dp"
-                        android:singleLine="true" />
+                        android:minWidth="0dp"
+                        android:layout_marginLeft="8dp"
+                        android:visibility="gone" />
+
+                </LinearLayout>
+
+                <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#E0E0E0" />
+
+                <!-- ── Month row ── -->
+                <LinearLayout
+                    android:id="@+id/layoutMonthLineSection"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingTop="12dp"
+                    android:paddingBottom="12dp"
+                    android:paddingRight="12dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <View
+                            android:layout_width="3dp"
+                            android:layout_height="match_parent"
+                            android:background="#2E7D32"
+                            android:layout_marginRight="12dp" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="MONTH"
+                                android:textSize="11sp"
+                                android:textColor="#2E7D32"
+                                android:textStyle="bold"
+                                android:layout_marginBottom="3dp" />
+
+                            <TextView
+                                android:id="@+id/tvMonthOrigLine"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:textSize="13sp"
+                                android:textColor="#212121"
+                                android:typeface="monospace"
+                                android:textIsSelectable="true"
+                                android:layout_marginBottom="2dp"
+                                android:visibility="gone" />
+
+                            <TextView
+                                android:id="@+id/tvMonthPatternPreview"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:textSize="11sp"
+                                android:textColor="#2E7D32"
+                                android:typeface="monospace"
+                                android:visibility="gone" />
+
+                            <EditText android:id="@+id/etMonthPattern"
+                                android:layout_width="match_parent" android:layout_height="wrap_content"
+                                android:textSize="13sp" android:inputType="textNoSuggestions"
+                                android:singleLine="true" android:visibility="gone" />
+                            <Button android:id="@+id/btnMonthPatMonYYYY" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone" />
+                            <Button android:id="@+id/btnMonthPatYYYYMM"  android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone" />
+                            <Button android:id="@+id/btnMonthPatMMYYYY"  android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone" />
+                            <Button android:id="@+id/btnMonthPatAny"     android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone" />
+                            <Button android:id="@+id/btnMonthPatSkip"    android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone" />
+
+                        </LinearLayout>
+
+                        <Button
+                            android:id="@+id/btnMarkMonth"
+                            android:layout_width="wrap_content"
+                            android:layout_height="32dp"
+                            android:text="Mark"
+                            android:textSize="12sp"
+                            android:textColor="#FFFFFF"
+                            android:background="@drawable/bg_button_secondary"
+                            android:backgroundTint="#2E7D32"
+                            android:paddingLeft="12dp"
+                            android:paddingRight="12dp"
+                            android:minWidth="0dp"
+                            android:layout_marginLeft="8dp"
+                            android:visibility="gone" />
+
+                    </LinearLayout>
+
+                    <!-- Period field -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:paddingLeft="15dp"
+                        android:paddingTop="8dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/label_month"
+                            android:textSize="12sp"
+                            android:textColor="#2E7D32"
+                            android:textStyle="bold"
+                            android:layout_marginRight="10dp" />
+
+                        <EditText
+                            android:id="@+id/etPdfMonth"
+                            android:layout_width="0dp"
+                            android:layout_height="36dp"
+                            android:layout_weight="1"
+                            android:hint="@string/hint_month"
+                            android:textSize="13sp"
+                            android:inputType="text"
+                            android:background="@drawable/bg_edittext_outlined"
+                            android:paddingLeft="10dp"
+                            android:paddingRight="10dp"
+                            android:singleLine="true" />
+
+                    </LinearLayout>
+
                 </LinearLayout>
 
             </LinearLayout>
+            <!-- ══ END TAB 1 ══ -->
 
-        </LinearLayout>
 
-        <!-- Transaction box: original line + pattern template -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:background="#FFF3E0"
-            android:padding="8dp"
-            android:layout_marginBottom="6dp">
-
-            <TextView
-                android:id="@+id/tvTransHeader"
+            <!-- ══════════════════════════════════════
+                 TAB 2 — Transaction + Expense Details
+                 ══════════════════════════════════════ -->
+            <LinearLayout
+                android:id="@+id/layoutTab2"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/label_original_sms"
-                android:textSize="13sp"
-                android:textColor="#E65100"
-                android:textStyle="bold"
-                android:layout_marginBottom="2dp" />
+                android:orientation="vertical"
+                android:visibility="visible">
 
-            <TextView
-                android:id="@+id/tvSmsBody"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text=""
-                android:textColor="#212121"
-                android:textSize="14sp"
-                android:typeface="monospace"
-                android:textIsSelectable="true"
-                android:layout_marginBottom="6dp" />
+                <!-- ── Transaction card ── -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:background="@drawable/bg_card"
+                    android:elevation="2dp"
+                    android:paddingBottom="12dp"
+                    android:layout_marginBottom="8dp">
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/label_pattern_template"
-                android:textColor="#E65100"
-                android:textSize="13sp"
-                android:textStyle="bold"
-                android:layout_marginBottom="2dp" />
+                    <!-- Section label row -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:paddingTop="12dp"
+                        android:paddingBottom="8dp">
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/hint_pattern_template"
-                android:textColor="#9E9E9E"
-                android:textSize="12sp"
-                android:layout_marginBottom="3dp" />
+                        <View
+                            android:layout_width="3dp"
+                            android:layout_height="16dp"
+                            android:background="#E65100"
+                            android:layout_marginRight="12dp" />
 
-            <com.ldsa.myfintracker.ui.FlowLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="3dp">
-                <!-- Okabe-Ito colorblind-safe palette -->
-                <Button android:id="@+id/btnTokAmount"
-                    android:layout_width="wrap_content" android:layout_height="22dp"
-                    android:text="Amt" android:textSize="12sp" android:textColor="#FFFFFF"
-                    android:background="@drawable/bg_button_secondary"
-                    android:backgroundTint="#009E73"
-                    android:paddingLeft="8dp" android:paddingRight="8dp"
-                    android:minWidth="0dp" />
-                <Button android:id="@+id/btnTokMerchant"
-                    android:layout_width="wrap_content" android:layout_height="22dp"
-                    android:text="Merchant" android:textSize="12sp" android:textColor="#FFFFFF"
-                    android:background="@drawable/bg_button_secondary"
-                    android:backgroundTint="#0072B2"
-                    android:paddingLeft="8dp" android:paddingRight="8dp"
-                    android:minWidth="0dp" />
-                <Button android:id="@+id/btnTokCard"
-                    android:layout_width="wrap_content" android:layout_height="22dp"
-                    android:text="Card" android:textSize="12sp" android:textColor="#FFFFFF"
-                    android:background="@drawable/bg_button_secondary"
-                    android:backgroundTint="#0072B2"
-                    android:paddingLeft="8dp" android:paddingRight="8dp"
-                    android:minWidth="0dp" />
-                <Button android:id="@+id/btnTokAcNo"
-                    android:layout_width="wrap_content" android:layout_height="22dp"
-                    android:text="Ac.No" android:textSize="12sp" android:textColor="#FFFFFF"
-                    android:background="@drawable/bg_button_secondary"
-                    android:backgroundTint="#0072B2"
-                    android:paddingLeft="8dp" android:paddingRight="8dp"
-                    android:minWidth="0dp" />
-                <Button android:id="@+id/btnTokUpi"
-                    android:layout_width="wrap_content" android:layout_height="22dp"
-                    android:text="UPI" android:textSize="12sp" android:textColor="#FFFFFF"
-                    android:background="@drawable/bg_button_secondary"
-                    android:backgroundTint="#0072B2"
-                    android:paddingLeft="8dp" android:paddingRight="8dp"
-                    android:minWidth="0dp" />
-                <Button android:id="@+id/btnTokDate"
-                    android:layout_width="wrap_content" android:layout_height="22dp"
-                    android:text="Date" android:textSize="12sp" android:textColor="#FFFFFF"
-                    android:background="@drawable/bg_button_secondary"
-                    android:backgroundTint="#D55E00"
-                    android:paddingLeft="8dp" android:paddingRight="8dp"
-                    android:minWidth="0dp" />
-                <Button android:id="@+id/btnTokTime"
-                    android:layout_width="wrap_content" android:layout_height="22dp"
-                    android:text="Time" android:textSize="12sp" android:textColor="#FFFFFF"
-                    android:background="@drawable/bg_button_secondary"
-                    android:backgroundTint="#CC79A7"
-                    android:paddingLeft="8dp" android:paddingRight="8dp"
-                    android:minWidth="0dp" />
-                <Button android:id="@+id/btnTokBalance"
-                    android:layout_width="wrap_content" android:layout_height="22dp"
-                    android:text="Bal" android:textSize="12sp" android:textColor="#FFFFFF"
-                    android:background="@drawable/bg_button_secondary"
-                    android:backgroundTint="#56B4E9"
-                    android:paddingLeft="8dp" android:paddingRight="8dp"
-                    android:minWidth="0dp" />
-                <Button android:id="@+id/btnTokIgnore"
-                    android:layout_width="wrap_content" android:layout_height="22dp"
-                    android:text="Skip" android:textSize="12sp" android:textColor="#FFFFFF"
-                    android:background="@drawable/bg_button_secondary"
-                    android:backgroundTint="#999999"
-                    android:paddingLeft="8dp" android:paddingRight="8dp"
-                    android:minWidth="0dp" />
-            </com.ldsa.myfintracker.ui.FlowLayout>
+                        <TextView
+                            android:id="@+id/tvTransHeader"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/label_original_sms"
+                            android:textSize="11sp"
+                            android:textColor="#E65100"
+                            android:textStyle="bold" />
 
-            <EditText
-                android:id="@+id/etTemplate"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:minHeight="56dp"
-                android:gravity="top"
-                android:inputType="textMultiLine|textNoSuggestions"
-                android:textSize="14sp"
-                android:textColor="#212121"
-                android:background="#FAFAFA"
-                android:padding="6dp"
-                android:typeface="monospace"
-                android:visibility="gone" />
+                    </LinearLayout>
 
-            <Button
-                android:id="@+id/btnClearTags"
-                android:layout_width="wrap_content"
-                android:layout_height="24dp"
-                android:text="Clear tags"
-                android:textSize="11sp"
-                android:textColor="#757575"
-                android:background="@drawable/bg_button_secondary"
-                android:paddingLeft="10dp"
-                android:paddingRight="10dp"
-                android:minWidth="0dp"
-                android:layout_marginTop="2dp" />
+                    <!-- Transaction text: prominent + selectable -->
+                    <TextView
+                        android:id="@+id/tvSmsBody"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="56dp"
+                        android:text=""
+                        android:textColor="#212121"
+                        android:textSize="14sp"
+                        android:typeface="monospace"
+                        android:lineSpacingMultiplier="1.4"
+                        android:textIsSelectable="true"
+                        android:background="#FFF8E1"
+                        android:paddingLeft="14dp"
+                        android:paddingRight="14dp"
+                        android:paddingTop="12dp"
+                        android:paddingBottom="12dp"
+                        android:layout_marginBottom="10dp" />
 
-            <TextView
-                android:id="@+id/tvExtractPreview"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:background="#ECEFF1"
-                android:padding="6dp"
-                android:textSize="12sp"
-                android:textColor="#37474F"
-                android:typeface="monospace"
-                android:visibility="gone" />
+                    <!-- Token chips -->
+                    <com.ldsa.myfintracker.ui.FlowLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:paddingLeft="12dp"
+                        android:paddingRight="12dp"
+                        android:layout_marginBottom="8dp">
 
-            <TextView
-                android:id="@+id/tvPatternHint"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="3dp"
-                android:background="#FFF8E1"
-                android:padding="6dp"
-                android:textSize="12sp"
-                android:textColor="#E65100"
-                android:textStyle="italic"
-                android:visibility="gone" />
+                        <Button android:id="@+id/btnTokAmount"
+                            android:layout_width="wrap_content" android:layout_height="32dp"
+                            android:text="Amt" android:textSize="13sp" android:textColor="#FFFFFF"
+                            android:background="@drawable/bg_button_secondary"
+                            android:backgroundTint="#009E73"
+                            android:paddingLeft="12dp" android:paddingRight="12dp" android:minWidth="0dp" />
 
-        </LinearLayout>
+                        <Button android:id="@+id/btnTokMerchant"
+                            android:layout_width="wrap_content" android:layout_height="32dp"
+                            android:text="Merchant" android:textSize="13sp" android:textColor="#FFFFFF"
+                            android:background="@drawable/bg_button_secondary"
+                            android:backgroundTint="#0072B2"
+                            android:paddingLeft="12dp" android:paddingRight="12dp" android:minWidth="0dp" />
 
-        <!-- Expense details card -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:background="@drawable/bg_card"
-            android:elevation="2dp"
-            android:padding="12dp">
+                        <Button android:id="@+id/btnTokCard"
+                            android:layout_width="wrap_content" android:layout_height="32dp"
+                            android:text="Card" android:textSize="13sp" android:textColor="#FFFFFF"
+                            android:background="@drawable/bg_button_secondary"
+                            android:backgroundTint="#0072B2"
+                            android:paddingLeft="12dp" android:paddingRight="12dp" android:minWidth="0dp" />
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/label_expense_details"
-                android:textColor="#1976D2"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:layout_marginBottom="6dp" />
+                        <Button android:id="@+id/btnTokAcNo"
+                            android:layout_width="wrap_content" android:layout_height="32dp"
+                            android:text="Ac.No" android:textSize="13sp" android:textColor="#FFFFFF"
+                            android:background="@drawable/bg_button_secondary"
+                            android:backgroundTint="#0072B2"
+                            android:paddingLeft="12dp" android:paddingRight="12dp" android:minWidth="0dp" />
 
-            <!-- Date + Time row -->
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:orientation="horizontal" android:layout_marginBottom="6dp">
-                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
-                    android:layout_weight="1" android:orientation="vertical"
-                    android:layout_marginRight="8dp">
+                        <Button android:id="@+id/btnTokUpi"
+                            android:layout_width="wrap_content" android:layout_height="32dp"
+                            android:text="UPI" android:textSize="13sp" android:textColor="#FFFFFF"
+                            android:background="@drawable/bg_button_secondary"
+                            android:backgroundTint="#0072B2"
+                            android:paddingLeft="12dp" android:paddingRight="12dp" android:minWidth="0dp" />
+
+                        <Button android:id="@+id/btnTokDate"
+                            android:layout_width="wrap_content" android:layout_height="32dp"
+                            android:text="Date" android:textSize="13sp" android:textColor="#FFFFFF"
+                            android:background="@drawable/bg_button_secondary"
+                            android:backgroundTint="#D55E00"
+                            android:paddingLeft="12dp" android:paddingRight="12dp" android:minWidth="0dp" />
+
+                        <Button android:id="@+id/btnTokTime"
+                            android:layout_width="wrap_content" android:layout_height="32dp"
+                            android:text="Time" android:textSize="13sp" android:textColor="#FFFFFF"
+                            android:background="@drawable/bg_button_secondary"
+                            android:backgroundTint="#CC79A7"
+                            android:paddingLeft="12dp" android:paddingRight="12dp" android:minWidth="0dp" />
+
+                        <Button android:id="@+id/btnTokBalance"
+                            android:layout_width="wrap_content" android:layout_height="32dp"
+                            android:text="Bal" android:textSize="13sp" android:textColor="#FFFFFF"
+                            android:background="@drawable/bg_button_secondary"
+                            android:backgroundTint="#56B4E9"
+                            android:paddingLeft="12dp" android:paddingRight="12dp" android:minWidth="0dp" />
+
+                        <Button android:id="@+id/btnTokIgnore"
+                            android:layout_width="wrap_content" android:layout_height="32dp"
+                            android:text="Skip" android:textSize="13sp" android:textColor="#757575"
+                            android:background="@drawable/bg_button_secondary"
+                            android:backgroundTint="#E0E0E0"
+                            android:paddingLeft="12dp" android:paddingRight="12dp" android:minWidth="0dp" />
+
+                        <Button android:id="@+id/btnClearTags"
+                            android:layout_width="wrap_content" android:layout_height="32dp"
+                            android:text="✕ Clear" android:textSize="13sp" android:textColor="#9E9E9E"
+                            android:background="@drawable/bg_button_secondary"
+                            android:backgroundTint="#F5F5F5"
+                            android:paddingLeft="12dp" android:paddingRight="12dp" android:minWidth="0dp" />
+
+                    </com.ldsa.myfintracker.ui.FlowLayout>
+
+                    <!-- Hidden template field (code compat) -->
+                    <EditText
+                        android:id="@+id/etTemplate"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="56dp"
+                        android:gravity="top"
+                        android:inputType="textMultiLine|textNoSuggestions"
+                        android:textSize="13sp"
+                        android:textColor="#212121"
+                        android:background="#FAFAFA"
+                        android:padding="6dp"
+                        android:typeface="monospace"
+                        android:visibility="gone" />
+
+                    <!-- Extract preview -->
+                    <TextView
+                        android:id="@+id/tvExtractPreview"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="12dp"
+                        android:layout_marginRight="12dp"
+                        android:layout_marginTop="2dp"
+                        android:background="#ECEFF1"
+                        android:paddingLeft="12dp"
+                        android:paddingRight="12dp"
+                        android:paddingTop="8dp"
+                        android:paddingBottom="8dp"
+                        android:textSize="12sp"
+                        android:textColor="#37474F"
+                        android:typeface="monospace"
+                        android:visibility="gone" />
+
+                    <!-- Pattern hint -->
+                    <TextView
+                        android:id="@+id/tvPatternHint"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="12dp"
+                        android:layout_marginRight="12dp"
+                        android:layout_marginTop="4dp"
+                        android:background="#FFF8E1"
+                        android:paddingLeft="12dp"
+                        android:paddingRight="12dp"
+                        android:paddingTop="8dp"
+                        android:paddingBottom="8dp"
+                        android:textSize="12sp"
+                        android:textColor="#E65100"
+                        android:textStyle="italic"
+                        android:visibility="gone" />
+
+                </LinearLayout>
+
+                <!-- ── Expense Details card ── -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:background="@drawable/bg_card"
+                    android:elevation="2dp"
+                    android:padding="14dp">
+
+                    <!-- Date + Time -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="8dp">
+
+                        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                            android:layout_weight="1" android:orientation="vertical"
+                            android:layout_marginRight="6dp">
+                            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                                android:text="@string/label_date"
+                                android:textColor="#757575" android:textSize="12sp" />
+                            <EditText android:id="@+id/etDate"
+                                android:layout_width="match_parent" android:layout_height="40dp"
+                                android:inputType="none" android:focusable="false" android:clickable="true"
+                                android:textSize="14sp" android:textColor="#212121"
+                                android:background="@drawable/bg_edittext_outlined"
+                                android:paddingLeft="10dp" android:paddingRight="10dp" />
+                        </LinearLayout>
+
+                        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                            android:layout_weight="1" android:orientation="vertical">
+                            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                                android:text="@string/label_time"
+                                android:textColor="#757575" android:textSize="12sp" />
+                            <EditText android:id="@+id/etTime"
+                                android:layout_width="match_parent" android:layout_height="40dp"
+                                android:inputType="none" android:focusable="false" android:clickable="true"
+                                android:textSize="14sp" android:textColor="#212121"
+                                android:background="@drawable/bg_edittext_outlined"
+                                android:paddingLeft="10dp" android:paddingRight="10dp" />
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                    <!-- Txn Type + Online -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="8dp">
+
+                        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                            android:layout_weight="3" android:orientation="vertical"
+                            android:layout_marginRight="8dp">
+                            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                                android:text="@string/label_transaction_type"
+                                android:textColor="#757575" android:textSize="12sp" />
+                            <Spinner android:id="@+id/spinnerTxnType"
+                                android:layout_width="match_parent" android:layout_height="40dp" />
+                        </LinearLayout>
+
+                        <CheckBox android:id="@+id/cbOnline"
+                            android:layout_width="0dp" android:layout_height="wrap_content"
+                            android:layout_weight="2"
+                            android:text="@string/label_online"
+                            android:textSize="13sp" android:textColor="#212121" />
+
+                    </LinearLayout>
+
+                    <!-- Reason -->
                     <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                        android:text="@string/label_date" android:textColor="#757575" android:textSize="12sp" />
-                    <EditText android:id="@+id/etDate" android:layout_width="match_parent"
-                        android:layout_height="40dp" android:inputType="none"
-                        android:focusable="false" android:clickable="true"
+                        android:text="@string/label_reason" android:textColor="#757575" android:textSize="12sp" />
+                    <EditText android:id="@+id/etReason"
+                        android:layout_width="match_parent" android:layout_height="40dp"
+                        android:hint="@string/hint_reason"
+                        android:inputType="textCapSentences"
                         android:textSize="14sp" android:textColor="#212121"
                         android:background="@drawable/bg_edittext_outlined"
-                        android:paddingLeft="12dp" android:paddingRight="12dp" />
-                </LinearLayout>
-                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
-                    android:layout_weight="1" android:orientation="vertical">
+                        android:paddingLeft="10dp" android:paddingRight="10dp"
+                        android:layout_marginBottom="8dp" />
+
+                    <!-- Bank -->
                     <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                        android:text="@string/label_time" android:textColor="#757575" android:textSize="12sp" />
-                    <EditText android:id="@+id/etTime" android:layout_width="match_parent"
-                        android:layout_height="40dp" android:inputType="none"
-                        android:focusable="false" android:clickable="true"
+                        android:text="@string/label_bank" android:textColor="#757575" android:textSize="12sp" />
+                    <EditText android:id="@+id/etBank"
+                        android:layout_width="match_parent" android:layout_height="40dp"
+                        android:hint="@string/hint_bank"
+                        android:inputType="text"
                         android:textSize="14sp" android:textColor="#212121"
                         android:background="@drawable/bg_edittext_outlined"
-                        android:paddingLeft="12dp" android:paddingRight="12dp" />
+                        android:paddingLeft="10dp" android:paddingRight="10dp"
+                        android:layout_marginBottom="8dp" />
+
+                    <!-- Remarks -->
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:text="@string/label_remarks" android:textColor="#757575" android:textSize="12sp" />
+                    <EditText android:id="@+id/etRemarks"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="52dp"
+                        android:gravity="top"
+                        android:hint="@string/hint_remarks"
+                        android:inputType="textMultiLine|textCapSentences"
+                        android:textSize="14sp" android:textColor="#212121"
+                        android:background="@drawable/bg_edittext_outlined"
+                        android:paddingLeft="10dp" android:paddingRight="10dp"
+                        android:paddingTop="10dp" android:paddingBottom="10dp"
+                        android:layout_marginBottom="12dp" />
+
+                    <Button android:id="@+id/btnSave"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:text="@string/btn_save_and_create_pattern"
+                        android:textColor="#FFFFFF"
+                        android:textSize="15sp"
+                        android:background="@drawable/bg_button_primary" />
+
                 </LinearLayout>
+
             </LinearLayout>
-
-            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:text="@string/label_transaction_type" android:textColor="#757575" android:textSize="12sp" />
-            <Spinner android:id="@+id/spinnerTxnType"
-                android:layout_width="match_parent" android:layout_height="40dp"
-                android:layout_marginBottom="6dp" />
-
-            <CheckBox android:id="@+id/cbOnline" android:layout_width="match_parent"
-                android:layout_height="wrap_content" android:text="@string/label_online"
-                android:textSize="14sp" android:textColor="#212121"
-                android:layout_marginBottom="6dp" />
-
-            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:text="@string/label_reason" android:textColor="#757575" android:textSize="12sp" />
-            <EditText android:id="@+id/etReason" android:layout_width="match_parent"
-                android:layout_height="40dp" android:hint="@string/hint_reason"
-                android:inputType="textCapSentences" android:textSize="14sp"
-                android:textColor="#212121"
-                android:background="@drawable/bg_edittext_outlined"
-                android:paddingLeft="12dp" android:paddingRight="12dp"
-                android:layout_marginBottom="6dp" />
-
-            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:text="@string/label_bank" android:textColor="#757575" android:textSize="12sp" />
-            <EditText android:id="@+id/etBank" android:layout_width="match_parent"
-                android:layout_height="40dp" android:hint="@string/hint_bank"
-                android:inputType="text" android:textSize="14sp"
-                android:textColor="#212121"
-                android:background="@drawable/bg_edittext_outlined"
-                android:paddingLeft="12dp" android:paddingRight="12dp"
-                android:layout_marginBottom="6dp" />
-
-            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:text="@string/label_remarks" android:textColor="#757575" android:textSize="12sp" />
-            <EditText android:id="@+id/etRemarks" android:layout_width="match_parent"
-                android:layout_height="wrap_content" android:minHeight="52dp"
-                android:gravity="top" android:hint="@string/hint_remarks"
-                android:inputType="textMultiLine|textCapSentences"
-                android:textSize="14sp" android:textColor="#212121"
-                android:background="@drawable/bg_edittext_outlined"
-                android:paddingLeft="12dp" android:paddingRight="12dp"
-                android:paddingTop="10dp" android:paddingBottom="10dp"
-                android:layout_marginBottom="10dp" />
-
-            <Button android:id="@+id/btnSave"
-                android:layout_width="match_parent" android:layout_height="48dp"
-                android:text="@string/btn_save_and_create_pattern"
-                android:textColor="#FFFFFF" android:textSize="15sp"
-                android:background="@drawable/bg_button_primary" />
+            <!-- ══ END TAB 2 ══ -->
 
         </LinearLayout>
+    </ScrollView>
 
-    </LinearLayout>
-</ScrollView>
+</LinearLayout>
