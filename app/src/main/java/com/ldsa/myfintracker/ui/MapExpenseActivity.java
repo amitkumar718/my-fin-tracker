@@ -750,6 +750,11 @@ public class MapExpenseActivity extends Activity {
         mBtnPickFromPdf.setEnabled(false);
         TextView tvStatus = (TextView) findViewById(R.id.tvPdfLoadStatus);
         if (tvStatus != null) { tvStatus.setVisibility(android.view.View.VISIBLE); tvStatus.setText(R.string.status_reading_file); }
+        if (password == null && mPdfStatement.senderId > 0) {
+            String stored = getSharedPreferences("fin_prefs", MODE_PRIVATE)
+                .getString("pdf_pass_" + mPdfStatement.senderId, null);
+            if (stored != null && !stored.isEmpty()) password = stored;
+        }
         Uri uri = Uri.parse(mPdfStatement.uri);
         new PdfLoadThread(this, uri, mPdfStatement.isPdf, password,
                 mPdfStatement.senderId, new Handler(Looper.getMainLooper()), mDb).start();

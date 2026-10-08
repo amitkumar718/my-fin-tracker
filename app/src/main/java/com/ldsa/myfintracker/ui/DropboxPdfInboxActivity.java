@@ -35,6 +35,8 @@ import java.util.Locale;
 
 public class DropboxPdfInboxActivity extends Activity {
 
+    public static final String EXTRA_SENDER_ID = "sender_id";
+
     private static final String PREF_FILE  = DropboxPdfHelper.PREF_FILE;
     private static final String KEY_TOKEN  = DropboxPdfHelper.KEY_TOKEN;
 
@@ -50,6 +52,7 @@ public class DropboxPdfInboxActivity extends Activity {
     private ExpenseDatabase mDb;
     private DbxPdfAdapter   mAdapter;
     String                  mToken;
+    long                    mSenderId = -1L;
 
     List<DropboxPdfHelper.PdfEntry> mEntries = new ArrayList<DropboxPdfHelper.PdfEntry>();
     List<Boolean>                   mSelected = new ArrayList<Boolean>();
@@ -72,6 +75,7 @@ public class DropboxPdfInboxActivity extends Activity {
         setContentView(R.layout.activity_dropbox_pdf_inbox);
 
         mDb = ExpenseDatabase.getInstance(this);
+        mSenderId = getIntent().getLongExtra(EXTRA_SENDER_ID, -1L);
 
         mTvStatus    = (TextView)    findViewById(R.id.tvDbxPdfStatus);
         mTvEmpty     = (TextView)    findViewById(R.id.tvDbxPdfEmpty);
@@ -219,7 +223,7 @@ public class DropboxPdfInboxActivity extends Activity {
                          List<DropboxPdfHelper.PdfEntry> queue, int idx) {
         // Insert PdfStatement row — displayName encodes dropbox path for dedupe
         PdfStatement s = new PdfStatement();
-        s.senderId    = -1L;
+        s.senderId    = mSenderId;
         s.bankName    = null;
         s.isPdf       = true;
         s.statementPeriod = null;
