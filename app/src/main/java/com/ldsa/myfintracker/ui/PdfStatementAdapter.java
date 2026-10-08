@@ -1,6 +1,7 @@
 package com.ldsa.myfintracker.ui;
 
 import android.content.Context;
+import android.graphics.Typeface;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -50,7 +51,16 @@ public class PdfStatementAdapter extends BaseAdapter {
         tvMonth.setText(s.statementPeriod   != null ? s.statementPeriod    : "");
         tvFile.setText(s.displayName != null ? s.displayName : s.uri);
 
-        if (count > 0) {
+        boolean imported = s.id > 0;
+        if (imported) {
+            tvBank.setTextColor(0xFF212121);
+            tvBank.setTypeface(null, Typeface.BOLD);
+        } else {
+            tvBank.setTextColor(0xFF9E9E9E);
+            tvBank.setTypeface(null, Typeface.NORMAL);
+        }
+
+        if (imported) {
             tvCount.setText(count + " expenses");
             tvCount.setVisibility(View.VISIBLE);
         } else {

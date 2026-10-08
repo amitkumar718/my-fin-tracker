@@ -100,6 +100,10 @@ public class StatementScanActivity extends Activity {
         mListView.setVisibility(View.GONE);
 
         String cachedPw = PdfInboxActivity.sCachedPasswords.get(mStatement.uri);
+        if (cachedPw == null && mStatement.senderId > 0) {
+            cachedPw = getSharedPreferences("fin_prefs", MODE_PRIVATE)
+                .getString("pdf_pass_" + mStatement.senderId, null);
+        }
         new ScanThread(this, mStatement, cachedPw, mDb, mHandler).start();
     }
 

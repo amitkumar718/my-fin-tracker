@@ -87,6 +87,7 @@ public class BankConfigActivity extends Activity {
         mBtnAddMorePaths.setOnClickListener(new AddMorePathsClickListener(this));
         ((TextView) findViewById(R.id.btnSetPassword)).setOnClickListener(new SetPasswordClickListener(this));
         ((Button) findViewById(R.id.btnAddPdfPattern)).setOnClickListener(new AddPdfPatternClickListener(this));
+        ((TextView) findViewById(R.id.linkPdfInbox)).setOnClickListener(new PdfInboxLinkClickListener(this));
         mBtnDeleteBank.setOnClickListener(new DeleteBankClickListener(this));
 
         if (mSenderId >= 0) {
@@ -692,6 +693,16 @@ public class BankConfigActivity extends Activity {
         private final BankConfigActivity mA;
         AddPdfPatternClickListener(BankConfigActivity a) { mA = a; }
         public void onClick(View v) { mA.addPdfPattern(); }
+    }
+
+    static class PdfInboxLinkClickListener implements View.OnClickListener {
+        private final BankConfigActivity mA;
+        PdfInboxLinkClickListener(BankConfigActivity a) { mA = a; }
+        public void onClick(View v) {
+            android.content.Intent i = new android.content.Intent(mA, PdfInboxActivity.class);
+            i.putExtra(PdfInboxActivity.EXTRA_SENDER_ID, mA.mSenderId);
+            mA.startActivity(i);
+        }
     }
 
     static class SavePasswordListener implements DialogInterface.OnClickListener {

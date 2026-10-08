@@ -424,6 +424,19 @@
                     android:textColor="#BDBDBD"
                     android:textSize="10sp" />
 
+                <TextView
+                    android:id="@+id/linkPdfInbox"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="PDF Inbox →"
+                    android:textColor="#1976D2"
+                    android:textSize="12sp"
+                    android:background="?android:attr/selectableItemBackground"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="4dp"
+                    android:paddingRight="8dp" />
+
             </LinearLayout>
 
         </LinearLayout>

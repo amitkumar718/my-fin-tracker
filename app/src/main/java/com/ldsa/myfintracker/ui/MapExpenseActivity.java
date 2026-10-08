@@ -582,6 +582,7 @@ public class MapExpenseActivity extends Activity {
         expense.transactionType = mTxnType;
         expense.remarks         = mEtRemarks.getText().toString().trim();
         expense.patternId       = patternId;
+        expense.pdfStatementId  = isPdfMode ? mStatementId : -1L;
         expense.createdAt       = System.currentTimeMillis();
         expense.source          = isPdfMode ? "pdf" : "sms";
         mDb.insertExpense(expense);

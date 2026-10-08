@@ -25,7 +25,9 @@
             android:layout_weight="1"
             android:textSize="14sp"
             android:textColor="#212121"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:maxLines="1"
+            android:ellipsize="end" />
 
         <TextView
             android:id="@+id/tvStmtMonth"
@@ -50,7 +52,9 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:textSize="11sp"
-            android:textColor="#757575" />
+            android:textColor="#757575"
+            android:maxLines="1"
+            android:ellipsize="middle" />
 
         <TextView
             android:id="@+id/tvStmtCount"
