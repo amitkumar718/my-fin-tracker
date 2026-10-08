@@ -242,6 +242,33 @@
     <string name="btn_edit_template">Edit / re-setup template</string>
     <string name="error_statement_not_found">Statement not found</string>
 
+    <!-- Banks config -->
+    <string name="title_banks">Banks</string>
+    <string name="btn_add_bank">+ Add Bank</string>
+    <string name="label_banks_patterns">Banks &amp; Patterns</string>
+    <string name="hint_bank_name">Bank / wallet name</string>
+    <string name="hint_sms_sender_pattern">SMS sender pattern (e.g. HDFCBK)</string>
+    <string name="label_sms_section">SMS</string>
+    <string name="label_pdf_section">PDF</string>
+    <string name="label_sender_id_section">Sender ID</string>
+    <string name="btn_add_pdf">+ Add PDF</string>
+    <string name="btn_check_dropbox">Dropbox</string>
+    <string name="label_pdf_password">Password</string>
+    <string name="btn_set_password">Set</string>
+    <string name="pdf_password_not_set">not set</string>
+    <string name="msg_bank_saved">Bank saved</string>
+    <string name="msg_bank_deleted">Bank deleted</string>
+    <string name="confirm_delete_bank">Delete this bank and all its patterns?</string>
+    <string name="banks_empty">No banks configured yet.\nTap + Add to create one.</string>
+    <string name="label_sms_patterns_section">SMS Patterns</string>
+    <string name="label_pdf_patterns_section">PDF Patterns</string>
+    <string name="no_sms_patterns">No SMS patterns yet.</string>
+    <string name="no_pdf_patterns_bank">No PDF patterns yet.</string>
+    <string name="msg_save_bank_first">Save the bank identity first</string>
+    <string name="title_bank_config">Bank Config</string>
+    <string name="btn_delete_bank">Delete</string>
+    <string name="pdf_password_dialog_msg">Password stored for this bank\'s PDFs. Applied automatically when opening encrypted files.</string>
+
     <string-array name="landing_page_labels">
         <item>Expenses (default)</item>
         <item>SMS Inbox</item>

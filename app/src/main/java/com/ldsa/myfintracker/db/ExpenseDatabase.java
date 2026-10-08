@@ -634,6 +634,13 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
         getWritableDatabase().delete(T_PDF_STMT, PS_ID + "=?", new String[]{String.valueOf(id)});
     }
 
+    public List<PdfStatement> getPdfStatementsBySender(long senderId) {
+        Cursor c = getReadableDatabase().query(T_PDF_STMT, null,
+            PS_SENDER + "=?", new String[]{String.valueOf(senderId)},
+            null, null, PS_CREATED + " DESC");
+        return pdfStmtCursorToList(c);
+    }
+
     public List<PdfStatement> getAllPdfStatements() {
         Cursor c = getReadableDatabase().query(T_PDF_STMT, null,
             null, null, null, null, PS_CREATED + " DESC");

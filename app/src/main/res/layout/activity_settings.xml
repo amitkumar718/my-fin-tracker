@@ -13,7 +13,7 @@
         android:paddingTop="12dp"
         android:paddingBottom="24dp">
 
-        <!-- Landing Page section -->
+        <!-- Landing Page -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -21,15 +21,16 @@
             android:background="@drawable/bg_card"
             android:elevation="2dp"
             android:padding="16dp"
-            android:layout_marginBottom="16dp">
+            android:layout_marginBottom="12dp">
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/label_landing_page"
                 android:textColor="#1976D2"
-                android:textSize="13sp"
+                android:textSize="11sp"
                 android:textStyle="bold"
+                android:letterSpacing="0.08"
                 android:layout_marginBottom="10dp" />
 
             <Spinner
@@ -39,118 +40,51 @@
 
         </LinearLayout>
 
-        <!-- SMS Senders section -->
+        <!-- Banks & Patterns -->
         <LinearLayout
+            android:id="@+id/rowBanks"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
+            android:orientation="horizontal"
             android:background="@drawable/bg_card"
             android:elevation="2dp"
-            android:padding="16dp">
+            android:paddingLeft="16dp"
+            android:paddingRight="12dp"
+            android:paddingTop="14dp"
+            android:paddingBottom="14dp"
+            android:gravity="center_vertical">
 
             <LinearLayout
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:layout_marginBottom="12dp">
+                android:layout_weight="1"
+                android:orientation="vertical">
 
                 <TextView
-                    android:layout_width="0dp"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/label_sms_senders"
-                    android:textColor="#1976D2"
-                    android:textSize="13sp"
+                    android:text="@string/label_banks_patterns"
+                    android:textColor="#212121"
+                    android:textSize="15sp"
                     android:textStyle="bold" />
 
-                <Button
-                    android:id="@+id/btnAddSender"
-                    android:layout_width="wrap_content"
-                    android:layout_height="36dp"
-                    android:text="@string/btn_add_sender"
-                    android:textColor="#FFFFFF"
-                    android:textSize="12sp"
-                    android:paddingLeft="14dp"
-                    android:paddingRight="14dp"
-                    android:background="@drawable/bg_button_primary" />
+                <TextView
+                    android:id="@+id/tvBanksCount"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:textColor="#757575"
+                    android:textSize="12sp" />
 
             </LinearLayout>
 
             <TextView
-                android:id="@+id/tvNoSenders"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/empty_senders"
-                android:textColor="#9E9E9E"
-                android:textSize="13sp"
-                android:gravity="center"
-                android:paddingTop="8dp"
-                android:paddingBottom="8dp"
-                android:visibility="visible" />
-
-            <LinearLayout
-                android:id="@+id/containerSenders"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:visibility="gone" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Long-press a sender to delete it"
-                android:textColor="#9E9E9E"
-                android:textSize="11sp"
-                android:layout_marginTop="8dp" />
-
-        </LinearLayout>
-
-        <!-- PDF Patterns section -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:background="@drawable/bg_card"
-            android:elevation="2dp"
-            android:padding="16dp"
-            android:layout_marginTop="16dp">
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/label_pdf_patterns"
-                android:textColor="#1976D2"
-                android:textSize="13sp"
-                android:textStyle="bold"
-                android:layout_marginBottom="12dp" />
-
-            <TextView
-                android:id="@+id/tvNoPdfPatterns"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/pdf_no_patterns"
-                android:textColor="#9E9E9E"
-                android:textSize="13sp"
-                android:gravity="center"
-                android:paddingTop="4dp"
-                android:paddingBottom="4dp"
-                android:visibility="visible" />
-
-            <LinearLayout
-                android:id="@+id/containerPdfPatterns"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:visibility="gone" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Long-press a pattern to delete it"
-                android:textColor="#9E9E9E"
-                android:textSize="11sp"
-                android:layout_marginTop="8dp" />
+                android:text="›"
+                android:textColor="#BDBDBD"
+                android:textSize="22sp"
+                android:paddingLeft="8dp" />
 
         </LinearLayout>
 
