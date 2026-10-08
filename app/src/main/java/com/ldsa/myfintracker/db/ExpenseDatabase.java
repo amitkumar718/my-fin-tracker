@@ -20,7 +20,7 @@ import java.util.regex.Pattern;
 public class ExpenseDatabase extends SQLiteOpenHelper {
 
     private static final String DB_NAME    = "fin_tracker.db";
-    private static final int    DB_VERSION = 14;
+    private static final int    DB_VERSION = 15;
 
     // ── expenses ──────────────────────────────────────────────────
     static final String T_EXPENSE    = "expenses";
@@ -89,6 +89,13 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
     static final String PS_MONTH_LINE  = "month_orig_line";
 
     // ── pdf_field_patterns ────────────────────────────────────────
+    // ── pdf sources ───────────────────────────────────────────────
+    static final String T_PDF_SOURCE   = "pdf_sources";
+    static final String SRC_ID         = "_id";
+    static final String SRC_SENDER     = "sender_id";
+    static final String SRC_PATH       = "path";
+    static final String SRC_IS_DROPBOX = "is_dropbox";
+
     static final String T_PDF_FIELD_PAT = "pdf_field_patterns";
     static final String PFP_ID          = "_id";
     static final String PFP_TYPE        = "field_type";
@@ -195,6 +202,12 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
             PFP_PATTERN + " TEXT NOT NULL," +
             PFP_CREATED + " INTEGER NOT NULL" +
         ")");
+        db.execSQL("CREATE TABLE " + T_PDF_SOURCE + " (" +
+            SRC_ID         + " INTEGER PRIMARY KEY AUTOINCREMENT," +
+            SRC_SENDER     + " INTEGER NOT NULL," +
+            SRC_PATH       + " TEXT NOT NULL," +
+            SRC_IS_DROPBOX + " INTEGER NOT NULL DEFAULT 0" +
+        ")");
     }
 
     @Override
@@ -264,6 +277,14 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
                 db.execSQL("ALTER TABLE " + T_PDF_STMT +
                     " ADD COLUMN " + PS_MONTH_LINE + " TEXT");
             } catch (Exception ignored) {}
+        }
+        if (oldVersion < 15) {
+            db.execSQL("CREATE TABLE IF NOT EXISTS " + T_PDF_SOURCE + " (" +
+                SRC_ID         + " INTEGER PRIMARY KEY AUTOINCREMENT," +
+                SRC_SENDER     + " INTEGER NOT NULL," +
+                SRC_PATH       + " TEXT NOT NULL," +
+                SRC_IS_DROPBOX + " INTEGER NOT NULL DEFAULT 0" +
+            ")");
         }
     }
 
@@ -632,6 +653,48 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
 
     public void deletePdfStatement(long id) {
         getWritableDatabase().delete(T_PDF_STMT, PS_ID + "=?", new String[]{String.valueOf(id)});
+    }
+
+    // ==================== PDF SOURCES ====================
+
+    public long insertPdfSource(long senderId, String path, boolean isDropbox) {
+        android.content.ContentValues cv = new android.content.ContentValues();
+        cv.put(SRC_SENDER,     senderId);
+        cv.put(SRC_PATH,       path);
+        cv.put(SRC_IS_DROPBOX, isDropbox ? 1 : 0);
+        return getWritableDatabase().insert(T_PDF_SOURCE, null, cv);
+    }
+
+    public List<PdfSource> getPdfSourcesBySender(long senderId) {
+        Cursor c = getReadableDatabase().query(T_PDF_SOURCE, null,
+            SRC_SENDER + "=?", new String[]{String.valueOf(senderId)},
+            null, null, SRC_ID + " ASC");
+        List<PdfSource> list = new java.util.ArrayList<PdfSource>();
+        if (c == null) return list;
+        try {
+            while (c.moveToNext()) {
+                PdfSource s = new PdfSource();
+                s.id         = c.getLong(c.getColumnIndexOrThrow(SRC_ID));
+                s.senderId   = c.getLong(c.getColumnIndexOrThrow(SRC_SENDER));
+                s.path       = c.getString(c.getColumnIndexOrThrow(SRC_PATH));
+                s.isDropbox  = c.getInt(c.getColumnIndexOrThrow(SRC_IS_DROPBOX)) == 1;
+                list.add(s);
+            }
+        } finally { c.close(); }
+        return list;
+    }
+
+    public void updatePdfSource(long id, String path, boolean isDropbox) {
+        android.content.ContentValues cv = new android.content.ContentValues();
+        cv.put(SRC_PATH,       path);
+        cv.put(SRC_IS_DROPBOX, isDropbox ? 1 : 0);
+        getWritableDatabase().update(T_PDF_SOURCE, cv, SRC_ID + "=?",
+            new String[]{String.valueOf(id)});
+    }
+
+    public void deletePdfSource(long id) {
+        getWritableDatabase().delete(T_PDF_SOURCE, SRC_ID + "=?",
+            new String[]{String.valueOf(id)});
     }
 
     public List<PdfStatement> getPdfStatementsBySender(long senderId) {
