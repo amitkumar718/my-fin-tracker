@@ -20,7 +20,7 @@ import java.util.regex.Pattern;
 public class ExpenseDatabase extends SQLiteOpenHelper {
 
     private static final String DB_NAME    = "fin_tracker.db";
-    private static final int    DB_VERSION = 15;
+    private static final int    DB_VERSION = 16;
 
     // ── expenses ──────────────────────────────────────────────────
     static final String T_EXPENSE    = "expenses";
@@ -65,7 +65,9 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
     static final String P_ACCT_GRP   = "account_group";
     static final String P_DATE_GRP   = "date_group";
     static final String P_TIME_GRP   = "time_group";
-    static final String P_IS_PDF     = "is_pdf";
+    static final String P_IS_PDF        = "is_pdf";
+    static final String P_BANK_NAME_PAT = "bank_name_pat";
+    static final String P_PERIOD_PAT    = "period_pat";
 
     // ── trips ─────────────────────────────────────────────────────
     static final String T_TRIP      = "trips";
@@ -164,7 +166,9 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
             P_ACCT_GRP   + " INTEGER NOT NULL DEFAULT -1," +
             P_DATE_GRP   + " INTEGER NOT NULL DEFAULT -1," +
             P_TIME_GRP   + " INTEGER NOT NULL DEFAULT -1," +
-            P_IS_PDF     + " INTEGER NOT NULL DEFAULT 0" +
+            P_IS_PDF        + " INTEGER NOT NULL DEFAULT 0," +
+            P_BANK_NAME_PAT + " TEXT," +
+            P_PERIOD_PAT    + " TEXT" +
         ")");
 
         db.execSQL("CREATE TABLE " + T_PDF_STMT + " (" +
@@ -285,6 +289,10 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
                 SRC_PATH       + " TEXT NOT NULL," +
                 SRC_IS_DROPBOX + " INTEGER NOT NULL DEFAULT 0" +
             ")");
+        }
+        if (oldVersion < 16) {
+            try { db.execSQL("ALTER TABLE " + T_PATTERN + " ADD COLUMN " + P_BANK_NAME_PAT + " TEXT"); } catch (Exception ignored) {}
+            try { db.execSQL("ALTER TABLE " + T_PATTERN + " ADD COLUMN " + P_PERIOD_PAT    + " TEXT"); } catch (Exception ignored) {}
         }
     }
 
@@ -884,6 +892,8 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
         p.dateGroup       = c.getInt(c.getColumnIndexOrThrow(P_DATE_GRP));
         p.timeGroup       = c.getInt(c.getColumnIndexOrThrow(P_TIME_GRP));
         p.isPdf           = c.getInt(c.getColumnIndexOrThrow(P_IS_PDF)) != 0;
+        p.bankNamePat     = c.getString(c.getColumnIndexOrThrow(P_BANK_NAME_PAT));
+        p.periodPat       = c.getString(c.getColumnIndexOrThrow(P_PERIOD_PAT));
         return p;
     }
 
@@ -901,7 +911,9 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
         cv.put(P_ACCT_GRP,   p.accountGroup);
         cv.put(P_DATE_GRP,   p.dateGroup);
         cv.put(P_TIME_GRP,   p.timeGroup);
-        cv.put(P_IS_PDF,     p.isPdf ? 1 : 0);
+        cv.put(P_IS_PDF,        p.isPdf ? 1 : 0);
+        cv.put(P_BANK_NAME_PAT, p.bankNamePat);
+        cv.put(P_PERIOD_PAT,    p.periodPat);
         return cv;
     }
 

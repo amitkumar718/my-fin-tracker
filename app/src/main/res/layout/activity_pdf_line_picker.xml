@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#F0F4F8">
+
+    <!-- Header -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="#1976D2"
+        android:gravity="center_vertical"
+        android:paddingLeft="8dp"
+        android:paddingRight="8dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp">
+
+        <TextView
+            android:id="@+id/btnBack"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="←"
+            android:textColor="#FFFFFF"
+            android:textSize="20sp"
+            android:paddingLeft="4dp"
+            android:paddingRight="12dp" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/title_pick_pdf_lines"
+            android:textColor="#FFFFFF"
+            android:textSize="17sp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/btnDone"
+            android:layout_width="wrap_content"
+            android:layout_height="32dp"
+            android:text="@string/btn_done"
+            android:textColor="#1976D2"
+            android:textSize="13sp"
+            android:background="@drawable/bg_card"
+            android:paddingLeft="12dp"
+            android:paddingRight="12dp"
+            android:enabled="false" />
+
+    </LinearLayout>
+
+    <!-- Assignment summary -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="#FFFFFF"
+        android:paddingLeft="12dp"
+        android:paddingRight="12dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp">
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:gravity="center_vertical"
+            android:layout_marginBottom="4dp">
+            <View android:layout_width="3dp" android:layout_height="14dp" android:background="#1976D2" android:layout_marginRight="8dp" />
+            <TextView android:layout_width="52dp" android:layout_height="wrap_content"
+                android:text="@string/label_bank_line" android:textColor="#757575" android:textSize="11sp" android:textStyle="bold" />
+            <TextView android:id="@+id/tvBankLinePreview"
+                android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                android:text="@string/hint_not_set" android:textColor="#9E9E9E" android:textSize="11sp"
+                android:fontFamily="monospace" android:singleLine="true" android:ellipsize="end" />
+        </LinearLayout>
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:gravity="center_vertical"
+            android:layout_marginBottom="4dp">
+            <View android:layout_width="3dp" android:layout_height="14dp" android:background="#D55E00" android:layout_marginRight="8dp" />
+            <TextView android:layout_width="52dp" android:layout_height="wrap_content"
+                android:text="@string/label_period_line" android:textColor="#757575" android:textSize="11sp" android:textStyle="bold" />
+            <TextView android:id="@+id/tvPeriodLinePreview"
+                android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                android:text="@string/hint_not_set" android:textColor="#9E9E9E" android:textSize="11sp"
+                android:fontFamily="monospace" android:singleLine="true" android:ellipsize="end" />
+        </LinearLayout>
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:gravity="center_vertical">
+            <View android:layout_width="3dp" android:layout_height="14dp" android:background="#009E73" android:layout_marginRight="8dp" />
+            <TextView android:layout_width="52dp" android:layout_height="wrap_content"
+                android:text="@string/label_trans_line" android:textColor="#757575" android:textSize="11sp" android:textStyle="bold" />
+            <TextView android:id="@+id/tvTransLinePreview"
+                android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                android:text="@string/hint_not_set" android:textColor="#9E9E9E" android:textSize="11sp"
+                android:fontFamily="monospace" android:singleLine="true" android:ellipsize="end" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- Status (shown while loading) -->
+    <TextView
+        android:id="@+id/tvPickerStatus"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/msg_pdf_loading"
+        android:textColor="#757575"
+        android:textSize="13sp"
+        android:gravity="center"
+        android:padding="16dp"
+        android:visibility="visible" />
+
+    <!-- Lines list -->
+    <ListView
+        android:id="@+id/listPdfLines"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="#FFFFFF"
+        android:divider="#F0F4F8"
+        android:dividerHeight="1dp" />
+
+</LinearLayout>

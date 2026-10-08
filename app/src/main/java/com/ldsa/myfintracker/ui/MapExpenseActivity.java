@@ -452,6 +452,11 @@ public class MapExpenseActivity extends Activity {
         String template = mEtTemplate.getText().toString();
         ExtractionPattern pattern = buildPatternFromTemplate(template);
 
+        if (mStatementId >= 0) {
+            if (mEtBankPattern  != null) pattern.bankNamePat = mEtBankPattern.getText().toString().trim();
+            if (mEtMonthPattern != null) pattern.periodPat   = mEtMonthPattern.getText().toString().trim();
+        }
+
         if (pattern.amountGroup < 0) {
             Toast.makeText(this, R.string.error_template_needs_amount, Toast.LENGTH_SHORT).show();
             return;
@@ -696,9 +701,15 @@ public class MapExpenseActivity extends Activity {
         mEtMonthPattern        = (EditText) findViewById(R.id.etMonthPattern);
         mTvMonthPatternPreview = (TextView) findViewById(R.id.tvMonthPatternPreview);
 
-        // Pre-fill stored patterns (before TextWatcher so no spurious DB writes)
-        String storedBankPat  = mDb.getPdfFieldPattern("bank");
-        String storedMonthPat = mDb.getPdfFieldPattern("month");
+        // Pre-fill stored patterns — prefer per-pattern values, fall back to global store
+        String storedBankPat  = (mCurrentPattern != null && mCurrentPattern.bankNamePat != null
+                                  && !mCurrentPattern.bankNamePat.isEmpty())
+                                ? mCurrentPattern.bankNamePat
+                                : mDb.getPdfFieldPattern("bank");
+        String storedMonthPat = (mCurrentPattern != null && mCurrentPattern.periodPat != null
+                                  && !mCurrentPattern.periodPat.isEmpty())
+                                ? mCurrentPattern.periodPat
+                                : mDb.getPdfFieldPattern("month");
         if (storedBankPat  != null) mEtBankPattern.setText(storedBankPat);
         if (storedMonthPat != null) mEtMonthPattern.setText(storedMonthPat);
 

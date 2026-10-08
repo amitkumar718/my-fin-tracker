@@ -16,6 +16,8 @@ public class ExtractionPattern {
     public long   id;
     public long   senderId;
     public String name;
+    public String bankNamePat;  // regex/literal to identify bank name line in PDF
+    public String periodPat;    // regex/literal to identify statement period line in PDF
     public String transactionType;
     public String templateText;    // editable SMS template with tokens
     public String templateRegex;   // single combined regex built from templateText

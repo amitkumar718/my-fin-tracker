@@ -103,10 +103,17 @@ public class BankConfigActivity extends Activity {
         if (mSenderId >= 0) {
             reloadSenderIds();
             reloadSmsPatterns();
+            saveAllSourceRows(); // flush any in-progress edits before reload wipes them
             reloadPdfSources();
             reloadPdfPatterns();
             updatePasswordDisplay();
         }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        saveAllSourceRows();
     }
 
     private void populate() {
@@ -351,13 +358,15 @@ public class BankConfigActivity extends Activity {
             Toast.makeText(this, R.string.msg_save_bank_first, Toast.LENGTH_SHORT).show();
             return;
         }
-        pickPdf();
+        Intent i = new Intent(this, AddPdfPatternActivity.class);
+        i.putExtra(AddPdfPatternActivity.EXTRA_SENDER_ID, mSenderId);
+        startActivity(i);
     }
 
     void openPdfPattern(long patternId) {
-        Intent i = new Intent(this, SmsExtractConfigActivity.class);
-        i.putExtra(SmsExtractConfigActivity.EXTRA_SENDER_ID, mSenderId);
-        i.putExtra(SmsExtractConfigActivity.EXTRA_PATTERN_ID, patternId);
+        Intent i = new Intent(this, AddPdfPatternActivity.class);
+        i.putExtra(AddPdfPatternActivity.EXTRA_SENDER_ID,  mSenderId);
+        i.putExtra(AddPdfPatternActivity.EXTRA_PATTERN_ID, patternId);
         startActivity(i);
     }
 
@@ -461,6 +470,26 @@ public class BankConfigActivity extends Activity {
     }
 
     // ── PDF Sources ───────────────────────────────────────────────────────────
+
+    void saveAllSourceRows() {
+        if (mSenderId < 0) return;
+        for (int i = 0; i < mContainerPdfSources.getChildCount(); i++) {
+            View row = mContainerPdfSources.getChildAt(i);
+            EditText et = (EditText) row.findViewById(R.id.etSourcePath);
+            CheckBox cb = (CheckBox) row.findViewById(R.id.cbDropbox);
+            if (et == null) continue;
+            String path = et.getText().toString().trim();
+            if (path.isEmpty()) continue;
+            long id = (Long) row.getTag();
+            if (id < 0) {
+                long newId = mDb.insertPdfSource(mSenderId, path, cb != null && cb.isChecked());
+                row.setTag(Long.valueOf(newId));
+                mBtnAddMorePaths.setVisibility(View.VISIBLE);
+            } else {
+                mDb.updatePdfSource(id, path, cb != null && cb.isChecked());
+            }
+        }
+    }
 
     void reloadPdfSources() {
         if (mSenderId < 0) return;
