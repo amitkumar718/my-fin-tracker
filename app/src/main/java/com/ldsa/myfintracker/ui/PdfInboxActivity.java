@@ -544,10 +544,12 @@ public class PdfInboxActivity extends Activity {
             mA.onDropboxEntries(mBankName, entries);
         }
         public void onError(String message) {
+            android.util.Log.w("myfin.dropbox", "list error: " + message);
             if (mA.isFinishing()) return;
             Toast.makeText(mA, "Dropbox: " + message, Toast.LENGTH_SHORT).show();
         }
         public void onAuthFailed() {
+            android.util.Log.w("myfin.dropbox", "list auth failed");
             if (mA.isFinishing()) return;
             Toast.makeText(mA, "Dropbox auth failed", Toast.LENGTH_SHORT).show();
         }

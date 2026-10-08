@@ -128,8 +128,8 @@ public class DropboxPdfHelper {
                 mMain.post(new ListAuthRunnable(mCallback));
             } catch (Exception e) {
                 final String msg = e.getMessage() != null ? e.getMessage() : "List failed";
-                Log.e(TAG, "list exception: " + msg, e);
-                mMain.post(new ListErrorRunnable(mCallback, msg));
+                Log.e(TAG, "list exception for path '" + mRoot + "': " + msg, e);
+                mMain.post(new ListErrorRunnable(mCallback, "path '" + mRoot + "': " + msg));
             }
         }
 
