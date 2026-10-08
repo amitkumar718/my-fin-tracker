@@ -12,11 +12,17 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import android.os.Handler;
+import android.os.Looper;
+
 import com.ldsa.myfintracker.R;
 import com.ldsa.myfintracker.db.ExpenseDatabase;
 import com.ldsa.myfintracker.db.ExtractionPattern;
 import com.ldsa.myfintracker.db.PdfSource;
+import com.ldsa.myfintracker.pdf.PdfDecryptor;
+import com.ldsa.myfintracker.pdf.PdfTextExtractor;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -48,9 +54,11 @@ public class AddPdfPatternActivity extends Activity {
         TOK_NAME, TOK_MONTH, TOK_YEAR
     };
 
-    private static final int REQ_PICK_LOCAL   = 601;
-    private static final int REQ_PICK_DROPBOX = 602;
-    private static final int REQ_PICK_LINES   = 603;
+    private static final int REQ_PICK_LOCAL      = 601;
+    private static final int REQ_PICK_DROPBOX    = 602;
+    private static final int REQ_PICK_LINES      = 603;
+    private static final int REQ_TEST_PICK_LOCAL   = 611;
+    private static final int REQ_TEST_PICK_DROPBOX = 612;
 
     long             mSenderId  = -1L;
     long             mPatternId = -1L;
@@ -60,10 +68,6 @@ public class AddPdfPatternActivity extends Activity {
     EditText mEtBankPat;
     EditText mEtPeriodPat;
     EditText mEtTransPat;
-
-    String mRawBankPat   = "";
-    String mRawPeriodPat = "";
-    String mRawTransPat  = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,9 +84,14 @@ public class AddPdfPatternActivity extends Activity {
         mEtPeriodPat   = (EditText) findViewById(R.id.etPeriodPat);
         mEtTransPat    = (EditText) findViewById(R.id.etTransPat);
 
+        mEtBankPat.addTextChangedListener(new ChipColorWatcher());
+        mEtPeriodPat.addTextChangedListener(new ChipColorWatcher());
+        mEtTransPat.addTextChangedListener(new ChipColorWatcher());
+
         ((TextView) findViewById(R.id.btnBack)).setOnClickListener(new BackListener(this));
         ((Button) findViewById(R.id.btnPickFromStatement)).setOnClickListener(new PickListener(this));
         ((Button) findViewById(R.id.btnSavePattern)).setOnClickListener(new SaveListener(this));
+        ((Button) findViewById(R.id.btnTestPattern)).setOnClickListener(new TestListener(this));
 
         // Bank chips
         wireFieldChip(R.id.btnTokNameBank,    mEtBankPat,   TOK_NAME);
@@ -111,96 +120,99 @@ public class AddPdfPatternActivity extends Activity {
     }
 
     void insertInto(EditText field, String token) {
-        String raw = getRaw(field);
         int start = Math.max(field.getSelectionStart(), 0);
         int end   = Math.max(field.getSelectionEnd(), 0);
         if (start > end) { int t = start; start = end; end = t; }
-        if (end > raw.length()) end = raw.length();
-        raw = raw.substring(0, start) + token + raw.substring(end);
-        setRaw(field, raw);
-        renderField(field);
+        android.text.Editable e = field.getText();
+        if (end > e.length()) end = e.length();
+        e.replace(start, end, token);
     }
 
-    String getRaw(EditText field) {
-        if (field == mEtBankPat)   return mRawBankPat;
-        if (field == mEtPeriodPat) return mRawPeriodPat;
-        return mRawTransPat;
+    static class ChipColorWatcher implements android.text.TextWatcher {
+        public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+        public void onTextChanged(CharSequence s, int start, int before, int count) {}
+        public void afterTextChanged(android.text.Editable s) {
+            for (android.text.style.BackgroundColorSpan sp :
+                 s.getSpans(0, s.length(), android.text.style.BackgroundColorSpan.class)) {
+                s.removeSpan(sp);
+            }
+            for (android.text.style.ForegroundColorSpan sp :
+                 s.getSpans(0, s.length(), android.text.style.ForegroundColorSpan.class)) {
+                s.removeSpan(sp);
+            }
+            String raw = s.toString();
+            int pos = 0;
+            while (pos < raw.length()) {
+                String found = null;
+                for (String tok : ALL_TOKENS) {
+                    if (raw.startsWith(tok, pos)) { found = tok; break; }
+                }
+                if (found != null) {
+                    int color = tokenColor(found);
+                    s.setSpan(new android.text.style.BackgroundColorSpan(color),
+                        pos, pos + found.length(),
+                        android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    s.setSpan(new android.text.style.ForegroundColorSpan(0xFFFFFFFF),
+                        pos, pos + found.length(),
+                        android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    pos += found.length();
+                } else {
+                    pos++;
+                }
+            }
+        }
     }
 
-    void setRaw(EditText field, String raw) {
-        if (field == mEtBankPat)        mRawBankPat   = raw;
-        else if (field == mEtPeriodPat) mRawPeriodPat = raw;
-        else                            mRawTransPat  = raw;
-    }
-
-    void renderField(EditText field) {
-        if (field == mEtBankPat)
-            field.setText(renderPatternAsChips(mRawBankPat,   "NAME",   0xFF0072B2));
-        else if (field == mEtPeriodPat)
-            field.setText(renderPatternAsChips(mRawPeriodPat, "PERIOD", 0xFFD55E00));
-        else
-            field.setText(renderTokenTemplate(mRawTransPat));
-    }
-
-    static CharSequence renderPatternAsChips(String pat, String label, int color) {
-        if (pat == null || pat.isEmpty()) return "";
+    static String regexToTokens(String regex, String defaultToken) {
+        if (regex == null || regex.isEmpty()) return "";
         for (String tok : ALL_TOKENS) {
-            if (pat.contains(tok)) return renderTokenTemplate(pat);
+            if (regex.contains(tok)) return regex;
         }
-        java.util.regex.Matcher m = java.util.regex.Pattern.compile(
-            "\\\\Q(.*?)\\\\E|\\(([^)]+)\\)").matcher(pat);
-        StringBuilder display = new StringBuilder();
-        List<int[]> chips = new ArrayList<int[]>();
-        while (m.find()) {
-            if (m.group(1) != null) {
-                display.append(m.group(1));
-            } else {
-                int s = display.length();
-                display.append(label);
-                chips.add(new int[]{s, display.length()});
-            }
-        }
-        if (display.length() == 0) return pat;
-        android.text.SpannableString ss = new android.text.SpannableString(display.toString());
-        for (int[] c : chips) {
-            ss.setSpan(new android.text.style.BackgroundColorSpan(color), c[0], c[1],
-                android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-            ss.setSpan(new android.text.style.ForegroundColorSpan(0xFFFFFFFF), c[0], c[1],
-                android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        }
-        return ss;
-    }
-
-    static CharSequence renderTokenTemplate(String pat) {
-        if (pat == null || pat.isEmpty()) return "";
-        StringBuilder display = new StringBuilder();
-        List<int[]> chips = new ArrayList<int[]>();
-        List<Integer> colors = new ArrayList<Integer>();
+        StringBuilder out = new StringBuilder();
         int pos = 0;
-        while (pos < pat.length()) {
-            String found = null;
-            for (String tok : ALL_TOKENS) {
-                if (pat.startsWith(tok, pos)) { found = tok; break; }
+        while (pos < regex.length()) {
+            // \Q...\E literal block → unquote
+            if (pos + 2 <= regex.length()
+                && regex.charAt(pos) == '\\' && regex.charAt(pos + 1) == 'Q') {
+                int end = regex.indexOf("\\E", pos + 2);
+                if (end < 0) break;
+                out.append(regex, pos + 2, end);
+                pos = end + 2;
+                continue;
             }
-            if (found != null) {
-                int s = display.length();
-                display.append(tokenLabel(found));
-                chips.add(new int[]{s, display.length()});
-                colors.add(tokenColor(found));
-                pos += found.length();
-            } else {
-                display.append(pat.charAt(pos++));
+            // .*? → (/ignore/)
+            if (pos + 3 <= regex.length()
+                && regex.charAt(pos) == '.' && regex.charAt(pos + 1) == '*'
+                && regex.charAt(pos + 2) == '?') {
+                out.append(TOK_IGNORE);
+                pos += 3;
+                continue;
             }
+            // (...) with balanced parens → token (distinguish year vs default)
+            if (regex.charAt(pos) == '(') {
+                int depth = 1;
+                int end = pos + 1;
+                while (end < regex.length() && depth > 0) {
+                    char ch = regex.charAt(end);
+                    if (ch == '\\' && end + 1 < regex.length()) { end += 2; continue; }
+                    if (ch == '(') depth++;
+                    else if (ch == ')') { depth--; if (depth == 0) break; }
+                    end++;
+                }
+                if (depth == 0) {
+                    String content = regex.substring(pos + 1, end);
+                    String token;
+                    if ("\\d{4}".equals(content)) token = TOK_YEAR;
+                    else                           token = defaultToken;
+                    out.append(token);
+                    pos = end + 1;
+                    continue;
+                }
+            }
+            out.append(regex.charAt(pos));
+            pos++;
         }
-        android.text.SpannableString ss = new android.text.SpannableString(display.toString());
-        for (int i = 0; i < chips.size(); i++) {
-            int[] c = chips.get(i);
-            ss.setSpan(new android.text.style.BackgroundColorSpan(colors.get(i)), c[0], c[1],
-                android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-            ss.setSpan(new android.text.style.ForegroundColorSpan(0xFFFFFFFF), c[0], c[1],
-                android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        }
-        return ss;
+        return out.toString();
     }
 
     void populateFromPattern(long id) {
@@ -208,14 +220,13 @@ public class AddPdfPatternActivity extends Activity {
         if (p == null) return;
         mEtPatternName.setText(p.name != null ? p.name : "");
 
-        mRawBankPat   = (p.bankNamePat != null && !p.bankNamePat.isEmpty())
+        String bank   = (p.bankNamePat != null && !p.bankNamePat.isEmpty())
                         ? p.bankNamePat : nullToEmpty(mDb.getPdfFieldPattern("bank"));
-        mRawPeriodPat = (p.periodPat   != null && !p.periodPat.isEmpty())
+        String period = (p.periodPat   != null && !p.periodPat.isEmpty())
                         ? p.periodPat  : nullToEmpty(mDb.getPdfFieldPattern("month"));
-        mRawTransPat  = p.templateText != null ? p.templateText : "";
-        renderField(mEtBankPat);
-        renderField(mEtPeriodPat);
-        renderField(mEtTransPat);
+        mEtBankPat.setText(regexToTokens(bank,   TOK_NAME));
+        mEtPeriodPat.setText(regexToTokens(period, TOK_MONTH));
+        mEtTransPat.setText(p.templateText != null ? p.templateText : "");
     }
 
 
@@ -241,6 +252,9 @@ public class AddPdfPatternActivity extends Activity {
         if (TOK_UPI.equals(token))      return 0xFF0072B2;
         if (TOK_DATE.equals(token))     return 0xFFD55E00;
         if (TOK_TIME.equals(token))     return 0xFFCC79A7;
+        if (TOK_NAME.equals(token))     return 0xFF0072B2;
+        if (TOK_MONTH.equals(token))    return 0xFFD55E00;
+        if (TOK_YEAR.equals(token))     return 0xFFD55E00;
         if (TOK_IGNORE.equals(token))   return 0xFF999999;
         return 0xFF999999;
     }
@@ -326,23 +340,40 @@ public class AddPdfPatternActivity extends Activity {
             String bankLine   = data.getStringExtra(PdfLinePickerActivity.EXTRA_BANK_LINE);
             String periodLine = data.getStringExtra(PdfLinePickerActivity.EXTRA_PERIOD_LINE);
             String transLine  = data.getStringExtra(PdfLinePickerActivity.EXTRA_TRANS_LINE);
-            if (bankLine   != null) { mRawBankPat   = bankLine;   renderField(mEtBankPat); }
-            if (periodLine != null) { mRawPeriodPat = periodLine; renderField(mEtPeriodPat); }
-            if (transLine  != null) { mRawTransPat  = transLine;  renderField(mEtTransPat); }
+            if (bankLine   != null) mEtBankPat.setText(bankLine);
+            if (periodLine != null) mEtPeriodPat.setText(periodLine);
+            if (transLine  != null) mEtTransPat.setText(transLine);
+
+        } else if (req == REQ_TEST_PICK_LOCAL) {
+            Uri uri = data.getData();
+            if (uri == null) return;
+            try {
+                getContentResolver().takePersistableUriPermission(
+                    uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            } catch (SecurityException ignored) {}
+            runTestOnPdf(uri);
+
+        } else if (req == REQ_TEST_PICK_DROPBOX) {
+            String uriStr = data.getStringExtra(DropboxPdfInboxActivity.EXTRA_FILE_URI);
+            if (uriStr == null) return;
+            runTestOnPdf(Uri.parse(uriStr));
         }
     }
 
     void savePattern() {
-        if (mRawTransPat.trim().isEmpty()) {
+        String transRaw  = mEtTransPat.getText().toString();
+        String bankRaw   = mEtBankPat.getText().toString();
+        String periodRaw = mEtPeriodPat.getText().toString();
+        if (transRaw.trim().isEmpty()) {
             Toast.makeText(this, R.string.msg_trans_pat_required, Toast.LENGTH_SHORT).show();
             return;
         }
 
-        ExtractionPattern p = buildPatternFromTemplate(mRawTransPat.trim());
+        ExtractionPattern p = buildPatternFromTemplate(transRaw.trim());
         p.senderId    = mSenderId;
         p.isPdf       = true;
-        p.bankNamePat = mRawBankPat.trim();
-        p.periodPat   = mRawPeriodPat.trim();
+        p.bankNamePat = toRegexIfTokens(bankRaw);
+        p.periodPat   = toRegexIfTokens(periodRaw);
 
         String name = mEtPatternName.getText().toString().trim();
         if (name.isEmpty()) {
@@ -360,6 +391,73 @@ public class AddPdfPatternActivity extends Activity {
         Toast.makeText(this, R.string.msg_pattern_saved, Toast.LENGTH_SHORT).show();
         setResult(RESULT_OK);
         finish();
+    }
+
+    // TODO: adapt StatementScanActivity to accept draft pattern + URI as extras
+    //       and reuse its candidate list for test results, removing TestRunnable /
+    //       TestResult / TestResultRunnable in this file.
+    void testPattern() {
+        if (mEtTransPat.getText().toString().trim().isEmpty()) {
+            Toast.makeText(this, R.string.msg_trans_pat_required, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (mSenderId < 0) {
+            Toast.makeText(this, R.string.msg_save_bank_first, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        List<PdfSource> sources = mDb.getPdfSourcesBySender(mSenderId);
+        boolean hasDropbox = false;
+        for (PdfSource s : sources) {
+            if (s.isDropbox) { hasDropbox = true; break; }
+        }
+        if (hasDropbox) {
+            new AlertDialog.Builder(this, R.style.RoundedDialog)
+                .setTitle(R.string.title_pick_source)
+                .setItems(new String[]{
+                    getString(R.string.btn_from_phone),
+                    getString(R.string.btn_from_dropbox)
+                }, new TestPickSourceDialogListener(this))
+                .show();
+        } else {
+            openTestLocalPicker();
+        }
+    }
+
+    void openTestLocalPicker() {
+        Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        i.addCategory(Intent.CATEGORY_OPENABLE);
+        i.setType("*/*");
+        i.putExtra(Intent.EXTRA_MIME_TYPES,
+            new String[]{"application/pdf", "text/plain"});
+        startActivityForResult(i, REQ_TEST_PICK_LOCAL);
+    }
+
+    void openTestDropboxPicker() {
+        Intent i = new Intent(this, DropboxPdfInboxActivity.class);
+        i.putExtra(DropboxPdfInboxActivity.EXTRA_SENDER_ID, mSenderId);
+        i.putExtra(DropboxPdfInboxActivity.EXTRA_PICK_MODE, true);
+        startActivityForResult(i, REQ_TEST_PICK_DROPBOX);
+    }
+
+    void runTestOnPdf(Uri uri) {
+        String password = getSharedPreferences("fin_prefs", MODE_PRIVATE)
+            .getString("pdf_pass_" + mSenderId, null);
+        ExtractionPattern transPat = buildPatternFromTemplate(mEtTransPat.getText().toString().trim());
+        String bankRegex   = toRegexIfTokens(mEtBankPat.getText().toString());
+        String periodRegex = toRegexIfTokens(mEtPeriodPat.getText().toString());
+        Toast.makeText(this, "Testing…", Toast.LENGTH_SHORT).show();
+        Handler h = new Handler(Looper.getMainLooper());
+        new Thread(new TestRunnable(this, h, uri, transPat, bankRegex, periodRegex, password)).start();
+    }
+
+    String toRegexIfTokens(String raw) {
+        if (raw == null) return "";
+        String s = raw.trim();
+        if (s.isEmpty()) return "";
+        for (String tok : ALL_TOKENS) {
+            if (s.contains(tok)) return buildPatternFromTemplate(s).templateRegex;
+        }
+        return s;
     }
 
     ExtractionPattern buildPatternFromTemplate(String template) {
@@ -480,6 +578,186 @@ public class AddPdfPatternActivity extends Activity {
         public void onClick(DialogInterface d, int which) {
             if (which == 0) mA.openLocalPicker();
             else            mA.openDropboxPicker();
+        }
+    }
+
+    static class TestListener implements View.OnClickListener {
+        private final AddPdfPatternActivity mA;
+        TestListener(AddPdfPatternActivity a) { mA = a; }
+        public void onClick(View v) { mA.testPattern(); }
+    }
+
+    static class TestPickSourceDialogListener implements DialogInterface.OnClickListener {
+        private final AddPdfPatternActivity mA;
+        TestPickSourceDialogListener(AddPdfPatternActivity a) { mA = a; }
+        public void onClick(DialogInterface d, int which) {
+            if (which == 0) mA.openTestLocalPicker();
+            else            mA.openTestDropboxPicker();
+        }
+    }
+
+    static class TestResult {
+        String       bank    = "";
+        String       period  = "";
+        List<String> matches = new ArrayList<String>();
+    }
+
+    static class TestRunnable implements Runnable {
+        private final AddPdfPatternActivity mA;
+        private final Handler               mH;
+        private final Uri                   mUri;
+        private final ExtractionPattern     mTransPat;
+        private final String                mBankRegex;
+        private final String                mPeriodRegex;
+        private final String                mPassword;
+
+        TestRunnable(AddPdfPatternActivity a, Handler h, Uri uri,
+                     ExtractionPattern transPat, String bankRegex, String periodRegex,
+                     String password) {
+            mA = a; mH = h; mUri = uri; mTransPat = transPat;
+            mBankRegex = bankRegex; mPeriodRegex = periodRegex; mPassword = password;
+        }
+
+        public void run() {
+            String text;
+            try {
+                InputStream is = mA.getContentResolver().openInputStream(mUri);
+                if (is == null) { post(null, "Could not open PDF"); return; }
+                text = PdfTextExtractor.extract(is, mPassword);
+                is.close();
+            } catch (Exception e) {
+                post(null, "Error reading PDF: " + e.getMessage());
+                return;
+            }
+            if (PdfDecryptor.NEEDS_PASSWORD.equals(text)) {
+                post(null, "PDF is password-protected; save the password in Bank Config first.");
+                return;
+            }
+            if (text == null || text.trim().isEmpty()) {
+                post(null, "No text extracted from PDF");
+                return;
+            }
+
+            List<String> lines = PdfInboxActivity.splitLines(text);
+            TestResult tr = new TestResult();
+            tr.bank   = applyField(mBankRegex,   lines);
+            tr.period = applyPeriodField(mPeriodRegex, lines);
+
+            for (String line : lines) {
+                if (!mTransPat.matches(line)) continue;
+                String date   = mTransPat.dateGroup     > 0 ? mTransPat.extractGroup(line, mTransPat.dateGroup).trim()     : "";
+                String amt    = mTransPat.amountGroup   > 0 ? mTransPat.extractGroup(line, mTransPat.amountGroup).trim()   : "";
+                String merch  = mTransPat.merchantGroup > 0 ? mTransPat.extractGroup(line, mTransPat.merchantGroup).trim() : "";
+                StringBuilder row = new StringBuilder();
+                if (!date.isEmpty())  { row.append(date);  row.append("  "); }
+                if (!merch.isEmpty()) { row.append(merch); row.append("  "); }
+                if (!amt.isEmpty())   { row.append("₹").append(amt); }
+                if (row.length() == 0) row.append(line);
+                tr.matches.add(row.toString());
+                if (tr.matches.size() >= 20) break;
+            }
+            post(tr, null);
+        }
+
+        private static java.util.regex.Matcher findMatch(String regex, List<String> lines) {
+            if (regex == null || regex.isEmpty()) return null;
+            try {
+                Pattern p = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+                for (String line : lines) {
+                    java.util.regex.Matcher m = p.matcher(line.trim());
+                    if (m.find()) return m;
+                }
+            } catch (Exception ignored) {}
+            return null;
+        }
+
+        private static String applyField(String regex, List<String> lines) {
+            java.util.regex.Matcher m = findMatch(regex, lines);
+            if (m == null) return "";
+            if (m.groupCount() > 0 && m.group(1) != null) return m.group(1).trim();
+            return m.group(0).trim();
+        }
+
+        private static String applyPeriodField(String regex, List<String> lines) {
+            java.util.regex.Matcher m = findMatch(regex, lines);
+            if (m == null) return "";
+            String month = null, year = null;
+            for (int i = 1; i <= m.groupCount(); i++) {
+                String g = m.group(i);
+                if (g == null) continue;
+                g = g.trim();
+                if (year == null && g.matches("\\d{4}")) year = g;
+                else if (month == null) month = normalizeMonth(g);
+            }
+            if (year != null && month != null) return year + "-" + month;
+            if (year != null) return year;
+            if (month != null) return month;
+            return m.group(0).trim();
+        }
+
+        private static String normalizeMonth(String s) {
+            if (s == null) return "";
+            if (s.matches("\\d{1,2}")) {
+                int n = Integer.parseInt(s);
+                return n < 10 ? "0" + n : String.valueOf(n);
+            }
+            String lower = s.toLowerCase(java.util.Locale.US);
+            String[] names = {"jan","feb","mar","apr","may","jun",
+                              "jul","aug","sep","oct","nov","dec"};
+            for (int i = 0; i < names.length; i++) {
+                if (lower.startsWith(names[i])) {
+                    int n = i + 1;
+                    return n < 10 ? "0" + n : String.valueOf(n);
+                }
+            }
+            return s;
+        }
+
+        private void post(TestResult tr, String error) {
+            mH.post(new TestResultRunnable(mA, tr, error));
+        }
+    }
+
+    static class TestResultRunnable implements Runnable {
+        private final AddPdfPatternActivity mA;
+        private final TestResult            mResult;
+        private final String                mError;
+
+        TestResultRunnable(AddPdfPatternActivity a, TestResult result, String error) {
+            mA = a; mResult = result; mError = error;
+        }
+
+        public void run() {
+            if (mA.isFinishing()) return;
+            if (mError != null) {
+                new AlertDialog.Builder(mA, R.style.RoundedDialog)
+                    .setTitle("Test failed")
+                    .setMessage(mError)
+                    .setPositiveButton("Close", null)
+                    .show();
+                return;
+            }
+            StringBuilder body = new StringBuilder();
+            body.append("Bank:   ")
+                .append(mResult.bank.isEmpty()   ? "(not found)" : mResult.bank).append("\n");
+            body.append("Period: ")
+                .append(mResult.period.isEmpty() ? "(not found)" : mResult.period).append("\n\n");
+
+            if (mResult.matches.isEmpty()) {
+                body.append("No transactions matched.");
+            } else {
+                body.append("Matched ")
+                    .append(mResult.matches.size())
+                    .append(mResult.matches.size() == 20 ? "+" : "")
+                    .append(" transactions:\n\n");
+                for (String row : mResult.matches) body.append(row).append("\n");
+            }
+
+            new AlertDialog.Builder(mA, R.style.RoundedDialog)
+                .setTitle("Test result")
+                .setMessage(body.toString().trim())
+                .setPositiveButton("Close", null)
+                .show();
         }
     }
 }

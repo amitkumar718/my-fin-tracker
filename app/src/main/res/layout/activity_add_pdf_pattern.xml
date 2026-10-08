@@ -281,7 +281,17 @@
                 android:text="@string/action_save"
                 android:textColor="#FFFFFF"
                 android:textSize="13sp"
-                android:background="@drawable/bg_button_primary" />
+                android:background="@drawable/bg_button_primary"
+                android:layout_marginBottom="8dp" />
+
+            <Button
+                android:id="@+id/btnTestPattern"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:text="Test Pattern"
+                android:textColor="#1976D2"
+                android:textSize="13sp"
+                android:background="@drawable/bg_button_secondary" />
 
         </LinearLayout>
     </ScrollView>
