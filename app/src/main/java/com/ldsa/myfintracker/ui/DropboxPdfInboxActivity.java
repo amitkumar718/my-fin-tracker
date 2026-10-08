@@ -36,6 +36,8 @@ import java.util.Locale;
 public class DropboxPdfInboxActivity extends Activity {
 
     public static final String EXTRA_SENDER_ID = "sender_id";
+    public static final String EXTRA_PICK_MODE = "pick_mode";
+    public static final String EXTRA_FILE_URI  = "file_uri";
 
     private static final String PREF_FILE  = DropboxPdfHelper.PREF_FILE;
     private static final String KEY_TOKEN  = DropboxPdfHelper.KEY_TOKEN;
@@ -64,6 +66,8 @@ public class DropboxPdfInboxActivity extends Activity {
     int mDlFailed;
 
     /** Statement IDs inserted this session, to be scanned in order after all downloads. */
+    boolean mPickMode = false;
+
     List<Long> mDownloadedIds = new ArrayList<Long>();
     int mScanIdx = 0;
 
@@ -76,6 +80,7 @@ public class DropboxPdfInboxActivity extends Activity {
 
         mDb = ExpenseDatabase.getInstance(this);
         mSenderId = getIntent().getLongExtra(EXTRA_SENDER_ID, -1L);
+        mPickMode = getIntent().getBooleanExtra(EXTRA_PICK_MODE, false);
 
         mTvStatus    = (TextView)    findViewById(R.id.tvDbxPdfStatus);
         mTvEmpty     = (TextView)    findViewById(R.id.tvDbxPdfEmpty);
@@ -87,6 +92,7 @@ public class DropboxPdfInboxActivity extends Activity {
         mListView.setOnItemClickListener(new ItemClickListener(this));
         mBtnDownload.setOnClickListener(new DownloadClickListener(this));
         btnCancel.setOnClickListener(new CancelClickListener(this));
+        ((TextView) findViewById(R.id.btnDbxChangeToken)).setOnClickListener(new ChangeTokenClickListener(this));
 
         // Build set of already-imported dropbox paths (dedupe)
         for (PdfStatement s : mDb.getAllPdfStatements()) {
@@ -108,6 +114,9 @@ public class DropboxPdfInboxActivity extends Activity {
         EditText et = (EditText) v.findViewById(R.id.etDialogPassword);
         et.setHint(R.string.dropbox_token_hint);
         et.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+        // Pre-fill with stored token so user only needs to update if expired
+        String stored = getSharedPreferences(PREF_FILE, MODE_PRIVATE).getString(KEY_TOKEN, null);
+        if (stored != null && !stored.isEmpty()) et.setText(stored);
         AlertDialog.Builder b = new AlertDialog.Builder(this, R.style.RoundedDialog);
         b.setTitle(R.string.dropbox_token_title);
         b.setMessage(R.string.dropbox_token_message);
@@ -131,8 +140,10 @@ public class DropboxPdfInboxActivity extends Activity {
         mListView.setVisibility(View.GONE);
         mTvEmpty.setVisibility(View.GONE);
         mBtnDownload.setEnabled(false);
-        DropboxPdfHelper.listPdfs(this, mToken,
-            DropboxPdfHelper.DEFAULT_ROOT, new ListCallbackImpl(this));
+        String root = getSharedPreferences(DropboxPdfHelper.PREF_FILE, MODE_PRIVATE)
+            .getString(DropboxPdfHelper.KEY_ROOT, DropboxPdfHelper.DEFAULT_ROOT);
+        if (root == null) root = DropboxPdfHelper.DEFAULT_ROOT;
+        DropboxPdfHelper.listPdfs(this, mToken, root, new ListCallbackImpl(this));
     }
 
     void onListSuccess(List<DropboxPdfHelper.PdfEntry> entries) {
@@ -163,10 +174,10 @@ public class DropboxPdfInboxActivity extends Activity {
     }
 
     void onAuthFailed() {
-        getSharedPreferences(PREF_FILE, MODE_PRIVATE).edit().remove(KEY_TOKEN).apply();
         mToken = null;
-        Toast.makeText(this, R.string.dropbox_token_invalid, Toast.LENGTH_LONG).show();
-        showTokenDialog();
+        mProgress.setVisibility(View.GONE);
+        mTvStatus.setText(R.string.dropbox_token_invalid);
+        // Don't show dialog — user taps "⚙ Token" in the header to update
     }
 
     void toggleItem(int pos) {
@@ -221,6 +232,13 @@ public class DropboxPdfInboxActivity extends Activity {
 
     void onOneDownloaded(DropboxPdfHelper.PdfEntry entry, File out,
                          List<DropboxPdfHelper.PdfEntry> queue, int idx) {
+        if (mPickMode) {
+            Intent result = new Intent();
+            result.putExtra(EXTRA_FILE_URI, Uri.fromFile(out).toString());
+            setResult(RESULT_OK, result);
+            finish();
+            return;
+        }
         // Insert PdfStatement row — displayName encodes dropbox path for dedupe
         PdfStatement s = new PdfStatement();
         s.senderId    = mSenderId;
@@ -366,7 +384,9 @@ public class DropboxPdfInboxActivity extends Activity {
         public void onError(String msg) {
             mOuter.onOneFailed(mEntry, msg, mQueue, mIdx);
         }
-        public void onAuthFailed() { mOuter.onAuthFailed(); }
+        public void onAuthFailed() {
+            mOuter.onOneFailed(mEntry, mOuter.getString(R.string.dropbox_token_invalid), mQueue, mIdx);
+        }
     }
 
     // ============================================================
@@ -412,5 +432,11 @@ public class DropboxPdfInboxActivity extends Activity {
         private final DropboxPdfInboxActivity mA;
         TokenCancelListener(DropboxPdfInboxActivity a) { mA = a; }
         public void onClick(DialogInterface d, int w) { mA.finish(); }
+    }
+
+    static class ChangeTokenClickListener implements View.OnClickListener {
+        private final DropboxPdfInboxActivity mA;
+        ChangeTokenClickListener(DropboxPdfInboxActivity a) { mA = a; }
+        public void onClick(View v) { mA.showTokenDialog(); }
     }
 }

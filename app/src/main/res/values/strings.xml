@@ -82,7 +82,6 @@
     <string name="title_sms_extract_config">Configure Extraction</string>
     <string name="btn_save_extraction">Save Pattern</string>
 
-    <string name="hint_pattern_name">Pattern name (e.g. UPI Debit, Card POS)</string>
     <string name="hint_balance">Balance regex (e.g. Avl Bal[: ]+Rs\.?([\d,]+))</string>
     <string name="label_balance">Balance After Txn</string>
     <string name="label_transaction_type">Transaction Type</string>
@@ -175,7 +174,6 @@
     <string name="pdf_no_file">No file selected</string>
     <string name="pdf_lines_hint">Tap a line to configure a regex pattern for it.</string>
     <string name="btn_pick_from_pdf">Select PDF Lines</string>
-    <string name="label_bank_line">Bank Line</string>
     <string name="label_pdf_bank_pattern">Bank pattern:</string>
     <string name="hint_pdf_bank_pattern">Regex to identify bank name (e.g. HDFC)</string>
     <string name="label_month_line">Month Line</string>
@@ -279,7 +277,60 @@
     <string name="confirm_delete_sender_id">Remove this sender ID?</string>
     <string name="title_bank_config">Bank Config</string>
     <string name="btn_delete_bank">Delete</string>
+
+    <!-- Add PDF Pattern -->
+    <string name="title_add_pdf_pattern">Add PDF Pattern</string>
+    <string name="hint_pattern_name">Pattern name (e.g. HDFC Credit Card)</string>
+    <string name="label_bank_name_pat">Bank name pattern</string>
+    <string name="hint_bank_name_pat">e.g. HDFC Bank</string>
+    <string name="label_period_pat">Statement period pattern</string>
+    <string name="hint_period_pat">e.g. Apr 2024 to May 2024</string>
+    <string name="label_trans_pat">Transaction line pattern</string>
+    <string name="hint_trans_pat">e.g. (/date/) (/merchant/) (/amount/)</string>
+    <string name="btn_pick_from_statement">Pick from a statement</string>
+    <string name="msg_trans_pat_required">Transaction line pattern is required</string>
+    <string name="msg_pattern_saved">Pattern saved</string>
+    <string name="label_tokens_hint">Tap a token to insert at cursor</string>
+
+    <!-- PDF Line Picker -->
+    <string name="title_pick_pdf_lines">Pick Lines</string>
+    <string name="label_bank_line">Bank line</string>
+    <string name="label_period_line">Period line</string>
+    <string name="label_trans_line">Transaction line</string>
+    <string name="hint_not_set">(not set)</string>
+    <string name="msg_pdf_loading">Loading PDF…</string>
+    <string name="msg_pdf_no_text">No text found in PDF</string>
+    <string name="msg_trans_line_required">Select at least a transaction line</string>
+    <string name="btn_from_phone">From phone</string>
+    <string name="btn_from_dropbox">From Dropbox</string>
+    <string name="title_pick_source">Pick PDF from</string>
+    <string name="assign_as_bank">Bank name line</string>
+    <string name="assign_as_period">Statement period line</string>
+    <string name="assign_as_trans">Transaction line</string>
+    <string name="msg_pdf_needs_password">PDF is encrypted — set password in Bank Config</string>
     <string name="pdf_password_dialog_msg">Password stored for this bank\'s PDFs. Applied automatically when opening encrypted files.</string>
+    <string name="btn_done">Done</string>
+    <string name="label_dropbox">Dropbox</string>
+    <string name="dropbox_token_set">Token saved</string>
+    <string name="dropbox_token_not_set">No token set</string>
+    <string name="title_dropbox_settings">Dropbox Settings</string>
+    <string name="label_access_token">ACCESS TOKEN</string>
+    <string name="dropbox_token_hint_long">Generate a long-lived token in dropbox.com → App Console → your app → Permissions: files.content.read + files.metadata.read</string>
+    <string name="label_root_folder">ROOT FOLDER</string>
+    <string name="hint_root_folder">/Apps/myfintracker</string>
+    <string name="hint_root_folder_desc">Leave blank to search entire App Folder. Set to a subfolder to narrow the PDF list.</string>
+    <string name="btn_test_connection">Test</string>
+    <string name="btn_clear">Clear</string>
+    <string name="dbx_status_no_token">No token set</string>
+    <string name="dbx_status_token_saved">Token saved — not tested yet</string>
+    <string name="dbx_status_testing">Testing connection…</string>
+    <string name="dbx_status_ok">Connected — %1$d PDFs found</string>
+    <string name="dbx_status_auth_fail">Token rejected by Dropbox</string>
+    <string name="dbx_status_error">Error: %1$s</string>
+    <string name="msg_token_saved">Saved</string>
+    <string name="msg_token_cleared">Token cleared</string>
+    <string name="btn_browse_dropbox">Browse</string>
+    <string name="msg_focus_field_first">Tap a field first, then insert a token</string>
 
     <string-array name="landing_page_labels">
         <item>Expenses (default)</item>

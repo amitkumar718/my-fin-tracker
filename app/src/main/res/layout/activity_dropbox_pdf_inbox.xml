@@ -26,6 +26,16 @@
             android:textSize="16sp"
             android:textStyle="bold" />
 
+        <TextView
+            android:id="@+id/btnDbxChangeToken"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="⚙ Token"
+            android:textColor="#FFFFFF"
+            android:textSize="13sp"
+            android:paddingLeft="8dp"
+            android:paddingRight="4dp" />
+
     </LinearLayout>
 
     <!-- Status row -->

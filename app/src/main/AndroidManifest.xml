@@ -113,6 +113,24 @@
             android:exported="false"
             android:theme="@android:style/Theme.Material.Light.NoActionBar" />
 
+        <activity
+            android:name=".ui.AddPdfPatternActivity"
+            android:label="@string/title_add_pdf_pattern"
+            android:exported="false"
+            android:theme="@android:style/Theme.Material.Light.NoActionBar" />
+
+        <activity
+            android:name=".ui.DropboxSettingsActivity"
+            android:label="@string/title_dropbox_settings"
+            android:exported="false"
+            android:theme="@android:style/Theme.Material.Light.NoActionBar" />
+
+        <activity
+            android:name=".ui.PdfLinePickerActivity"
+            android:label="@string/title_pick_pdf_lines"
+            android:exported="false"
+            android:theme="@android:style/Theme.Material.Light.NoActionBar" />
+
     </application>
 
 </manifest>
