@@ -10,6 +10,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.provider.OpenableColumns;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -84,7 +85,7 @@ public class BankConfigActivity extends Activity {
         ((Button) findViewById(R.id.btnAddSmsPattern)).setOnClickListener(new AddSmsPatternClickListener(this));
         mBtnAddMorePaths = (Button) findViewById(R.id.btnAddMorePaths);
         mBtnAddMorePaths.setOnClickListener(new AddMorePathsClickListener(this));
-        ((Button) findViewById(R.id.btnSetPassword)).setOnClickListener(new SetPasswordClickListener(this));
+        ((TextView) findViewById(R.id.btnSetPassword)).setOnClickListener(new SetPasswordClickListener(this));
         ((Button) findViewById(R.id.btnAddPdfPattern)).setOnClickListener(new AddPdfPatternClickListener(this));
         mBtnDeleteBank.setOnClickListener(new DeleteBankClickListener(this));
 
@@ -484,6 +485,7 @@ public class BankConfigActivity extends Activity {
         etPath.setText(path);
         cbDropbox.setChecked(isDropbox);
         etPath.setOnFocusChangeListener(new SourceFocusListener(this, row, etPath, cbDropbox));
+        etPath.setOnTouchListener(new SourceSwipeFillListener(etPath));
         cbDropbox.setOnCheckedChangeListener(new SourceCheckListener(this, row, etPath));
         row.setOnLongClickListener(new SourceRowLongClickListener(this, row));
         mContainerPdfSources.addView(row);
@@ -756,5 +758,31 @@ public class BankConfigActivity extends Activity {
         private final BankConfigActivity mA;
         DeleteSourceConfirmListener(BankConfigActivity a) { mA = a; }
         public void onClick(DialogInterface d, int w) { mA.deleteSource(); }
+    }
+
+    static class SourceSwipeFillListener implements View.OnTouchListener {
+        private final EditText mEt;
+        private float mDownX;
+        private static final float SWIPE_MIN_DISTANCE = 80f;
+        SourceSwipeFillListener(EditText et) { mEt = et; }
+        public boolean onTouch(View v, MotionEvent e) {
+            switch (e.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                    mDownX = e.getX();
+                    break;
+                case MotionEvent.ACTION_UP:
+                    float dx = e.getX() - mDownX;
+                    if (dx > SWIPE_MIN_DISTANCE && mEt.getText().toString().isEmpty()) {
+                        CharSequence hint = mEt.getHint();
+                        if (hint != null) {
+                            mEt.setText(hint);
+                            mEt.setSelection(mEt.getText().length());
+                        }
+                        return true;
+                    }
+                    break;
+            }
+            return false;
+        }
     }
 }
