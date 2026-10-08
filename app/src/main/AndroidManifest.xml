@@ -104,12 +104,14 @@
         <activity
             android:name=".ui.BankListActivity"
             android:label="@string/title_banks"
-            android:exported="false" />
+            android:exported="false"
+            android:theme="@android:style/Theme.Material.Light.NoActionBar" />
 
         <activity
             android:name=".ui.BankConfigActivity"
             android:label="@string/title_bank_config"
-            android:exported="false" />
+            android:exported="false"
+            android:theme="@android:style/Theme.Material.Light.NoActionBar" />
 
     </application>
 

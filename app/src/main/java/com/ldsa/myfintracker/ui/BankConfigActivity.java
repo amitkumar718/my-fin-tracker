@@ -21,6 +21,7 @@ import android.widget.Toast;
 import com.ldsa.myfintracker.R;
 import com.ldsa.myfintracker.db.ExpenseDatabase;
 import com.ldsa.myfintracker.db.ExtractionPattern;
+import com.ldsa.myfintracker.db.PdfSource;
 import com.ldsa.myfintracker.db.PdfStatement;
 import com.ldsa.myfintracker.db.SenderConfig;
 
@@ -31,9 +32,9 @@ public class BankConfigActivity extends Activity {
 
     public static final String EXTRA_SENDER_ID = "sender_id";
 
-    private static final String PREF_FILE      = "fin_prefs";
-    private static final String PREF_PDF_PASS  = "pdf_pass_";
-    private static final int    REQ_PICK_PDF   = 401;
+    private static final String PREF_FILE     = "fin_prefs";
+    private static final String PREF_PDF_PASS = "pdf_pass_";
+    private static final int    REQ_PICK_PDF  = 401;
 
     private long            mSenderId = -1L;
     private SenderConfig    mSender;
@@ -42,15 +43,19 @@ public class BankConfigActivity extends Activity {
     private TextView     mTvTitle;
     private TextView     mBtnDeleteBank;
     private EditText     mEtBankName;
-    private EditText     mEtSenderPattern;
-    private CheckBox     mCbIsRegex;
+    private LinearLayout mContainerSenderIds;
     private LinearLayout mContainerSmsPatterns;
     private LinearLayout mContainerPdfPatterns;
+    private TextView     mTvNoSenderIds;
     private TextView     mTvNoSmsPatterns;
+    private LinearLayout mContainerPdfSources;
+    private Button       mBtnAddMorePaths;
     private TextView     mTvNoPdfPatterns;
     private TextView     mTvPdfPassword;
 
-    long mPendingDeletePatternId = -1L;
+    long mPendingDeletePatternId  = -1L;
+    long mPendingDeleteSenderIdId = -1L;
+    long mPendingDeleteSourceId   = -1L;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,22 +66,24 @@ public class BankConfigActivity extends Activity {
         mSenderId = getIntent().getLongExtra(EXTRA_SENDER_ID, -1L);
         mDb = ExpenseDatabase.getInstance(this);
 
-        mTvTitle              = (TextView)     findViewById(R.id.tvBankConfigTitle);
-        mBtnDeleteBank        = (TextView)     findViewById(R.id.btnDeleteBank);
-        mEtBankName           = (EditText)     findViewById(R.id.etBankName);
-        mEtSenderPattern      = (EditText)     findViewById(R.id.etSenderPattern);
-        mCbIsRegex            = (CheckBox)     findViewById(R.id.cbIsRegex);
-        mContainerSmsPatterns = (LinearLayout) findViewById(R.id.containerSmsPatterns);
-        mContainerPdfPatterns = (LinearLayout) findViewById(R.id.containerPdfPatterns);
-        mTvNoSmsPatterns      = (TextView)     findViewById(R.id.tvNoSmsPatterns);
-        mTvNoPdfPatterns      = (TextView)     findViewById(R.id.tvNoPdfPatterns);
-        mTvPdfPassword        = (TextView)     findViewById(R.id.tvPdfPassword);
+        mTvTitle             = (TextView)     findViewById(R.id.tvBankConfigTitle);
+        mBtnDeleteBank       = (TextView)     findViewById(R.id.btnDeleteBank);
+        mEtBankName          = (EditText)     findViewById(R.id.etBankName);
+        mContainerSenderIds  = (LinearLayout) findViewById(R.id.containerSenderIds);
+        mContainerSmsPatterns= (LinearLayout) findViewById(R.id.containerSmsPatterns);
+        mContainerPdfSources = (LinearLayout) findViewById(R.id.containerPdfSources);
+        mContainerPdfPatterns= (LinearLayout) findViewById(R.id.containerPdfPatterns);
+        mTvNoSenderIds       = (TextView)     findViewById(R.id.tvNoSenderIds);
+        mTvNoSmsPatterns     = (TextView)     findViewById(R.id.tvNoSmsPatterns);
+        mTvNoPdfPatterns     = (TextView)     findViewById(R.id.tvNoPdfPatterns);
+        mTvPdfPassword       = (TextView)     findViewById(R.id.tvPdfPassword);
 
         ((TextView) findViewById(R.id.btnBack)).setOnClickListener(new BackClickListener(this));
         ((Button) findViewById(R.id.btnSaveIdentity)).setOnClickListener(new SaveIdentityClickListener(this));
+        ((Button) findViewById(R.id.btnAddSenderId)).setOnClickListener(new AddSenderIdClickListener(this));
         ((Button) findViewById(R.id.btnAddSmsPattern)).setOnClickListener(new AddSmsPatternClickListener(this));
-        ((Button) findViewById(R.id.btnAddPdf)).setOnClickListener(new AddPdfClickListener(this));
-        ((Button) findViewById(R.id.btnDropbox)).setOnClickListener(new DropboxClickListener(this));
+        mBtnAddMorePaths = (Button) findViewById(R.id.btnAddMorePaths);
+        mBtnAddMorePaths.setOnClickListener(new AddMorePathsClickListener(this));
         ((Button) findViewById(R.id.btnSetPassword)).setOnClickListener(new SetPasswordClickListener(this));
         ((Button) findViewById(R.id.btnAddPdfPattern)).setOnClickListener(new AddPdfPatternClickListener(this));
         mBtnDeleteBank.setOnClickListener(new DeleteBankClickListener(this));
@@ -93,49 +100,154 @@ public class BankConfigActivity extends Activity {
     protected void onResume() {
         super.onResume();
         if (mSenderId >= 0) {
+            reloadSenderIds();
             reloadSmsPatterns();
+            reloadPdfSources();
             reloadPdfPatterns();
             updatePasswordDisplay();
         }
     }
 
     private void populate() {
-        mTvTitle.setText(mSender.displayName != null && !mSender.displayName.isEmpty()
-            ? mSender.displayName : mSender.pattern);
+        String label = mSender.displayName != null && !mSender.displayName.isEmpty()
+            ? mSender.displayName : mSender.pattern;
+        mTvTitle.setText(label);
         mEtBankName.setText(mSender.displayName != null ? mSender.displayName : "");
-        mEtSenderPattern.setText(mSender.pattern != null ? mSender.pattern : "");
-        mCbIsRegex.setChecked(mSender.isRegex);
         mBtnDeleteBank.setVisibility(View.VISIBLE);
     }
 
+    // ── Identity ──────────────────────────────────────────────────────────────
+
     void saveIdentity() {
-        String name    = mEtBankName.getText().toString().trim();
-        String pattern = mEtSenderPattern.getText().toString().trim();
-        if (pattern.isEmpty()) {
-            Toast.makeText(this, R.string.error_pattern_required, Toast.LENGTH_SHORT).show();
+        String name = mEtBankName.getText().toString().trim();
+        if (name.isEmpty()) {
+            Toast.makeText(this, R.string.error_bank_name_required, Toast.LENGTH_SHORT).show();
             return;
         }
         if (mSenderId >= 0 && mSender != null) {
             mSender.displayName = name;
-            mSender.pattern     = pattern;
-            mSender.isRegex     = mCbIsRegex.isChecked();
             mDb.updateSender(mSender);
         } else {
+            // New bank: create a placeholder SenderConfig; user sets the pattern via SENDER IDS
             SenderConfig s = new SenderConfig();
             s.displayName = name;
-            s.pattern     = pattern;
-            s.isRegex     = mCbIsRegex.isChecked();
+            s.pattern     = name;
+            s.isRegex     = false;
             mSenderId = mDb.insertSender(s);
             mSender   = mDb.getSenderById(mSenderId);
             mBtnDeleteBank.setVisibility(View.VISIBLE);
         }
-        String label = name.isEmpty() ? pattern : name;
-        mTvTitle.setText(label);
+        mTvTitle.setText(name);
         Toast.makeText(this, R.string.msg_bank_saved, Toast.LENGTH_SHORT).show();
+        reloadSenderIds();
         reloadSmsPatterns();
         reloadPdfPatterns();
         updatePasswordDisplay();
     }
+
+    // ── Sender IDs ────────────────────────────────────────────────────────────
+
+    void reloadSenderIds() {
+        if (mSenderId < 0 || mSender == null) return;
+        String myName = mSender.displayName != null ? mSender.displayName : mSender.pattern;
+        List<SenderConfig> all = mDb.getAllSenders();
+        mContainerSenderIds.removeAllViews();
+        LayoutInflater inflater = LayoutInflater.from(this);
+        float dp = getResources().getDisplayMetrics().density;
+        int count = 0;
+
+        for (SenderConfig s : all) {
+            String sName = s.displayName != null ? s.displayName : s.pattern;
+            if (!sName.equals(myName)) continue;
+
+            View row = inflater.inflate(R.layout.item_extraction_pattern, mContainerSenderIds, false);
+            ((TextView) row.findViewById(R.id.tvPatternName)).setText(s.pattern);
+            TextView badge = (TextView) row.findViewById(R.id.tvPatternTypeBadge);
+            if (s.isRegex) {
+                badge.setText("REGEX");
+                badge.setBackgroundResource(R.drawable.bg_button_secondary);
+                badge.setTextColor(0xFF1976D2);
+                badge.setVisibility(View.VISIBLE);
+            } else {
+                badge.setVisibility(View.GONE);
+            }
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+            lp.bottomMargin = (int)(dp * 6);
+            row.setLayoutParams(lp);
+            row.setOnClickListener(new SenderIdClickListener(this, s.id));
+            row.setOnLongClickListener(new SenderIdLongClickListener(this, s.id));
+            mContainerSenderIds.addView(row);
+            count++;
+        }
+
+        mTvNoSenderIds.setVisibility(count == 0 ? View.VISIBLE : View.GONE);
+        mContainerSenderIds.setVisibility(count == 0 ? View.GONE : View.VISIBLE);
+    }
+
+    void showSenderIdDialog(final long existingId, String currentPattern, boolean currentIsRegex) {
+        if (mSenderId < 0) {
+            Toast.makeText(this, R.string.msg_save_bank_first, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        View v = getLayoutInflater().inflate(R.layout.dialog_sender_id, null);
+        EditText etPattern  = (EditText) v.findViewById(R.id.etSenderPattern);
+        CheckBox cbIsRegex  = (CheckBox) v.findViewById(R.id.cbSenderIsRegex);
+        etPattern.setText(currentPattern);
+        cbIsRegex.setChecked(currentIsRegex);
+
+        new AlertDialog.Builder(this, R.style.RoundedDialog)
+            .setTitle(existingId < 0 ? "Add Sender ID" : "Edit Sender ID")
+            .setView(v)
+            .setPositiveButton(android.R.string.ok,
+                new SaveSenderIdListener(this, existingId, etPattern, cbIsRegex))
+            .setNegativeButton(android.R.string.cancel, null)
+            .show();
+    }
+
+    void saveSenderId(long existingId, EditText etPattern, CheckBox cbIsRegex) {
+        String pattern = etPattern.getText().toString().trim();
+        if (pattern.isEmpty()) {
+            Toast.makeText(this, R.string.error_pattern_required, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (existingId >= 0) {
+            SenderConfig s = mDb.getSenderById(existingId);
+            if (s != null) {
+                s.pattern = pattern;
+                s.isRegex = cbIsRegex.isChecked();
+                mDb.updateSender(s);
+                if (existingId == mSenderId) mSender = s;
+            }
+        } else {
+            SenderConfig s = new SenderConfig();
+            s.displayName = mSender.displayName;
+            s.pattern     = pattern;
+            s.isRegex     = cbIsRegex.isChecked();
+            mDb.insertSender(s);
+        }
+        reloadSenderIds();
+    }
+
+    void confirmDeleteSenderId(long id) {
+        mPendingDeleteSenderIdId = id;
+        new AlertDialog.Builder(this, R.style.RoundedDialog)
+            .setMessage(R.string.confirm_delete_sender_id)
+            .setPositiveButton(android.R.string.ok, new DeleteSenderIdConfirmListener(this))
+            .setNegativeButton(android.R.string.cancel, null)
+            .show();
+    }
+
+    void deleteSenderId() {
+        if (mPendingDeleteSenderIdId < 0) return;
+        long id = mPendingDeleteSenderIdId;
+        mPendingDeleteSenderIdId = -1L;
+        mDb.deleteSender(id);
+        if (id == mSenderId) { finish(); return; }
+        reloadSenderIds();
+    }
+
+    // ── SMS Patterns ──────────────────────────────────────────────────────────
 
     void reloadSmsPatterns() {
         if (mSenderId < 0) return;
@@ -169,6 +281,25 @@ public class BankConfigActivity extends Activity {
         mContainerSmsPatterns.setVisibility(empty ? View.GONE : View.VISIBLE);
     }
 
+    void addSmsPattern() {
+        if (mSenderId < 0) {
+            Toast.makeText(this, R.string.msg_save_bank_first, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        Intent i = new Intent(this, SmsExtractConfigActivity.class);
+        i.putExtra(SmsExtractConfigActivity.EXTRA_SENDER_ID, mSenderId);
+        startActivity(i);
+    }
+
+    void openSmsPattern(long patternId) {
+        Intent i = new Intent(this, SmsExtractConfigActivity.class);
+        i.putExtra(SmsExtractConfigActivity.EXTRA_SENDER_ID, mSenderId);
+        i.putExtra(SmsExtractConfigActivity.EXTRA_PATTERN_ID, patternId);
+        startActivity(i);
+    }
+
+    // ── PDF ───────────────────────────────────────────────────────────────────
+
     void reloadPdfPatterns() {
         if (mSenderId < 0) return;
         List<ExtractionPattern> patterns = mDb.getPdfPatternsBySender(mSenderId);
@@ -201,23 +332,6 @@ public class BankConfigActivity extends Activity {
         mContainerPdfPatterns.setVisibility(empty ? View.GONE : View.VISIBLE);
     }
 
-    void addSmsPattern() {
-        if (mSenderId < 0) {
-            Toast.makeText(this, R.string.msg_save_bank_first, Toast.LENGTH_SHORT).show();
-            return;
-        }
-        Intent i = new Intent(this, SmsExtractConfigActivity.class);
-        i.putExtra(SmsExtractConfigActivity.EXTRA_SENDER_ID, mSenderId);
-        startActivity(i);
-    }
-
-    void openSmsPattern(long patternId) {
-        Intent i = new Intent(this, SmsExtractConfigActivity.class);
-        i.putExtra(SmsExtractConfigActivity.EXTRA_SENDER_ID, mSenderId);
-        i.putExtra(SmsExtractConfigActivity.EXTRA_PATTERN_ID, patternId);
-        startActivity(i);
-    }
-
     void pickPdf() {
         if (mSenderId < 0) {
             Toast.makeText(this, R.string.msg_save_bank_first, Toast.LENGTH_SHORT).show();
@@ -231,16 +345,11 @@ public class BankConfigActivity extends Activity {
         startActivityForResult(i, REQ_PICK_PDF);
     }
 
-    void openDropbox() {
-        startActivity(new Intent(this, DropboxPdfInboxActivity.class));
-    }
-
     void addPdfPattern() {
         if (mSenderId < 0) {
             Toast.makeText(this, R.string.msg_save_bank_first, Toast.LENGTH_SHORT).show();
             return;
         }
-        // PDF patterns are created by scanning a PDF — reuse the file picker flow
         pickPdf();
     }
 
@@ -297,6 +406,8 @@ public class BankConfigActivity extends Activity {
         startActivity(intent);
     }
 
+    // ── PDF Password ──────────────────────────────────────────────────────────
+
     void showPasswordDialog() {
         if (mSenderId < 0) {
             Toast.makeText(this, R.string.msg_save_bank_first, Toast.LENGTH_SHORT).show();
@@ -348,6 +459,54 @@ public class BankConfigActivity extends Activity {
         }
     }
 
+    // ── PDF Sources ───────────────────────────────────────────────────────────
+
+    void reloadPdfSources() {
+        if (mSenderId < 0) return;
+        mContainerPdfSources.removeAllViews();
+        List<PdfSource> sources = mDb.getPdfSourcesBySender(mSenderId);
+        for (PdfSource src : sources) {
+            addSourceRow(src.id, src.path, src.isDropbox);
+        }
+        if (sources.isEmpty()) {
+            addSourceRow(-1L, "", false);
+            mBtnAddMorePaths.setVisibility(View.GONE);
+        } else {
+            mBtnAddMorePaths.setVisibility(View.VISIBLE);
+        }
+    }
+
+    void addSourceRow(long id, String path, boolean isDropbox) {
+        View row = getLayoutInflater().inflate(R.layout.item_pdf_source_row, mContainerPdfSources, false);
+        row.setTag(Long.valueOf(id));
+        EditText etPath    = (EditText) row.findViewById(R.id.etSourcePath);
+        CheckBox cbDropbox = (CheckBox) row.findViewById(R.id.cbDropbox);
+        etPath.setText(path);
+        cbDropbox.setChecked(isDropbox);
+        etPath.setOnFocusChangeListener(new SourceFocusListener(this, row, etPath, cbDropbox));
+        cbDropbox.setOnCheckedChangeListener(new SourceCheckListener(this, row, etPath));
+        row.setOnLongClickListener(new SourceRowLongClickListener(this, row));
+        mContainerPdfSources.addView(row);
+    }
+
+    void confirmDeleteSource(long id) {
+        mPendingDeleteSourceId = id;
+        new AlertDialog.Builder(this, R.style.RoundedDialog)
+            .setMessage(R.string.confirm_delete_source)
+            .setPositiveButton(android.R.string.ok, new DeleteSourceConfirmListener(this))
+            .setNegativeButton(android.R.string.cancel, null)
+            .show();
+    }
+
+    void deleteSource() {
+        if (mPendingDeleteSourceId < 0) return;
+        mDb.deletePdfSource(mPendingDeleteSourceId);
+        mPendingDeleteSourceId = -1L;
+        reloadPdfSources();  // re-inflate all rows from DB
+    }
+
+    // ── Delete bank ───────────────────────────────────────────────────────────
+
     void confirmDeleteBank() {
         new AlertDialog.Builder(this, R.style.RoundedDialog)
             .setMessage(R.string.confirm_delete_bank)
@@ -369,6 +528,8 @@ public class BankConfigActivity extends Activity {
         finish();
     }
 
+    // ── Delete pattern ────────────────────────────────────────────────────────
+
     void confirmDeletePattern(long id) {
         mPendingDeletePatternId = id;
         new AlertDialog.Builder(this, R.style.RoundedDialog)
@@ -387,7 +548,9 @@ public class BankConfigActivity extends Activity {
         reloadPdfPatterns();
     }
 
-    // ── Static listener classes ───────────────────────────────────────────────
+    // ============================================================
+    // Static listener classes — D8 constraints
+    // ============================================================
 
     static class BackClickListener implements View.OnClickListener {
         private final BankConfigActivity mA;
@@ -411,6 +574,48 @@ public class BankConfigActivity extends Activity {
         private final BankConfigActivity mA;
         DeleteBankConfirmListener(BankConfigActivity a) { mA = a; }
         public void onClick(DialogInterface d, int w) { mA.deleteBank(); }
+    }
+
+    static class AddSenderIdClickListener implements View.OnClickListener {
+        private final BankConfigActivity mA;
+        AddSenderIdClickListener(BankConfigActivity a) { mA = a; }
+        public void onClick(View v) { mA.showSenderIdDialog(-1L, "", false); }
+    }
+
+    static class SenderIdClickListener implements View.OnClickListener {
+        private final BankConfigActivity mA;
+        private final long mId;
+        SenderIdClickListener(BankConfigActivity a, long id) { mA = a; mId = id; }
+        public void onClick(View v) {
+            SenderConfig s = mA.mDb.getSenderById(mId);
+            if (s != null) mA.showSenderIdDialog(mId, s.pattern, s.isRegex);
+        }
+    }
+
+    static class SenderIdLongClickListener implements View.OnLongClickListener {
+        private final BankConfigActivity mA;
+        private final long mId;
+        SenderIdLongClickListener(BankConfigActivity a, long id) { mA = a; mId = id; }
+        public boolean onLongClick(View v) { mA.confirmDeleteSenderId(mId); return true; }
+    }
+
+    static class DeleteSenderIdConfirmListener implements DialogInterface.OnClickListener {
+        private final BankConfigActivity mA;
+        DeleteSenderIdConfirmListener(BankConfigActivity a) { mA = a; }
+        public void onClick(DialogInterface d, int w) { mA.deleteSenderId(); }
+    }
+
+    static class SaveSenderIdListener implements DialogInterface.OnClickListener {
+        private final BankConfigActivity mA;
+        private final long    mExistingId;
+        private final EditText mEtPattern;
+        private final CheckBox mCbIsRegex;
+        SaveSenderIdListener(BankConfigActivity a, long id, EditText et, CheckBox cb) {
+            mA = a; mExistingId = id; mEtPattern = et; mCbIsRegex = cb;
+        }
+        public void onClick(DialogInterface d, int w) {
+            mA.saveSenderId(mExistingId, mEtPattern, mCbIsRegex);
+        }
     }
 
     static class AddSmsPatternClickListener implements View.OnClickListener {
@@ -446,18 +651,6 @@ public class BankConfigActivity extends Activity {
         public void onClick(DialogInterface d, int w) { mA.deletePattern(); }
     }
 
-    static class AddPdfClickListener implements View.OnClickListener {
-        private final BankConfigActivity mA;
-        AddPdfClickListener(BankConfigActivity a) { mA = a; }
-        public void onClick(View v) { mA.pickPdf(); }
-    }
-
-    static class DropboxClickListener implements View.OnClickListener {
-        private final BankConfigActivity mA;
-        DropboxClickListener(BankConfigActivity a) { mA = a; }
-        public void onClick(View v) { mA.openDropbox(); }
-    }
-
     static class SetPasswordClickListener implements View.OnClickListener {
         private final BankConfigActivity mA;
         SetPasswordClickListener(BankConfigActivity a) { mA = a; }
@@ -483,5 +676,85 @@ public class BankConfigActivity extends Activity {
         private final BankConfigActivity mA;
         ClearPasswordListener(BankConfigActivity a) { mA = a; }
         public void onClick(DialogInterface d, int w) { mA.clearPassword(); }
+    }
+
+    static class AddMorePathsClickListener implements View.OnClickListener {
+        private final BankConfigActivity mA;
+        AddMorePathsClickListener(BankConfigActivity a) { mA = a; }
+        public void onClick(View v) {
+            if (mA.mSenderId < 0) {
+                Toast.makeText(mA, R.string.msg_save_bank_first, Toast.LENGTH_SHORT).show();
+                return;
+            }
+            mA.addSourceRow(-1L, "", false);
+        }
+    }
+
+    static class SourceFocusListener implements View.OnFocusChangeListener {
+        private final BankConfigActivity mA;
+        private final View     mRow;
+        private final EditText mEtPath;
+        private final CheckBox mCbDropbox;
+        SourceFocusListener(BankConfigActivity a, View row, EditText et, CheckBox cb) {
+            mA = a; mRow = row; mEtPath = et; mCbDropbox = cb;
+        }
+        public void onFocusChange(View v, boolean hasFocus) {
+            if (hasFocus) return;
+            String path = mEtPath.getText().toString().trim();
+            if (path.isEmpty()) return;
+            long id = (Long) mRow.getTag();
+            if (id < 0) {
+                long newId = mA.mDb.insertPdfSource(mA.mSenderId, path, mCbDropbox.isChecked());
+                mRow.setTag(Long.valueOf(newId));
+                mA.mBtnAddMorePaths.setVisibility(View.VISIBLE);
+            } else {
+                mA.mDb.updatePdfSource(id, path, mCbDropbox.isChecked());
+            }
+        }
+    }
+
+    static class SourceCheckListener implements android.widget.CompoundButton.OnCheckedChangeListener {
+        private final BankConfigActivity mA;
+        private final View     mRow;
+        private final EditText mEtPath;
+        SourceCheckListener(BankConfigActivity a, View row, EditText et) {
+            mA = a; mRow = row; mEtPath = et;
+        }
+        public void onCheckedChanged(android.widget.CompoundButton b, boolean checked) {
+            if (checked && mEtPath.getText().toString().trim().isEmpty()) {
+                String bankName = mA.mSender != null
+                    ? (mA.mSender.displayName != null ? mA.mSender.displayName : mA.mSender.pattern)
+                    : "bankname";
+                mEtPath.setHint("/Apps/myfintracker/" + bankName + "/");
+            } else if (!checked && mEtPath.getText().toString().trim().isEmpty()) {
+                mEtPath.setHint(mA.getString(R.string.hint_pdf_source_path));
+            }
+            long id = (Long) mRow.getTag();
+            if (id < 0) return;
+            String path = mEtPath.getText().toString().trim();
+            if (path.isEmpty()) return;
+            mA.mDb.updatePdfSource(id, path, checked);
+        }
+    }
+
+    static class SourceRowLongClickListener implements View.OnLongClickListener {
+        private final BankConfigActivity mA;
+        private final View mRow;
+        SourceRowLongClickListener(BankConfigActivity a, View row) { mA = a; mRow = row; }
+        public boolean onLongClick(View v) {
+            long id = (Long) mRow.getTag();
+            if (id < 0) {
+                mA.mContainerPdfSources.removeView(mRow);
+            } else {
+                mA.confirmDeleteSource(id);
+            }
+            return true;
+        }
+    }
+
+    static class DeleteSourceConfirmListener implements DialogInterface.OnClickListener {
+        private final BankConfigActivity mA;
+        DeleteSourceConfirmListener(BankConfigActivity a) { mA = a; }
+        public void onClick(DialogInterface d, int w) { mA.deleteSource(); }
     }
 }

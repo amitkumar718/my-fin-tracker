@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:layout_marginBottom="6dp">
+
+    <EditText
+        android:id="@+id/etSourcePath"
+        android:layout_width="0dp"
+        android:layout_height="44dp"
+        android:layout_weight="1"
+        android:hint="@string/hint_pdf_source_path"
+        android:textSize="12sp"
+        android:textColor="#212121"
+        android:textColorHint="#9E9E9E"
+        android:background="@drawable/bg_edittext_outlined"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:inputType="textNoSuggestions"
+        android:fontFamily="monospace" />
+
+    <CheckBox
+        android:id="@+id/cbDropbox"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="8dp"
+        android:text="@string/label_is_dropbox"
+        android:textSize="12sp"
+        android:textColor="#424242" />
+
+</LinearLayout>
