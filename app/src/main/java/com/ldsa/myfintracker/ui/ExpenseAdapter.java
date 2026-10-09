@@ -1,6 +1,10 @@
 package com.ldsa.myfintracker.ui;
 
 import android.content.Context;
+import android.content.res.ColorStateList;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.style.StyleSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -103,7 +107,19 @@ public class ExpenseAdapter extends BaseAdapter {
         }
 
         Expense e = item.expense;
-        h.tvAmount.setText(formatAmount(e.amount));
+        if (e.isCredit) {
+            SpannableStringBuilder sb = new SpannableStringBuilder(formatAmount(e.amount));
+            int cr = sb.length();
+            sb.append(" (Cr)");
+            sb.setSpan(new StyleSpan(android.graphics.Typeface.BOLD),
+                cr, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            h.tvAmount.setText(sb);
+        } else {
+            h.tvAmount.setText(formatAmount(e.amount));
+        }
+        convertView.setBackgroundTintList(e.isCredit
+            ? ColorStateList.valueOf(0xFFE8F5E9)  // light green
+            : null);
 
         SimpleDateFormat sdf = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault());
         h.tvDate.setText(e.dateMs > 0 ? sdf.format(new Date(e.dateMs)) : "—");
