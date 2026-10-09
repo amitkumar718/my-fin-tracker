@@ -28,6 +28,7 @@ public class DropboxSettingsActivity extends Activity {
     private EditText mEtToken;
     private EditText mEtRootFolder;
     private TextView mTvStatus;
+    private TextView mTvConnectStatus;
     private View     mVStatusDot;
     private Button   mBtnConnect;
     private Button   mBtnTest;
@@ -44,9 +45,10 @@ public class DropboxSettingsActivity extends Activity {
         mEtAppSecret  = (EditText) findViewById(R.id.etAppSecret);
         mEtToken      = (EditText) findViewById(R.id.etToken);
         mEtRootFolder = (EditText) findViewById(R.id.etRootFolder);
-        mTvStatus     = (TextView) findViewById(R.id.tvStatus);
-        mVStatusDot   = findViewById(R.id.vStatusDot);
-        mBtnConnect   = (Button)   findViewById(R.id.btnConnect);
+        mTvStatus        = (TextView) findViewById(R.id.tvStatus);
+        mTvConnectStatus = (TextView) findViewById(R.id.tvConnectStatus);
+        mVStatusDot      = findViewById(R.id.vStatusDot);
+        mBtnConnect      = (Button)   findViewById(R.id.btnConnect);
         mBtnTest      = (Button)   findViewById(R.id.btnTest);
         mBtnBrowse    = (Button)   findViewById(R.id.btnBrowse);
         mBtnSave      = (Button)   findViewById(R.id.btnSave);
@@ -78,7 +80,9 @@ public class DropboxSettingsActivity extends Activity {
         mEtAppSecret.setText(appSecret != null ? appSecret : "");
         mEtToken.setText(token != null ? token : "");
         mEtRootFolder.setText(root != null ? root : "");
-        updateStatus(token != null && !token.isEmpty());
+        String refresh = p.getString(DropboxPdfHelper.KEY_REFRESH_TOKEN, "");
+        updateStatus(token != null && !token.isEmpty(),
+                     refresh != null && !refresh.isEmpty());
     }
 
     void connectDropbox() {
@@ -92,19 +96,29 @@ public class DropboxSettingsActivity extends Activity {
         if (!ok) Toast.makeText(this, "Set App Key first", Toast.LENGTH_SHORT).show();
     }
 
-    void updateStatus(boolean hasToken) {
+    void updateStatus(boolean hasToken, boolean hasOAuth) {
+        String connectStatus;
+        int    connectColor;
         if (!hasToken) {
             mTvStatus.setText(R.string.dbx_status_no_token);
             mTvStatus.setTextColor(0xFF9E9E9E);
             mVStatusDot.setBackgroundColor(0xFFBDBDBD);
             mBtnTest.setEnabled(false);
             mBtnBrowse.setEnabled(false);
+            connectStatus = "Not connected";
+            connectColor  = 0xFF9E9E9E;
         } else {
-            mTvStatus.setText(R.string.dbx_status_token_saved);
+            mTvStatus.setText(hasOAuth ? "Connected via OAuth" : "Manual token saved");
             mTvStatus.setTextColor(0xFF757575);
+            connectStatus = hasOAuth ? "Connected via OAuth" : "Manual token saved";
+            connectColor  = hasOAuth ? 0xFF388E3C : 0xFFE65100;
             mVStatusDot.setBackgroundColor(0xFF1976D2);
             mBtnTest.setEnabled(true);
             mBtnBrowse.setEnabled(true);
+        }
+        if (mTvConnectStatus != null) {
+            mTvConnectStatus.setText(connectStatus);
+            mTvConnectStatus.setTextColor(connectColor);
         }
     }
 
@@ -157,7 +171,7 @@ public class DropboxSettingsActivity extends Activity {
 
     void clearToken() {
         mEtToken.setText("");
-        updateStatus(false);
+        updateStatus(false, false);
     }
 
     void save() {
@@ -176,7 +190,9 @@ public class DropboxSettingsActivity extends Activity {
         }
         ed.putString(KEY_ROOT, root);
         ed.apply();
-        updateStatus(!token.isEmpty());
+        String refresh = getSharedPreferences(PREF_FILE, MODE_PRIVATE)
+            .getString(DropboxPdfHelper.KEY_REFRESH_TOKEN, "");
+        updateStatus(!token.isEmpty(), refresh != null && !refresh.isEmpty());
         Toast.makeText(this, R.string.msg_token_saved, Toast.LENGTH_SHORT).show();
     }
 

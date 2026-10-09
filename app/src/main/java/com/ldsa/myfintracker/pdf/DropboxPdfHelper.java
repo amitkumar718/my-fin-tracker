@@ -39,6 +39,7 @@ public class DropboxPdfHelper {
     public static final String KEY_REFRESH_TOKEN     = "refresh_token";
     public static final String KEY_EXPIRES_AT        = "expires_at";
     public static final String KEY_PENDING_VERIFIER  = "pending_verifier";
+    public static final String KEY_LAST_AUTH_STATUS  = "last_auth_status"; // "ok" / "auth_fail"
 
     /** App Folder root. Dropbox API uses empty string, not "/", for the root. */
     public static final String DEFAULT_ROOT = "";
