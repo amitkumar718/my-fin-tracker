@@ -544,8 +544,10 @@ public class PdfInboxActivity extends Activity {
         }
     }
 
-    static class ByDisplayNameDesc implements java.util.Comparator<PdfStatement> {
-        public int compare(PdfStatement a, PdfStatement b) {
+    static class ByDisplayNameDesc implements java.util.Comparator {
+        public int compare(Object oa, Object ob) {
+            PdfStatement a = (PdfStatement) oa;
+            PdfStatement b = (PdfStatement) ob;
             String an = a.displayName != null ? a.displayName : (a.uri != null ? a.uri : "");
             String bn = b.displayName != null ? b.displayName : (b.uri != null ? b.uri : "");
             return bn.compareToIgnoreCase(an); // descending

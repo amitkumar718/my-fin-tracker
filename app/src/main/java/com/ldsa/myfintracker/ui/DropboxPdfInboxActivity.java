@@ -441,8 +441,10 @@ public class DropboxPdfInboxActivity extends Activity {
         public void onClick(View v) { mA.showTokenDialog(); }
     }
 
-    static class ByEntryNameDesc implements java.util.Comparator<DropboxPdfHelper.PdfEntry> {
-        public int compare(DropboxPdfHelper.PdfEntry a, DropboxPdfHelper.PdfEntry b) {
+    static class ByEntryNameDesc implements java.util.Comparator {
+        public int compare(Object oa, Object ob) {
+            DropboxPdfHelper.PdfEntry a = (DropboxPdfHelper.PdfEntry) oa;
+            DropboxPdfHelper.PdfEntry b = (DropboxPdfHelper.PdfEntry) ob;
             String an = a != null && a.name != null ? a.name : "";
             String bn = b != null && b.name != null ? b.name : "";
             return bn.compareToIgnoreCase(an);
