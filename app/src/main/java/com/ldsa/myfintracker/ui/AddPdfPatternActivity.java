@@ -57,6 +57,7 @@ public class AddPdfPatternActivity extends Activity {
     private static final int REQ_PICK_LOCAL      = 601;
     private static final int REQ_PICK_DROPBOX    = 602;
     private static final int REQ_PICK_LINES      = 603;
+    private static final int REQ_PICK_FROM_INBOX = 604;
     private static final int REQ_TEST_PICK_LOCAL   = 611;
     private static final int REQ_TEST_PICK_DROPBOX = 612;
 
@@ -266,22 +267,10 @@ public class AddPdfPatternActivity extends Activity {
             Toast.makeText(this, R.string.msg_save_bank_first, Toast.LENGTH_SHORT).show();
             return;
         }
-        List<PdfSource> sources = mDb.getPdfSourcesBySender(mSenderId);
-        boolean hasDropbox = false;
-        for (PdfSource s : sources) {
-            if (s.isDropbox) { hasDropbox = true; break; }
-        }
-        if (hasDropbox) {
-            new AlertDialog.Builder(this, R.style.RoundedDialog)
-                .setTitle(R.string.title_pick_source)
-                .setItems(new String[]{
-                    getString(R.string.btn_from_phone),
-                    getString(R.string.btn_from_dropbox)
-                }, new PickSourceDialogListener(this))
-                .show();
-        } else {
-            openLocalPicker();
-        }
+        Intent i = new Intent(this, PdfInboxActivity.class);
+        i.putExtra(PdfInboxActivity.EXTRA_SENDER_ID, mSenderId);
+        i.putExtra(PdfInboxActivity.EXTRA_PICK_MODE, true);
+        startActivityForResult(i, REQ_PICK_FROM_INBOX);
     }
 
     void openLocalPicker() {
@@ -343,6 +332,15 @@ public class AddPdfPatternActivity extends Activity {
             if (bankLine   != null) mEtBankPat.setText(bankLine);
             if (periodLine != null) mEtPeriodPat.setText(periodLine);
             if (transLine  != null) mEtTransPat.setText(transLine);
+
+        } else if (req == REQ_PICK_FROM_INBOX) {
+            String uriStr = data.getStringExtra(PdfInboxActivity.EXTRA_FILE_URI);
+            if (uriStr == null) return;
+            Uri uri = Uri.parse(uriStr);
+            String name = uri.getLastPathSegment();
+            boolean isPdf = name == null || name.toLowerCase().endsWith(".pdf")
+                || "application/pdf".equals(getContentResolver().getType(uri));
+            openLinePicker(uri, isPdf);
 
         } else if (req == REQ_TEST_PICK_LOCAL) {
             Uri uri = data.getData();

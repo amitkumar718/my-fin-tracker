@@ -148,6 +148,7 @@ public class DropboxPdfInboxActivity extends Activity {
 
     void onListSuccess(List<DropboxPdfHelper.PdfEntry> entries) {
         mProgress.setVisibility(View.GONE);
+        java.util.Collections.sort(entries, new ByEntryNameDesc());
         mEntries = entries;
         mSelected = new ArrayList<Boolean>();
         for (int i = 0; i < entries.size(); i++) mSelected.add(Boolean.FALSE);
@@ -438,5 +439,13 @@ public class DropboxPdfInboxActivity extends Activity {
         private final DropboxPdfInboxActivity mA;
         ChangeTokenClickListener(DropboxPdfInboxActivity a) { mA = a; }
         public void onClick(View v) { mA.showTokenDialog(); }
+    }
+
+    static class ByEntryNameDesc implements java.util.Comparator<DropboxPdfHelper.PdfEntry> {
+        public int compare(DropboxPdfHelper.PdfEntry a, DropboxPdfHelper.PdfEntry b) {
+            String an = a != null && a.name != null ? a.name : "";
+            String bn = b != null && b.name != null ? b.name : "";
+            return bn.compareToIgnoreCase(an);
+        }
     }
 }

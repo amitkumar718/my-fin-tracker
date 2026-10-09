@@ -35,6 +35,8 @@ import java.util.Set;
 public class PdfInboxActivity extends Activity {
 
     public static final String EXTRA_SENDER_ID = "sender_id";
+    public static final String EXTRA_PICK_MODE = "pick_mode";
+    public static final String EXTRA_FILE_URI  = "file_uri";
 
     /** Session-scoped password cache: URI string → password. Cleared when process dies. */
     static final HashMap<String, String> sCachedPasswords = new HashMap<String, String>();
@@ -47,6 +49,7 @@ public class PdfInboxActivity extends Activity {
     private ExpenseDatabase      mDb;
 
     private long    mSenderId   = -1L;
+    private boolean mPickMode;
     private Uri     mPendingUri;
     private String  mPendingDisplayName;
     private boolean mPendingIsPdf;
@@ -63,6 +66,7 @@ public class PdfInboxActivity extends Activity {
         getWindow().setStatusBarColor(0xFF1976D2);
         mDb = ExpenseDatabase.getInstance(this);
         mSenderId = getIntent().getLongExtra(EXTRA_SENDER_ID, -1L);
+        mPickMode = getIntent().getBooleanExtra(EXTRA_PICK_MODE, false);
 
         mTvEmpty  = (TextView) findViewById(R.id.tvStatementsEmpty);
         mListView = (ListView) findViewById(R.id.listStatements);
@@ -109,6 +113,7 @@ public class PdfInboxActivity extends Activity {
     }
 
     void refreshAdapter() {
+        java.util.Collections.sort(mCurrentList, new ByDisplayNameDesc());
         List<Integer> counts = new ArrayList<Integer>();
         for (PdfStatement s : mCurrentList) {
             counts.add(s.id > 0 ? mDb.countExpensesByStatement(s.id) : 0);
@@ -189,6 +194,13 @@ public class PdfInboxActivity extends Activity {
             downloadAndOpenDropbox(s);
             return;
         }
+        if (mPickMode) {
+            Intent result = new Intent();
+            result.putExtra(EXTRA_FILE_URI, s.uri);
+            setResult(RESULT_OK, result);
+            finish();
+            return;
+        }
         long id = s.id;
         if (id <= 0) {
             // "New" entry discovered from a configured source — import first.
@@ -226,6 +238,13 @@ public class PdfInboxActivity extends Activity {
     }
 
     void onDropboxDownloaded(PdfStatement entry, File out) {
+        if (mPickMode) {
+            Intent result = new Intent();
+            result.putExtra(EXTRA_FILE_URI, Uri.fromFile(out).toString());
+            setResult(RESULT_OK, result);
+            finish();
+            return;
+        }
         PdfStatement row = new PdfStatement();
         row.senderId        = entry.senderId;
         row.bankName        = entry.bankName;
@@ -522,6 +541,14 @@ public class PdfInboxActivity extends Activity {
             }
 
             mH.post(new PublishRunnable(mA, merged));
+        }
+    }
+
+    static class ByDisplayNameDesc implements java.util.Comparator<PdfStatement> {
+        public int compare(PdfStatement a, PdfStatement b) {
+            String an = a.displayName != null ? a.displayName : (a.uri != null ? a.uri : "");
+            String bn = b.displayName != null ? b.displayName : (b.uri != null ? b.uri : "");
+            return bn.compareToIgnoreCase(an); // descending
         }
     }
 
