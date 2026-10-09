@@ -134,7 +134,9 @@ public class PdfInboxActivity extends Activity {
         for (PdfSource src : sources) {
             if (!src.isDropbox) continue;
             if (src.path == null) continue;
-            DropboxPdfHelper.listPdfs(this, token, src.path,
+            String path = src.path.trim();
+            while (path.endsWith("/")) path = path.substring(0, path.length() - 1);
+            DropboxPdfHelper.listPdfs(this, token, path,
                 new DropboxListCallback(this, bankName));
         }
     }

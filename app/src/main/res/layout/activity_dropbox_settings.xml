@@ -105,6 +105,83 @@
 
             </LinearLayout>
 
+            <!-- App key / secret card -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/bg_card"
+                android:elevation="2dp"
+                android:padding="12dp"
+                android:layout_marginBottom="12dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="App Key"
+                    android:textColor="#757575"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.06"
+                    android:layout_marginBottom="6dp" />
+
+                <EditText
+                    android:id="@+id/etAppKey"
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:hint="Your Dropbox app key"
+                    android:textSize="13sp"
+                    android:textColor="#212121"
+                    android:background="@drawable/bg_edittext_outlined"
+                    android:paddingLeft="10dp"
+                    android:paddingRight="10dp"
+                    android:inputType="textNoSuggestions|textVisiblePassword"
+                    android:fontFamily="monospace"
+                    android:layout_marginBottom="10dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="App Secret"
+                    android:textColor="#757575"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.06"
+                    android:layout_marginBottom="6dp" />
+
+                <EditText
+                    android:id="@+id/etAppSecret"
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:hint="Your Dropbox app secret"
+                    android:textSize="13sp"
+                    android:textColor="#212121"
+                    android:background="@drawable/bg_edittext_outlined"
+                    android:paddingLeft="10dp"
+                    android:paddingRight="10dp"
+                    android:inputType="textNoSuggestions|textVisiblePassword"
+                    android:fontFamily="monospace"
+                    android:layout_marginBottom="10dp" />
+
+                <Button
+                    android:id="@+id/btnConnect"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:text="Connect Dropbox"
+                    android:textColor="#FFFFFF"
+                    android:textSize="13sp"
+                    android:background="@drawable/bg_button_primary" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Opens Dropbox in your browser once. Thereafter the token refreshes automatically."
+                    android:textColor="#9E9E9E"
+                    android:textSize="11sp"
+                    android:layout_marginTop="6dp" />
+
+            </LinearLayout>
+
             <!-- Token card -->
             <LinearLayout
                 android:layout_width="match_parent"

@@ -126,6 +126,19 @@
             android:theme="@android:style/Theme.Material.Light.NoActionBar" />
 
         <activity
+            android:name=".ui.DropboxAuthCallbackActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:theme="@android:style/Theme.NoDisplay">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="myfintracker" android:host="oauth" />
+            </intent-filter>
+        </activity>
+
+        <activity
             android:name=".ui.PdfLinePickerActivity"
             android:label="@string/title_pick_pdf_lines"
             android:exported="false"

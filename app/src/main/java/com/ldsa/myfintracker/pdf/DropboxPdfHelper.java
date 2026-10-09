@@ -1,6 +1,10 @@
 package com.ldsa.myfintracker.pdf;
 
 import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -16,6 +20,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,13 +31,21 @@ import java.util.List;
  */
 public class DropboxPdfHelper {
 
-    public static final String PREF_FILE  = "dropbox";
-    public static final String KEY_TOKEN  = "access_token";
-    public static final String KEY_ROOT   = "root_path";
+    public static final String PREF_FILE          = "dropbox";
+    public static final String KEY_TOKEN          = "access_token";
+    public static final String KEY_ROOT           = "root_path";
+    public static final String KEY_APP_KEY        = "app_key";
+    public static final String KEY_APP_SECRET     = "app_secret";
+    public static final String KEY_REFRESH_TOKEN  = "refresh_token";
+    public static final String KEY_EXPIRES_AT     = "expires_at";
 
     /** App Folder root. Dropbox API uses empty string, not "/", for the root. */
     public static final String DEFAULT_ROOT = "";
 
+    public static final String REDIRECT_URI = "myfintracker://oauth";
+
+    private static final String AUTH_URL          = "https://www.dropbox.com/oauth2/authorize";
+    private static final String TOKEN_URL         = "https://api.dropboxapi.com/oauth2/token";
     private static final String LIST_URL          = "https://api.dropboxapi.com/2/files/list_folder";
     private static final String LIST_CONTINUE_URL = "https://api.dropboxapi.com/2/files/list_folder/continue";
     private static final String DOWNLOAD_URL      = "https://content.dropboxapi.com/2/files/download";
@@ -67,6 +80,11 @@ public class DropboxPdfHelper {
         void onAuthFailed();
     }
 
+    public interface AuthCallback {
+        void onSuccess();
+        void onError(String message);
+    }
+
     // ============================================================
     // Public API
     // ============================================================
@@ -75,14 +93,167 @@ public class DropboxPdfHelper {
     public static void listPdfs(Activity activity, String token, String rootPath,
                                 ListCallback callback) {
         Handler main = new Handler(Looper.getMainLooper());
-        new ListThread(token, rootPath, callback, main).start();
+        new ListThread(activity.getApplicationContext(), token, rootPath, callback, main).start();
     }
 
     /** Download pathLower into outFile. Overwrites existing file. */
     public static void downloadPdf(Activity activity, String token, String pathLower,
                                    File outFile, DownloadCallback callback) {
         Handler main = new Handler(Looper.getMainLooper());
-        new DownloadThread(token, pathLower, outFile, callback, main).start();
+        new DownloadThread(activity.getApplicationContext(), token, pathLower, outFile,
+            callback, main).start();
+    }
+
+    // ============================================================
+    // OAuth 2.0 (app key + secret, offline access with refresh token)
+    // ============================================================
+
+    /** Launch the system browser to the Dropbox authorize URL. */
+    public static boolean startAuth(Activity activity) {
+        SharedPreferences p = activity.getSharedPreferences(PREF_FILE, Context.MODE_PRIVATE);
+        String appKey = p.getString(KEY_APP_KEY, "");
+        if (appKey == null || appKey.isEmpty()) return false;
+        String url = AUTH_URL
+            + "?client_id=" + urlEncode(appKey)
+            + "&response_type=code"
+            + "&token_access_type=offline"
+            + "&redirect_uri=" + urlEncode(REDIRECT_URI);
+        Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        activity.startActivity(i);
+        return true;
+    }
+
+    /** Exchange an authorization code for access + refresh tokens. */
+    public static void exchangeCode(Context ctx, String code, AuthCallback cb) {
+        new ExchangeCodeThread(ctx.getApplicationContext(), code, cb,
+            new Handler(Looper.getMainLooper())).start();
+    }
+
+    /**
+     * Returns the stored access token, refreshing first if it's expired or
+     * near-expiry. Returns null if there is no token at all. Must be called
+     * from a background thread (performs network IO on refresh).
+     */
+    static synchronized String getValidAccessToken(Context ctx) {
+        SharedPreferences p = ctx.getSharedPreferences(PREF_FILE, Context.MODE_PRIVATE);
+        String token = p.getString(KEY_TOKEN, null);
+        long expiresAt = p.getLong(KEY_EXPIRES_AT, 0L);
+        if (token != null && !token.isEmpty()
+                && (expiresAt == 0L || System.currentTimeMillis() < expiresAt - 60_000L)) {
+            return token;
+        }
+        String refreshToken = p.getString(KEY_REFRESH_TOKEN, null);
+        if (refreshToken == null || refreshToken.isEmpty()) return token; // stale
+        String appKey    = p.getString(KEY_APP_KEY,    "");
+        String appSecret = p.getString(KEY_APP_SECRET, "");
+        if (appKey.isEmpty() || appSecret.isEmpty()) return token;
+        try {
+            String body = "grant_type=refresh_token"
+                + "&refresh_token=" + urlEncode(refreshToken)
+                + "&client_id="     + urlEncode(appKey)
+                + "&client_secret=" + urlEncode(appSecret);
+            String resp = postForm(TOKEN_URL, body);
+            JSONObject j = new JSONObject(resp);
+            String newAccess = j.getString("access_token");
+            long   expIn     = j.optLong("expires_in", 14400L);
+            String newRefresh = j.optString("refresh_token", "");
+            SharedPreferences.Editor ed = p.edit();
+            ed.putString(KEY_TOKEN, newAccess);
+            ed.putLong(KEY_EXPIRES_AT, System.currentTimeMillis() + expIn * 1000L);
+            if (!newRefresh.isEmpty()) ed.putString(KEY_REFRESH_TOKEN, newRefresh);
+            ed.apply();
+            Log.d(TAG, "refresh ok, new expiry in " + expIn + "s");
+            return newAccess;
+        } catch (Exception e) {
+            Log.e(TAG, "refresh failed: " + e.getMessage(), e);
+            return token;
+        }
+    }
+
+    // ============================================================
+    // OAuth thread + helpers
+    // ============================================================
+
+    static class ExchangeCodeThread extends Thread {
+        private final Context mCtx;
+        private final String  mCode;
+        private final AuthCallback mCb;
+        private final Handler mMain;
+        ExchangeCodeThread(Context ctx, String code, AuthCallback cb, Handler main) {
+            mCtx = ctx; mCode = code; mCb = cb; mMain = main;
+        }
+        public void run() {
+            SharedPreferences p = mCtx.getSharedPreferences(PREF_FILE, Context.MODE_PRIVATE);
+            String appKey    = p.getString(KEY_APP_KEY,    "");
+            String appSecret = p.getString(KEY_APP_SECRET, "");
+            if (appKey.isEmpty() || appSecret.isEmpty()) {
+                mMain.post(new AuthErrorRunnable(mCb, "App key or secret not set"));
+                return;
+            }
+            try {
+                String body = "grant_type=authorization_code"
+                    + "&code="          + urlEncode(mCode)
+                    + "&client_id="     + urlEncode(appKey)
+                    + "&client_secret=" + urlEncode(appSecret)
+                    + "&redirect_uri="  + urlEncode(REDIRECT_URI);
+                String resp = postForm(TOKEN_URL, body);
+                JSONObject j = new JSONObject(resp);
+                String access  = j.getString("access_token");
+                String refresh = j.optString("refresh_token", "");
+                long   expIn   = j.optLong("expires_in", 14400L);
+                SharedPreferences.Editor ed = p.edit();
+                ed.putString(KEY_TOKEN, access);
+                if (!refresh.isEmpty()) ed.putString(KEY_REFRESH_TOKEN, refresh);
+                ed.putLong(KEY_EXPIRES_AT, System.currentTimeMillis() + expIn * 1000L);
+                ed.apply();
+                Log.d(TAG, "exchange ok, refresh=" + (refresh.isEmpty() ? "n" : "y")
+                    + " expiry in " + expIn + "s");
+                mMain.post(new AuthSuccessRunnable(mCb));
+            } catch (Exception e) {
+                Log.e(TAG, "exchange failed: " + e.getMessage(), e);
+                mMain.post(new AuthErrorRunnable(mCb, e.getMessage()));
+            }
+        }
+    }
+
+    static class AuthSuccessRunnable implements Runnable {
+        private final AuthCallback mCb;
+        AuthSuccessRunnable(AuthCallback cb) { mCb = cb; }
+        public void run() { mCb.onSuccess(); }
+    }
+
+    static class AuthErrorRunnable implements Runnable {
+        private final AuthCallback mCb;
+        private final String       mMsg;
+        AuthErrorRunnable(AuthCallback cb, String msg) { mCb = cb; mMsg = msg; }
+        public void run() { mCb.onError(mMsg != null ? mMsg : "unknown error"); }
+    }
+
+    static String postForm(String url, String body) throws Exception {
+        HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
+        conn.setRequestMethod("POST");
+        conn.setDoOutput(true);
+        conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+        conn.setConnectTimeout(15000);
+        conn.setReadTimeout(60000);
+        byte[] b = body.getBytes("UTF-8");
+        OutputStream os = conn.getOutputStream();
+        os.write(b);
+        os.close();
+        int code = conn.getResponseCode();
+        InputStream is = (code >= 200 && code < 300) ? conn.getInputStream() : conn.getErrorStream();
+        BufferedReader r = new BufferedReader(new InputStreamReader(is, "UTF-8"));
+        StringBuilder sb = new StringBuilder();
+        String line;
+        while ((line = r.readLine()) != null) sb.append(line);
+        r.close();
+        if (code < 200 || code >= 300) throw new Exception("HTTP " + code + ": " + sb);
+        return sb.toString();
+    }
+
+    static String urlEncode(String s) {
+        try { return URLEncoder.encode(s, "UTF-8"); } catch (Exception e) { return s; }
     }
 
     // ============================================================
@@ -96,17 +267,22 @@ public class DropboxPdfHelper {
     // ============================================================
 
     static class ListThread extends Thread {
-        private final String mToken;
-        private final String mRoot;
+        private final Context mCtx;
+        private String        mToken;
+        private final String  mRoot;
         private final ListCallback mCallback;
         private final Handler mMain;
 
-        ListThread(String token, String root, ListCallback cb, Handler main) {
-            mToken = token; mRoot = root; mCallback = cb; mMain = main;
+        ListThread(Context ctx, String token, String root, ListCallback cb, Handler main) {
+            mCtx = ctx; mToken = token; mRoot = root; mCallback = cb; mMain = main;
         }
 
         public void run() {
             try {
+                // Prefer a freshly refreshed token when the stored one is near-expiry.
+                String refreshed = getValidAccessToken(mCtx);
+                if (refreshed != null && !refreshed.isEmpty()) mToken = refreshed;
+
                 List<PdfEntry> out = new ArrayList<PdfEntry>();
 
                 String body = "{\"path\":\"" + mRoot
@@ -188,18 +364,23 @@ public class DropboxPdfHelper {
     // ============================================================
 
     static class DownloadThread extends Thread {
-        private final String mToken;
-        private final String mPath;
-        private final File mOut;
+        private final Context mCtx;
+        private String        mToken;
+        private final String  mPath;
+        private final File    mOut;
         private final DownloadCallback mCallback;
         private final Handler mMain;
 
-        DownloadThread(String token, String path, File out, DownloadCallback cb, Handler main) {
-            mToken = token; mPath = path; mOut = out; mCallback = cb; mMain = main;
+        DownloadThread(Context ctx, String token, String path, File out,
+                       DownloadCallback cb, Handler main) {
+            mCtx = ctx; mToken = token; mPath = path; mOut = out; mCallback = cb; mMain = main;
         }
 
         public void run() {
             try {
+                String refreshed = getValidAccessToken(mCtx);
+                if (refreshed != null && !refreshed.isEmpty()) mToken = refreshed;
+
                 HttpURLConnection conn = (HttpURLConnection) new URL(DOWNLOAD_URL).openConnection();
                 conn.setRequestMethod("POST");
                 conn.setDoOutput(true);

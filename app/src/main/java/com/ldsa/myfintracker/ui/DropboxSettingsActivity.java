@@ -17,14 +17,19 @@ import java.util.List;
 
 public class DropboxSettingsActivity extends Activity {
 
-    private static final String PREF_FILE = DropboxPdfHelper.PREF_FILE;
-    private static final String KEY_TOKEN = DropboxPdfHelper.KEY_TOKEN;
-    private static final String KEY_ROOT  = DropboxPdfHelper.KEY_ROOT;
+    private static final String PREF_FILE      = DropboxPdfHelper.PREF_FILE;
+    private static final String KEY_TOKEN      = DropboxPdfHelper.KEY_TOKEN;
+    private static final String KEY_ROOT       = DropboxPdfHelper.KEY_ROOT;
+    private static final String KEY_APP_KEY    = DropboxPdfHelper.KEY_APP_KEY;
+    private static final String KEY_APP_SECRET = DropboxPdfHelper.KEY_APP_SECRET;
 
+    private EditText mEtAppKey;
+    private EditText mEtAppSecret;
     private EditText mEtToken;
     private EditText mEtRootFolder;
     private TextView mTvStatus;
     private View     mVStatusDot;
+    private Button   mBtnConnect;
     private Button   mBtnTest;
     private Button   mBtnBrowse;
     private Button   mBtnSave;
@@ -35,15 +40,19 @@ public class DropboxSettingsActivity extends Activity {
         setContentView(R.layout.activity_dropbox_settings);
         getWindow().setStatusBarColor(0xFF1976D2);
 
+        mEtAppKey     = (EditText) findViewById(R.id.etAppKey);
+        mEtAppSecret  = (EditText) findViewById(R.id.etAppSecret);
         mEtToken      = (EditText) findViewById(R.id.etToken);
         mEtRootFolder = (EditText) findViewById(R.id.etRootFolder);
         mTvStatus     = (TextView) findViewById(R.id.tvStatus);
         mVStatusDot   = findViewById(R.id.vStatusDot);
+        mBtnConnect   = (Button)   findViewById(R.id.btnConnect);
         mBtnTest      = (Button)   findViewById(R.id.btnTest);
         mBtnBrowse    = (Button)   findViewById(R.id.btnBrowse);
         mBtnSave      = (Button)   findViewById(R.id.btnSave);
 
         ((TextView) findViewById(R.id.btnBack)).setOnClickListener(new BackListener(this));
+        mBtnConnect.setOnClickListener(new ConnectListener(this));
         mBtnTest.setOnClickListener(new TestListener(this));
         mBtnBrowse.setOnClickListener(new BrowseListener(this));
         mBtnSave.setOnClickListener(new SaveListener(this));
@@ -52,13 +61,35 @@ public class DropboxSettingsActivity extends Activity {
         loadSaved();
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Refresh after Dropbox-auth callback finishes
+        loadSaved();
+    }
+
     void loadSaved() {
         android.content.SharedPreferences p = getSharedPreferences(PREF_FILE, MODE_PRIVATE);
-        String token = p.getString(KEY_TOKEN, "");
-        String root  = p.getString(KEY_ROOT,  "");
+        String appKey    = p.getString(KEY_APP_KEY,    "");
+        String appSecret = p.getString(KEY_APP_SECRET, "");
+        String token     = p.getString(KEY_TOKEN,      "");
+        String root      = p.getString(KEY_ROOT,       "");
+        mEtAppKey.setText(appKey != null ? appKey : "");
+        mEtAppSecret.setText(appSecret != null ? appSecret : "");
         mEtToken.setText(token != null ? token : "");
         mEtRootFolder.setText(root != null ? root : "");
         updateStatus(token != null && !token.isEmpty());
+    }
+
+    void connectDropbox() {
+        // Save key/secret first so the auth URL + callback can use them.
+        android.content.SharedPreferences.Editor ed =
+            getSharedPreferences(PREF_FILE, MODE_PRIVATE).edit();
+        ed.putString(KEY_APP_KEY,    mEtAppKey.getText().toString().trim());
+        ed.putString(KEY_APP_SECRET, mEtAppSecret.getText().toString().trim());
+        ed.apply();
+        boolean ok = DropboxPdfHelper.startAuth(this);
+        if (!ok) Toast.makeText(this, "Set App Key first", Toast.LENGTH_SHORT).show();
     }
 
     void updateStatus(boolean hasToken) {
@@ -130,10 +161,14 @@ public class DropboxSettingsActivity extends Activity {
     }
 
     void save() {
-        String token = mEtToken.getText().toString().trim();
-        String root  = mEtRootFolder.getText().toString().trim();
+        String appKey    = mEtAppKey.getText().toString().trim();
+        String appSecret = mEtAppSecret.getText().toString().trim();
+        String token     = mEtToken.getText().toString().trim();
+        String root      = mEtRootFolder.getText().toString().trim();
         android.content.SharedPreferences.Editor ed =
             getSharedPreferences(PREF_FILE, MODE_PRIVATE).edit();
+        ed.putString(KEY_APP_KEY,    appKey);
+        ed.putString(KEY_APP_SECRET, appSecret);
         if (token.isEmpty()) {
             ed.remove(KEY_TOKEN);
         } else {
@@ -175,6 +210,12 @@ public class DropboxSettingsActivity extends Activity {
         private final DropboxSettingsActivity mA;
         BrowseListener(DropboxSettingsActivity a) { mA = a; }
         public void onClick(View v) { mA.browseDropbox(); }
+    }
+
+    static class ConnectListener implements View.OnClickListener {
+        private final DropboxSettingsActivity mA;
+        ConnectListener(DropboxSettingsActivity a) { mA = a; }
+        public void onClick(View v) { mA.connectDropbox(); }
     }
 
     // ── Test callback (static, D8-safe) ───────────────────────────────────────
