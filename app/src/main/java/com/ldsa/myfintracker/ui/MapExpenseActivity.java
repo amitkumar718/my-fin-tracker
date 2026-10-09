@@ -1261,7 +1261,7 @@ public class MapExpenseActivity extends Activity {
     private String captureGroupFor(String fieldType) {
         switch (fieldType) {
             case "amount":
-            case "balance": return "([\\d,]+\\.?\\d{0,2})";
+            case "balance": return "([\\d,]+\\.?\\d{0,2}|-)";
             case "card":    return "(\\d{4})";
             case "upi":     return "([\\w@.\\-]+)";
             case "account": return "([X\\dx*]+)";

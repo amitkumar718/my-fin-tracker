@@ -462,14 +462,145 @@ public class PdfTextExtractor {
             }
         }
 
+        // Detect tabular columns across the whole page. Each column is tagged
+        // with its alignment so right-aligned amount columns are matched by
+        // right-edge (which is stable), not by X-start which shifts with
+        // amount length. Empty cells become a "-" sentinel.
+        List<Column> columns = detectColumns(merged);
+
         StringBuilder sb = new StringBuilder();
         for (int k = 0; k < merged.size(); k++) {
-            appendRow(sb, merged.get(k));
+            appendRow(sb, merged.get(k), columns);
         }
         return sb.toString();
     }
 
-    private static void appendRow(StringBuilder sb, List<TextChunk> row) {
+    /** A detected column: `pos` is the defining edge (either left or right
+     *  depending on `rightAligned`). Chunks snap to the column whose defining
+     *  edge is nearest. */
+    private static class Column {
+        float   pos;
+        boolean rightAligned;
+    }
+
+    /** Comparator for sorting Columns by effective left edge. */
+    static class ByColPos implements Comparator {
+        public int compare(Object oa, Object ob) {
+            float a = ((Column) oa).pos;
+            float b = ((Column) ob).pos;
+            if (a < b) return -1;
+            if (a > b) return 1;
+            return 0;
+        }
+    }
+
+    /** Returns detected columns (sorted by `pos`), or empty if fewer than
+     *  2 reliable columns are found. Clusters both X-starts (left-aligned)
+     *  and X-ends (right-aligned) — a column is kept if either axis has
+     *  content in ≥ 1/3 of the rows. */
+    private static List<Column> detectColumns(List<List<TextChunk>> rows) {
+        if (rows.size() < 3) return new ArrayList<Column>();
+
+        List<Float> allLeft  = new ArrayList<Float>();
+        List<Float> allRight = new ArrayList<Float>();
+        for (int k = 0; k < rows.size(); k++) {
+            for (int j = 0; j < rows.get(k).size(); j++) {
+                TextChunk c = rows.get(k).get(j);
+                allLeft.add(c.x);
+                allRight.add(c.x + c.text.length() * 5.0f);
+            }
+        }
+        Collections.sort(allLeft);
+        Collections.sort(allRight);
+
+        int threshold = Math.max(3, rows.size() / 3);
+        List<Column> cols = new ArrayList<Column>();
+        clusterInto(allLeft,  threshold, cols, false);
+        clusterInto(allRight, threshold, cols, true);
+
+        if (cols.size() < 2) return new ArrayList<Column>();
+
+        // Sort by pos; dedupe columns that are within 10pt of each other
+        // (prefer the right-aligned entry so amount columns win over any
+        // stray left-edge cluster the amounts also produced).
+        Collections.sort(cols, new ByColPos());
+        List<Column> dedup = new ArrayList<Column>();
+        for (int i = 0; i < cols.size(); i++) {
+            Column c = cols.get(i);
+            if (!dedup.isEmpty() && Math.abs(dedup.get(dedup.size() - 1).pos - c.pos) < 10f) {
+                if (c.rightAligned) dedup.set(dedup.size() - 1, c);
+                continue;
+            }
+            dedup.add(c);
+        }
+        return dedup.size() >= 2 ? dedup : new ArrayList<Column>();
+    }
+
+    /** Cluster a sorted list of X positions; emit a Column for each cluster
+     *  whose size meets `threshold`. */
+    private static void clusterInto(List<Float> sorted, int threshold,
+                                    List<Column> out, boolean rightAligned) {
+        float sum = 0;
+        int   n   = 0;
+        float last = -1000f;
+        for (int i = 0; i < sorted.size(); i++) {
+            float x = sorted.get(i);
+            if (n > 0 && x - last > 10f) {
+                if (n >= threshold) {
+                    Column c = new Column();
+                    c.pos = sum / n;
+                    c.rightAligned = rightAligned;
+                    out.add(c);
+                }
+                sum = 0; n = 0;
+            }
+            sum += x; n++; last = x;
+        }
+        if (n >= threshold) {
+            Column c = new Column();
+            c.pos = sum / n;
+            c.rightAligned = rightAligned;
+            out.add(c);
+        }
+    }
+
+    private static void appendRow(StringBuilder sb, List<TextChunk> row, List<Column> columns) {
+        if (row.isEmpty()) return;
+        Collections.sort(row, new ByXAsc());
+
+        if (columns.size() < 2) { appendRowSpaced(sb, row); return; }
+
+        // Assign each chunk to the column whose defining edge is nearest.
+        // Right-aligned columns compare chunk right-edge; left-aligned compare left-edge.
+        int cols = columns.size();
+        StringBuilder[] cells = new StringBuilder[cols];
+        for (int i = 0; i < cols; i++) cells[i] = new StringBuilder();
+        for (int k = 0; k < row.size(); k++) {
+            TextChunk ch = row.get(k);
+            float chLeft  = ch.x;
+            float chRight = ch.x + ch.text.length() * 5.0f;
+            int   best    = 0;
+            float bestDist = Float.MAX_VALUE;
+            for (int c = 0; c < cols; c++) {
+                Column col = columns.get(c);
+                float d = Math.abs((col.rightAligned ? chRight : chLeft) - col.pos);
+                if (d < bestDist) { bestDist = d; best = c; }
+            }
+            if (cells[best].length() > 0) cells[best].append(' ');
+            cells[best].append(ch.text);
+        }
+
+        StringBuilder line = new StringBuilder();
+        for (int c = 0; c < cols; c++) {
+            if (c > 0) line.append("  ");
+            if (cells[c].length() == 0) line.append('-');
+            else line.append(cells[c]);
+        }
+        String trimmed = line.toString().trim();
+        if (!trimmed.isEmpty()) sb.append(trimmed).append('\n');
+    }
+
+    private static void appendRowSpaced(StringBuilder sb, List<TextChunk> row) {
         if (row.isEmpty()) return;
         Collections.sort(row, new ByXAsc());
         StringBuilder line = new StringBuilder();

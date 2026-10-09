@@ -565,8 +565,10 @@ public class AddPdfPatternActivity extends Activity {
     }
 
     private String captureGroupFor(String fieldType) {
+        // amount / balance accept the "-" sentinel too — PdfTextExtractor emits
+        // that for empty cells in column-aware output.
         if ("amount".equals(fieldType) || "balance".equals(fieldType))
-            return "([\\d,]+\\.?\\d{0,2})";
+            return "([\\d,]+\\.?\\d{0,2}|-)";
         if ("card".equals(fieldType))    return "(\\d{4})";
         if ("upi".equals(fieldType))     return "([\\w@.\\-]+)";
         if ("account".equals(fieldType)) return "([X\\dx*]+)";
