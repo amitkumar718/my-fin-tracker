@@ -22,7 +22,9 @@ public class ExtractionPattern {
     public String templateText;    // editable SMS template with tokens
     public String templateRegex;   // single combined regex built from templateText
     public boolean isPdf;
-    public int    amountGroup   = -1;
+    public int    amountGroup   = -1;    // legacy single-amount capture (SMS, single-column PDFs)
+    public int    amountCrGroup = -1;    // credit column capture (PDF with debit/credit columns)
+    public int    amountDbGroup = -1;    // debit column capture
     public int    balanceGroup  = -1;
     public int    merchantGroup = -1;
     public int    cardGroup     = -1;
@@ -44,9 +46,13 @@ public class ExtractionPattern {
         return "";
     }
 
-    /** True if the combined regex matches and yields a non-empty amount. */
+    /** True if the combined regex matches and yields a non-empty amount
+     *  (legacy amount, debit column, or credit column). */
     public boolean matches(String smsBody) {
-        return amountGroup >= 0 && !extractGroup(smsBody, amountGroup).isEmpty();
+        if (amountGroup   >= 0 && !extractGroup(smsBody, amountGroup).isEmpty())   return true;
+        if (amountDbGroup >= 0 && !extractGroup(smsBody, amountDbGroup).isEmpty()) return true;
+        if (amountCrGroup >= 0 && !extractGroup(smsBody, amountCrGroup).isEmpty()) return true;
+        return false;
     }
 
     public String getTypeLabel() {

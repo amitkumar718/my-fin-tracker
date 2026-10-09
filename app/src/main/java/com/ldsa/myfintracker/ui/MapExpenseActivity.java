@@ -69,18 +69,19 @@ public class MapExpenseActivity extends Activity {
     public static final String EXTRA_STATEMENT_ID = "statement_id";
 
     // token labels inserted into the SMS template
-    static final String TOK_AMOUNT   = "(/amount/)";
-    static final String TOK_MERCHANT = "(/merchant/)";
-    static final String TOK_CARD     = "(/card/)";
-    static final String TOK_ACNO     = "(/ac_no/)";
-    static final String TOK_UPI      = "(/upi/)";
-    static final String TOK_DATE     = "(/date/)";
-    static final String TOK_TIME     = "(/time/)";
-    static final String TOK_BALANCE  = "(/balance/)";
-    static final String TOK_IGNORE   = "(/ignore/)";
+    static final String TOK_AMOUNT_CR = "(/amount_cr/)";
+    static final String TOK_AMOUNT_DB = "(/amount_db/)";
+    static final String TOK_MERCHANT  = "(/merchant/)";
+    static final String TOK_CARD      = "(/card/)";
+    static final String TOK_ACNO      = "(/ac_no/)";
+    static final String TOK_UPI       = "(/upi/)";
+    static final String TOK_DATE      = "(/date/)";
+    static final String TOK_TIME      = "(/time/)";
+    static final String TOK_BALANCE   = "(/balance/)";
+    static final String TOK_IGNORE    = "(/ignore/)";
 
     static final String[] ALL_TOKENS = {
-        TOK_AMOUNT, TOK_MERCHANT, TOK_CARD, TOK_ACNO, TOK_UPI,
+        TOK_AMOUNT_CR, TOK_AMOUNT_DB, TOK_MERCHANT, TOK_CARD, TOK_ACNO, TOK_UPI,
         TOK_DATE, TOK_TIME, TOK_BALANCE, TOK_IGNORE
     };
 
@@ -177,14 +178,14 @@ public class MapExpenseActivity extends Activity {
         mSpinnerTxnType.setOnItemSelectedListener(new TxnTypeSelectedListener(this));
 
         String[] btnIds_tokens = {
-            TOK_AMOUNT, TOK_MERCHANT, TOK_CARD,
-            TOK_ACNO,   TOK_UPI,     TOK_DATE,
-            TOK_TIME,   TOK_BALANCE, TOK_IGNORE
+            TOK_AMOUNT_DB, TOK_AMOUNT_CR, TOK_MERCHANT, TOK_CARD,
+            TOK_ACNO,      TOK_UPI,       TOK_DATE,
+            TOK_TIME,      TOK_BALANCE,   TOK_IGNORE
         };
         int[] btnIds = {
-            R.id.btnTokAmount, R.id.btnTokMerchant, R.id.btnTokCard,
-            R.id.btnTokAcNo,   R.id.btnTokUpi,     R.id.btnTokDate,
-            R.id.btnTokTime,   R.id.btnTokBalance,  R.id.btnTokIgnore
+            R.id.btnTokAmountDb, R.id.btnTokAmountCr, R.id.btnTokMerchant, R.id.btnTokCard,
+            R.id.btnTokAcNo,     R.id.btnTokUpi,      R.id.btnTokDate,
+            R.id.btnTokTime,     R.id.btnTokBalance,  R.id.btnTokIgnore
         };
         for (int i = 0; i < btnIds.length; i++) {
             Button b = (Button) findViewById(btnIds[i]);
@@ -431,7 +432,8 @@ public class MapExpenseActivity extends Activity {
 
     private static int tokenColor(String token) {
         // Okabe-Ito colorblind-safe palette
-        if (TOK_AMOUNT.equals(token))   return 0xFF009E73; // bluish green
+        if (TOK_AMOUNT_CR.equals(token)) return 0xFF2E7D32; // deep green = credit
+        if (TOK_AMOUNT_DB.equals(token)) return 0xFFC62828; // red = debit
         if (TOK_BALANCE.equals(token))  return 0xFF56B4E9; // sky blue
         if (TOK_MERCHANT.equals(token)) return 0xFF0072B2; // blue
         if (TOK_CARD.equals(token))     return 0xFF0072B2;
@@ -457,7 +459,7 @@ public class MapExpenseActivity extends Activity {
             if (mEtMonthPattern != null) pattern.periodPat   = mEtMonthPattern.getText().toString().trim();
         }
 
-        if (pattern.amountGroup < 0) {
+        if (pattern.amountGroup < 0 && pattern.amountCrGroup < 0 && pattern.amountDbGroup < 0) {
             Toast.makeText(this, R.string.error_template_needs_amount, Toast.LENGTH_SHORT).show();
             return;
         }
@@ -471,7 +473,19 @@ public class MapExpenseActivity extends Activity {
             } catch (Exception ignored) {}
         }
 
-        String amtStr   = groupStr(matcher, pattern.amountGroup).replaceAll("[^0-9.]", "");
+        // Credit column takes precedence; fall back to debit, then legacy amount.
+        String amtStr    = "";
+        boolean isCredit = false;
+        if (pattern.amountCrGroup >= 0) {
+            amtStr = groupStr(matcher, pattern.amountCrGroup).replaceAll("[^0-9.]", "");
+            if (!amtStr.isEmpty()) isCredit = true;
+        }
+        if (amtStr.isEmpty() && pattern.amountDbGroup >= 0) {
+            amtStr = groupStr(matcher, pattern.amountDbGroup).replaceAll("[^0-9.]", "");
+        }
+        if (amtStr.isEmpty() && pattern.amountGroup >= 0) {
+            amtStr = groupStr(matcher, pattern.amountGroup).replaceAll("[^0-9.]", "");
+        }
         String balStr   = groupStr(matcher, pattern.balanceGroup)
                             .replaceAll("[^0-9.,]", "").replaceAll(",", "");
         String merchant = groupStr(matcher, pattern.merchantGroup).trim();
@@ -570,6 +584,7 @@ public class MapExpenseActivity extends Activity {
         // ── SMS mode: single expense ─────────────────────────────────
         Expense expense = new Expense();
         expense.amount          = amount;
+        expense.isCredit        = isCredit;
         expense.dateMs          = mSelectedDateMs;
         expense.merchant        = merchant;
         expense.reason          = mEtReason.getText().toString().trim();
@@ -1216,7 +1231,8 @@ public class MapExpenseActivity extends Activity {
     }
 
     private String tokenToFieldType(String token) {
-        if (TOK_AMOUNT.equals(token))   return "amount";
+        if (TOK_AMOUNT_CR.equals(token)) return "amount";
+        if (TOK_AMOUNT_DB.equals(token)) return "amount";
         if (TOK_BALANCE.equals(token))  return "balance";
         if (TOK_MERCHANT.equals(token)) return "merchant";
         if (TOK_CARD.equals(token))     return "card";
@@ -1228,7 +1244,8 @@ public class MapExpenseActivity extends Activity {
     }
 
     private void assignGroup(ExtractionPattern p, String token, int group) {
-        if (TOK_AMOUNT.equals(token))   { p.amountGroup   = group; return; }
+        if (TOK_AMOUNT_CR.equals(token)) { p.amountCrGroup = group; return; }
+        if (TOK_AMOUNT_DB.equals(token)) { p.amountDbGroup = group; return; }
         if (TOK_BALANCE.equals(token))  { p.balanceGroup  = group; return; }
         if (TOK_MERCHANT.equals(token)) { p.merchantGroup = group; return; }
         if (TOK_CARD.equals(token))     { p.cardGroup     = group; return; }
@@ -1702,8 +1719,21 @@ public class MapExpenseActivity extends Activity {
             for (PdfLineAdapter.PdfLine item : mItems) {
                 if (!mPattern.matches(item.text)) continue;
                 if (already.contains(item.text)) continue;
-                String amtStr = mPattern.extractGroup(item.text, mPattern.amountGroup)
-                                        .replaceAll("[^0-9.]", "");
+                String amtStr    = "";
+                boolean isCredit = false;
+                if (mPattern.amountCrGroup >= 0) {
+                    amtStr = mPattern.extractGroup(item.text, mPattern.amountCrGroup)
+                                     .replaceAll("[^0-9.]", "");
+                    if (!amtStr.isEmpty()) isCredit = true;
+                }
+                if (amtStr.isEmpty() && mPattern.amountDbGroup >= 0) {
+                    amtStr = mPattern.extractGroup(item.text, mPattern.amountDbGroup)
+                                     .replaceAll("[^0-9.]", "");
+                }
+                if (amtStr.isEmpty() && mPattern.amountGroup >= 0) {
+                    amtStr = mPattern.extractGroup(item.text, mPattern.amountGroup)
+                                     .replaceAll("[^0-9.]", "");
+                }
                 if (amtStr.isEmpty()) continue;
                 double amount;
                 try { amount = Double.parseDouble(amtStr); }
@@ -1723,6 +1753,7 @@ public class MapExpenseActivity extends Activity {
 
                 Expense e = new Expense();
                 e.amount          = amount;
+                e.isCredit        = isCredit;
                 e.dateMs          = dateMs;
                 e.merchant        = mPattern.extractGroup(item.text, mPattern.merchantGroup).trim();
                 e.card            = mPattern.extractGroup(item.text, mPattern.cardGroup).trim();

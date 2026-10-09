@@ -20,7 +20,7 @@ import java.util.regex.Pattern;
 public class ExpenseDatabase extends SQLiteOpenHelper {
 
     private static final String DB_NAME    = "fin_tracker.db";
-    private static final int    DB_VERSION = 16;
+    private static final int    DB_VERSION = 17;
 
     // ── expenses ──────────────────────────────────────────────────
     static final String T_EXPENSE    = "expenses";
@@ -42,6 +42,7 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
     static final String E_PATTERN_ID  = "pattern_id";
     static final String E_STMT_ID     = "pdf_statement_id";
     static final String E_SOURCE      = "source";
+    static final String E_IS_CREDIT   = "is_credit";
 
     // ── sender_configs ────────────────────────────────────────────
     static final String T_SENDER   = "sender_configs";
@@ -59,6 +60,8 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
     static final String P_TEMPLATE   = "template_text";
     static final String P_TMPL_REGEX = "template_regex";
     static final String P_AMT_GRP    = "amount_group";
+    static final String P_AMT_CR_GRP = "amount_cr_group";
+    static final String P_AMT_DB_GRP = "amount_db_group";
     static final String P_BAL_GRP    = "balance_group";
     static final String P_MERCH_GRP  = "merchant_group";
     static final String P_CARD_GRP   = "card_group";
@@ -141,7 +144,8 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
             E_REMARKS     + " TEXT," +
             E_PATTERN_ID  + " INTEGER NOT NULL DEFAULT -1," +
             E_STMT_ID     + " INTEGER NOT NULL DEFAULT -1," +
-            E_SOURCE      + " TEXT NOT NULL DEFAULT 'sms'" +
+            E_SOURCE      + " TEXT NOT NULL DEFAULT 'sms'," +
+            E_IS_CREDIT   + " INTEGER NOT NULL DEFAULT 0" +
         ")");
         db.execSQL("CREATE INDEX idx_date ON " + T_EXPENSE + "(" + E_DATE_MS + ")");
 
@@ -160,6 +164,8 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
             P_TEMPLATE   + " TEXT," +
             P_TMPL_REGEX + " TEXT," +
             P_AMT_GRP    + " INTEGER NOT NULL DEFAULT -1," +
+            P_AMT_CR_GRP + " INTEGER NOT NULL DEFAULT -1," +
+            P_AMT_DB_GRP + " INTEGER NOT NULL DEFAULT -1," +
             P_BAL_GRP    + " INTEGER NOT NULL DEFAULT -1," +
             P_MERCH_GRP  + " INTEGER NOT NULL DEFAULT -1," +
             P_CARD_GRP   + " INTEGER NOT NULL DEFAULT -1," +
@@ -293,6 +299,25 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
         if (oldVersion < 16) {
             try { db.execSQL("ALTER TABLE " + T_PATTERN + " ADD COLUMN " + P_BANK_NAME_PAT + " TEXT"); } catch (Exception ignored) {}
             try { db.execSQL("ALTER TABLE " + T_PATTERN + " ADD COLUMN " + P_PERIOD_PAT    + " TEXT"); } catch (Exception ignored) {}
+        }
+        if (oldVersion < 17) {
+            try { db.execSQL("ALTER TABLE " + T_PATTERN +
+                " ADD COLUMN " + P_AMT_CR_GRP + " INTEGER NOT NULL DEFAULT -1"); } catch (Exception ignored) {}
+            try { db.execSQL("ALTER TABLE " + T_PATTERN +
+                " ADD COLUMN " + P_AMT_DB_GRP + " INTEGER NOT NULL DEFAULT -1"); } catch (Exception ignored) {}
+            try { db.execSQL("ALTER TABLE " + T_EXPENSE +
+                " ADD COLUMN " + E_IS_CREDIT  + " INTEGER NOT NULL DEFAULT 0"); } catch (Exception ignored) {}
+
+            // Migrate legacy "(/amount/)" tokens → "(/amount_db/)". Generated regex
+            // is identical for both; only the group index moves fields.
+            try {
+                db.execSQL(
+                    "UPDATE " + T_PATTERN + " SET " +
+                        P_TEMPLATE   + " = replace(" + P_TEMPLATE + ", '(/amount/)', '(/amount_db/)')," +
+                        P_AMT_DB_GRP + " = " + P_AMT_GRP + "," +
+                        P_AMT_GRP    + " = -1 " +
+                    "WHERE " + P_TEMPLATE + " LIKE '%(/amount/)%'");
+            } catch (Exception ignored) {}
         }
     }
 
@@ -822,6 +847,8 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
         e.pdfStatementId = (stmtIdx >= 0 && !c.isNull(stmtIdx)) ? c.getLong(stmtIdx) : -1L;
         int srcIdx = c.getColumnIndex(E_SOURCE);
         e.source = (srcIdx >= 0 && !c.isNull(srcIdx)) ? c.getString(srcIdx) : "sms";
+        int crIdx = c.getColumnIndex(E_IS_CREDIT);
+        e.isCredit = (crIdx >= 0 && !c.isNull(crIdx)) && c.getInt(crIdx) != 0;
         return e;
     }
 
@@ -844,6 +871,7 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
         cv.put(E_PATTERN_ID,   e.patternId);
         cv.put(E_STMT_ID,      e.pdfStatementId);
         cv.put(E_SOURCE,       e.source != null ? e.source : "sms");
+        cv.put(E_IS_CREDIT,    e.isCredit ? 1 : 0);
         return cv;
     }
 
@@ -885,6 +913,8 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
         p.templateText    = c.getString(c.getColumnIndexOrThrow(P_TEMPLATE));
         p.templateRegex   = c.getString(c.getColumnIndexOrThrow(P_TMPL_REGEX));
         p.amountGroup     = c.getInt(c.getColumnIndexOrThrow(P_AMT_GRP));
+        p.amountCrGroup   = c.getInt(c.getColumnIndexOrThrow(P_AMT_CR_GRP));
+        p.amountDbGroup   = c.getInt(c.getColumnIndexOrThrow(P_AMT_DB_GRP));
         p.balanceGroup    = c.getInt(c.getColumnIndexOrThrow(P_BAL_GRP));
         p.merchantGroup   = c.getInt(c.getColumnIndexOrThrow(P_MERCH_GRP));
         p.cardGroup       = c.getInt(c.getColumnIndexOrThrow(P_CARD_GRP));
@@ -905,6 +935,8 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
         cv.put(P_TEMPLATE,   p.templateText);
         cv.put(P_TMPL_REGEX, p.templateRegex);
         cv.put(P_AMT_GRP,    p.amountGroup);
+        cv.put(P_AMT_CR_GRP, p.amountCrGroup);
+        cv.put(P_AMT_DB_GRP, p.amountDbGroup);
         cv.put(P_BAL_GRP,    p.balanceGroup);
         cv.put(P_MERCH_GRP,  p.merchantGroup);
         cv.put(P_CARD_GRP,   p.cardGroup);

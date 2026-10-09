@@ -166,6 +166,7 @@ public class StatementScanActivity extends Activity {
             Candidate c = mCandidates.get(i);
             Expense e = new Expense();
             e.amount          = c.amount;
+            e.isCredit        = c.isCredit;
             e.dateMs          = c.dateMs;
             e.merchant        = c.merchant;
             e.card            = c.card;
@@ -311,7 +312,19 @@ public class StatementScanActivity extends Activity {
             for (String line : lines) {
                 for (ExtractionPattern p : patterns) {
                     if (!p.matches(line)) continue;
-                    String amtStr = p.extractGroup(line, p.amountGroup).replaceAll("[^0-9.]", "");
+                    // Try credit first, then debit, then legacy amount. First non-empty wins.
+                    String amtStr    = "";
+                    boolean isCredit = false;
+                    if (p.amountCrGroup >= 0) {
+                        amtStr = p.extractGroup(line, p.amountCrGroup).replaceAll("[^0-9.]", "");
+                        if (!amtStr.isEmpty()) isCredit = true;
+                    }
+                    if (amtStr.isEmpty() && p.amountDbGroup >= 0) {
+                        amtStr = p.extractGroup(line, p.amountDbGroup).replaceAll("[^0-9.]", "");
+                    }
+                    if (amtStr.isEmpty() && p.amountGroup >= 0) {
+                        amtStr = p.extractGroup(line, p.amountGroup).replaceAll("[^0-9.]", "");
+                    }
                     if (amtStr.isEmpty()) continue;
                     double amount;
                     try { amount = Double.parseDouble(amtStr); }
@@ -333,6 +346,7 @@ public class StatementScanActivity extends Activity {
 
                     Candidate c = new Candidate();
                     c.amount          = amount;
+                    c.isCredit        = isCredit;
                     c.dateMs          = dateMs;
                     c.merchant        = p.extractGroup(line, p.merchantGroup).trim();
                     c.card            = p.extractGroup(line, p.cardGroup).trim();
@@ -437,6 +451,7 @@ public class StatementScanActivity extends Activity {
 
     static class Candidate {
         double amount;
+        boolean isCredit;
         long   dateMs;
         String merchant;
         String card;

@@ -196,11 +196,18 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content">
 
-                    <Button android:id="@+id/btnTokAmount"
+                    <Button android:id="@+id/btnTokAmountDb"
                         android:layout_width="wrap_content" android:layout_height="26dp"
-                        android:text="Amt" android:textSize="11sp" android:textColor="#FFFFFF"
+                        android:text="Amt Db" android:textSize="11sp" android:textColor="#FFFFFF"
                         android:background="@drawable/bg_button_secondary"
-                        android:backgroundTint="#009E73"
+                        android:backgroundTint="#C62828"
+                        android:paddingLeft="10dp" android:paddingRight="10dp" android:minWidth="0dp" />
+
+                    <Button android:id="@+id/btnTokAmountCr"
+                        android:layout_width="wrap_content" android:layout_height="26dp"
+                        android:text="Amt Cr" android:textSize="11sp" android:textColor="#FFFFFF"
+                        android:background="@drawable/bg_button_secondary"
+                        android:backgroundTint="#2E7D32"
                         android:paddingLeft="10dp" android:paddingRight="10dp" android:minWidth="0dp" />
 
                     <Button android:id="@+id/btnTokMerchant"

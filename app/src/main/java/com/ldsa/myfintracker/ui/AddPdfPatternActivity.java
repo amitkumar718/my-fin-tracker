@@ -33,15 +33,16 @@ public class AddPdfPatternActivity extends Activity {
     public static final String EXTRA_PATTERN_ID = "pattern_id";
 
     // Transaction tokens (shared with MapExpenseActivity)
-    static final String TOK_AMOUNT   = "(/amount/)";
-    static final String TOK_MERCHANT = "(/merchant/)";
-    static final String TOK_CARD     = "(/card/)";
-    static final String TOK_ACNO     = "(/ac_no/)";
-    static final String TOK_UPI      = "(/upi/)";
-    static final String TOK_DATE     = "(/date/)";
-    static final String TOK_TIME     = "(/time/)";
-    static final String TOK_BALANCE  = "(/balance/)";
-    static final String TOK_IGNORE   = "(/ignore/)";
+    static final String TOK_AMOUNT_CR = "(/amount_cr/)";
+    static final String TOK_AMOUNT_DB = "(/amount_db/)";
+    static final String TOK_MERCHANT  = "(/merchant/)";
+    static final String TOK_CARD      = "(/card/)";
+    static final String TOK_ACNO      = "(/ac_no/)";
+    static final String TOK_UPI       = "(/upi/)";
+    static final String TOK_DATE      = "(/date/)";
+    static final String TOK_TIME      = "(/time/)";
+    static final String TOK_BALANCE   = "(/balance/)";
+    static final String TOK_IGNORE    = "(/ignore/)";
 
     // PDF-specific tokens
     static final String TOK_NAME     = "(/name/)";
@@ -49,7 +50,7 @@ public class AddPdfPatternActivity extends Activity {
     static final String TOK_YEAR     = "(/year/)";
 
     static final String[] ALL_TOKENS = {
-        TOK_AMOUNT, TOK_MERCHANT, TOK_CARD, TOK_ACNO, TOK_UPI,
+        TOK_AMOUNT_CR, TOK_AMOUNT_DB, TOK_MERCHANT, TOK_CARD, TOK_ACNO, TOK_UPI,
         TOK_DATE, TOK_TIME, TOK_BALANCE, TOK_IGNORE,
         TOK_NAME, TOK_MONTH, TOK_YEAR
     };
@@ -105,7 +106,8 @@ public class AddPdfPatternActivity extends Activity {
         if (mPatternId >= 0) populateFromPattern(mPatternId);
 
         // Trans chips
-        wireFieldChip(R.id.btnTokAmount,   mEtTransPat, TOK_AMOUNT);
+        wireFieldChip(R.id.btnTokAmountCr, mEtTransPat, TOK_AMOUNT_CR);
+        wireFieldChip(R.id.btnTokAmountDb, mEtTransPat, TOK_AMOUNT_DB);
         wireFieldChip(R.id.btnTokMerchant, mEtTransPat, TOK_MERCHANT);
         wireFieldChip(R.id.btnTokCard,     mEtTransPat, TOK_CARD);
         wireFieldChip(R.id.btnTokAcNo,     mEtTransPat, TOK_ACNO);
@@ -232,7 +234,8 @@ public class AddPdfPatternActivity extends Activity {
 
 
     static String tokenLabel(String token) {
-        if (TOK_AMOUNT.equals(token))   return "AMT";
+        if (TOK_AMOUNT_CR.equals(token)) return "AMT CR";
+        if (TOK_AMOUNT_DB.equals(token)) return "AMT DB";
         if (TOK_MERCHANT.equals(token)) return "MERCHANT";
         if (TOK_CARD.equals(token))     return "CARD";
         if (TOK_ACNO.equals(token))     return "AC.NO";
@@ -245,7 +248,8 @@ public class AddPdfPatternActivity extends Activity {
     }
 
     static int tokenColor(String token) {
-        if (TOK_AMOUNT.equals(token))   return 0xFF009E73;
+        if (TOK_AMOUNT_CR.equals(token)) return 0xFF2E7D32; // deeper green = credit
+        if (TOK_AMOUNT_DB.equals(token)) return 0xFFC62828; // red = debit
         if (TOK_BALANCE.equals(token))  return 0xFF56B4E9;
         if (TOK_MERCHANT.equals(token)) return 0xFF0072B2;
         if (TOK_CARD.equals(token))     return 0xFF0072B2;
@@ -498,7 +502,8 @@ public class AddPdfPatternActivity extends Activity {
     }
 
     private String tokenToFieldType(String token) {
-        if (TOK_AMOUNT.equals(token))   return "amount";
+        if (TOK_AMOUNT_CR.equals(token)) return "amount";
+        if (TOK_AMOUNT_DB.equals(token)) return "amount";
         if (TOK_BALANCE.equals(token))  return "balance";
         if (TOK_MERCHANT.equals(token)) return "merchant";
         if (TOK_CARD.equals(token))     return "card";
@@ -513,7 +518,8 @@ public class AddPdfPatternActivity extends Activity {
     }
 
     private void assignGroup(ExtractionPattern p, String token, int group) {
-        if (TOK_AMOUNT.equals(token))   { p.amountGroup   = group; return; }
+        if (TOK_AMOUNT_CR.equals(token)) { p.amountCrGroup = group; return; }
+        if (TOK_AMOUNT_DB.equals(token)) { p.amountDbGroup = group; return; }
         if (TOK_BALANCE.equals(token))  { p.balanceGroup  = group; return; }
         if (TOK_MERCHANT.equals(token)) { p.merchantGroup = group; return; }
         if (TOK_CARD.equals(token))     { p.cardGroup     = group; return; }
@@ -644,7 +650,10 @@ public class AddPdfPatternActivity extends Activity {
             for (String line : lines) {
                 if (!mTransPat.matches(line)) continue;
                 String date   = mTransPat.dateGroup     > 0 ? mTransPat.extractGroup(line, mTransPat.dateGroup).trim()     : "";
-                String amt    = mTransPat.amountGroup   > 0 ? mTransPat.extractGroup(line, mTransPat.amountGroup).trim()   : "";
+                String amt    = "";
+                if (mTransPat.amountCrGroup > 0) amt = mTransPat.extractGroup(line, mTransPat.amountCrGroup).trim();
+                if (amt.isEmpty() && mTransPat.amountDbGroup > 0) amt = mTransPat.extractGroup(line, mTransPat.amountDbGroup).trim();
+                if (amt.isEmpty() && mTransPat.amountGroup   > 0) amt = mTransPat.extractGroup(line, mTransPat.amountGroup).trim();
                 String merch  = mTransPat.merchantGroup > 0 ? mTransPat.extractGroup(line, mTransPat.merchantGroup).trim() : "";
                 StringBuilder row = new StringBuilder();
                 if (!date.isEmpty())  { row.append(date);  row.append("  "); }

@@ -7,6 +7,7 @@ import java.util.List;
 public class Expense {
     public long id;
     public double amount;
+    public boolean isCredit;   // true = income/refund; false = debit/expense
     public long dateMs;
     public String merchant;
     public String reason;
