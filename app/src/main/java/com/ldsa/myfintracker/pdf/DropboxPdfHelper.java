@@ -34,10 +34,11 @@ public class DropboxPdfHelper {
     public static final String PREF_FILE          = "dropbox";
     public static final String KEY_TOKEN          = "access_token";
     public static final String KEY_ROOT           = "root_path";
-    public static final String KEY_APP_KEY        = "app_key";
-    public static final String KEY_APP_SECRET     = "app_secret";
-    public static final String KEY_REFRESH_TOKEN  = "refresh_token";
-    public static final String KEY_EXPIRES_AT     = "expires_at";
+    public static final String KEY_APP_KEY           = "app_key";
+    public static final String KEY_APP_SECRET        = "app_secret";
+    public static final String KEY_REFRESH_TOKEN     = "refresh_token";
+    public static final String KEY_EXPIRES_AT        = "expires_at";
+    public static final String KEY_PENDING_VERIFIER  = "pending_verifier";
 
     /** App Folder root. Dropbox API uses empty string, not "/", for the root. */
     public static final String DEFAULT_ROOT = "";
@@ -108,20 +109,48 @@ public class DropboxPdfHelper {
     // OAuth 2.0 (app key + secret, offline access with refresh token)
     // ============================================================
 
-    /** Launch the system browser to the Dropbox authorize URL. */
+    /** Launch the system browser to the Dropbox authorize URL (PKCE S256). */
     public static boolean startAuth(Activity activity) {
         SharedPreferences p = activity.getSharedPreferences(PREF_FILE, Context.MODE_PRIVATE);
         String appKey = p.getString(KEY_APP_KEY, "");
         if (appKey == null || appKey.isEmpty()) return false;
+
+        String verifier  = generateCodeVerifier();
+        String challenge = codeChallengeS256(verifier);
+        p.edit().putString(KEY_PENDING_VERIFIER, verifier).apply();
+
         String url = AUTH_URL
             + "?client_id=" + urlEncode(appKey)
             + "&response_type=code"
             + "&token_access_type=offline"
+            + "&code_challenge=" + urlEncode(challenge)
+            + "&code_challenge_method=S256"
             + "&redirect_uri=" + urlEncode(REDIRECT_URI);
         Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
         i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         activity.startActivity(i);
         return true;
+    }
+
+    static String generateCodeVerifier() {
+        char[] alphabet =
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~".toCharArray();
+        java.security.SecureRandom rnd = new java.security.SecureRandom();
+        StringBuilder sb = new StringBuilder(64);
+        for (int i = 0; i < 64; i++) sb.append(alphabet[rnd.nextInt(alphabet.length)]);
+        return sb.toString();
+    }
+
+    static String codeChallengeS256(String verifier) {
+        try {
+            byte[] hash = java.security.MessageDigest.getInstance("SHA-256")
+                .digest(verifier.getBytes("US-ASCII"));
+            return android.util.Base64.encodeToString(hash,
+                android.util.Base64.URL_SAFE | android.util.Base64.NO_PADDING
+                    | android.util.Base64.NO_WRAP);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /** Exchange an authorization code for access + refresh tokens. */
@@ -187,8 +216,13 @@ public class DropboxPdfHelper {
             SharedPreferences p = mCtx.getSharedPreferences(PREF_FILE, Context.MODE_PRIVATE);
             String appKey    = p.getString(KEY_APP_KEY,    "");
             String appSecret = p.getString(KEY_APP_SECRET, "");
+            String verifier  = p.getString(KEY_PENDING_VERIFIER, "");
             if (appKey.isEmpty() || appSecret.isEmpty()) {
                 mMain.post(new AuthErrorRunnable(mCb, "App key or secret not set"));
+                return;
+            }
+            if (verifier.isEmpty()) {
+                mMain.post(new AuthErrorRunnable(mCb, "Missing PKCE verifier — start auth again"));
                 return;
             }
             try {
@@ -196,6 +230,7 @@ public class DropboxPdfHelper {
                     + "&code="          + urlEncode(mCode)
                     + "&client_id="     + urlEncode(appKey)
                     + "&client_secret=" + urlEncode(appSecret)
+                    + "&code_verifier=" + urlEncode(verifier)
                     + "&redirect_uri="  + urlEncode(REDIRECT_URI);
                 String resp = postForm(TOKEN_URL, body);
                 JSONObject j = new JSONObject(resp);
@@ -206,6 +241,7 @@ public class DropboxPdfHelper {
                 ed.putString(KEY_TOKEN, access);
                 if (!refresh.isEmpty()) ed.putString(KEY_REFRESH_TOKEN, refresh);
                 ed.putLong(KEY_EXPIRES_AT, System.currentTimeMillis() + expIn * 1000L);
+                ed.remove(KEY_PENDING_VERIFIER);
                 ed.apply();
                 Log.d(TAG, "exchange ok, refresh=" + (refresh.isEmpty() ? "n" : "y")
                     + " expiry in " + expIn + "s");

@@ -82,7 +82,7 @@ public class DropboxSettingsActivity extends Activity {
     }
 
     void connectDropbox() {
-        // Save key/secret first so the auth URL + callback can use them.
+        // Save key + secret first so the auth URL + callback can use them.
         android.content.SharedPreferences.Editor ed =
             getSharedPreferences(PREF_FILE, MODE_PRIVATE).edit();
         ed.putString(KEY_APP_KEY,    mEtAppKey.getText().toString().trim());
