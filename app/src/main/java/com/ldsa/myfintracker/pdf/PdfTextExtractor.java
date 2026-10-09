@@ -444,17 +444,27 @@ public class PdfTextExtractor {
         // if the leftmost column (date) itself wraps (minX ≤ contThresh), the
         // continuation row is NOT merged and will appear as a separate orphan line.
         // See limitations.md for the full list of PDF extraction constraints.
-        float contThresh = leftmostX + 30f;
+        float contThresh   = leftmostX + 30f;
+        float contUpperX   = leftmostX + 100f;   // Details column usually starts within here
         List<List<TextChunk>> merged = new ArrayList<List<TextChunk>>();
         for (int k = 0; k < rows.size(); k++) {
             List<TextChunk> row = rows.get(k);
             float minX = Float.MAX_VALUE;
+            boolean hasNumeric = false;
             for (int j = 0; j < row.size(); j++) {
-                if (row.get(j).x < minX) minX = row.get(j).x;
+                TextChunk ch = row.get(j);
+                if (ch.x < minX) minX = ch.x;
+                if (isNumericCell(ch.text)) hasNumeric = true;
             }
+            // A continuation should (a) start near the Details column, not
+            // further right (which would indicate centred footer text like
+            // "Closing Balance"), and (b) contain no numeric chunks (so section
+            // totals or standalone amounts don't get swallowed into a tx row).
             boolean isCont = !merged.isEmpty()
                     && row.size() <= 2          // ≤2 wrapping columns — see assumption above
-                    && minX > contThresh;        // not in the leftmost (date) column
+                    && minX > contThresh         // not in the leftmost (date) column
+                    && minX < contUpperX         // not centred-footer text
+                    && !hasNumeric;              // no amount-looking tokens
             if (isCont) {
                 merged.get(merged.size() - 1).addAll(row);
             } else {
@@ -495,39 +505,47 @@ public class PdfTextExtractor {
     }
 
     /** Returns detected columns (sorted by `pos`), or empty if fewer than
-     *  2 reliable columns are found. Clusters both X-starts (left-aligned)
-     *  and X-ends (right-aligned) — a column is kept if either axis has
-     *  content in ≥ 1/3 of the rows. */
+     *  2 reliable columns are found.
+     *
+     *  Clusters X-starts of all chunks (for left-aligned columns like Date,
+     *  Description) and X-ends of numeric chunks only (for right-aligned
+     *  amount/balance columns). Mixing in long text chunks' right-edges would
+     *  scatter the estimate; limiting to numeric chunks keeps amount column
+     *  right-edges tight. */
     private static List<Column> detectColumns(List<List<TextChunk>> rows) {
         if (rows.size() < 3) return new ArrayList<Column>();
 
         List<Float> allLeft  = new ArrayList<Float>();
-        List<Float> allRight = new ArrayList<Float>();
+        List<Float> numRight = new ArrayList<Float>();
         for (int k = 0; k < rows.size(); k++) {
             for (int j = 0; j < rows.get(k).size(); j++) {
                 TextChunk c = rows.get(k).get(j);
                 allLeft.add(c.x);
-                allRight.add(c.x + c.text.length() * 5.0f);
+                if (isNumericCell(c.text)) {
+                    // Digits are narrower than mixed text — ~3.5pt per char
+                    // keeps right-edge estimate close to the true visible edge.
+                    numRight.add(c.x + c.text.length() * 3.5f);
+                }
             }
         }
         Collections.sort(allLeft);
-        Collections.sort(allRight);
+        Collections.sort(numRight);
 
         int threshold = Math.max(3, rows.size() / 3);
         List<Column> cols = new ArrayList<Column>();
-        clusterInto(allLeft,  threshold, cols, false);
-        clusterInto(allRight, threshold, cols, true);
+        clusterInto(allLeft,  10f, threshold, cols, false);
+        clusterInto(numRight, 20f, threshold, cols, true);
 
         if (cols.size() < 2) return new ArrayList<Column>();
 
-        // Sort by pos; dedupe columns that are within 10pt of each other
-        // (prefer the right-aligned entry so amount columns win over any
-        // stray left-edge cluster the amounts also produced).
+        // Sort by pos; dedupe columns within 15pt of each other.
+        // Prefer the right-aligned entry so amount columns win over any
+        // stray left-edge cluster their own digits produced.
         Collections.sort(cols, new ByColPos());
         List<Column> dedup = new ArrayList<Column>();
         for (int i = 0; i < cols.size(); i++) {
             Column c = cols.get(i);
-            if (!dedup.isEmpty() && Math.abs(dedup.get(dedup.size() - 1).pos - c.pos) < 10f) {
+            if (!dedup.isEmpty() && Math.abs(dedup.get(dedup.size() - 1).pos - c.pos) < 15f) {
                 if (c.rightAligned) dedup.set(dedup.size() - 1, c);
                 continue;
             }
@@ -536,16 +554,30 @@ public class PdfTextExtractor {
         return dedup.size() >= 2 ? dedup : new ArrayList<Column>();
     }
 
+    /** Chunk looks like an amount / balance: has digits, no spaces, and at
+     *  least 60% of its characters are digits/commas/dots. */
+    private static boolean isNumericCell(String s) {
+        if (s == null || s.isEmpty()) return false;
+        int digits = 0, len = s.length();
+        for (int i = 0; i < len; i++) {
+            char ch = s.charAt(i);
+            if (ch == ' ') return false;
+            if ((ch >= '0' && ch <= '9') || ch == ',' || ch == '.') digits++;
+        }
+        return digits > 0 && digits * 10 >= len * 6;
+    }
+
     /** Cluster a sorted list of X positions; emit a Column for each cluster
-     *  whose size meets `threshold`. */
-    private static void clusterInto(List<Float> sorted, int threshold,
+     *  whose size meets `threshold`. Clusters split when consecutive values
+     *  differ by more than `window`. */
+    private static void clusterInto(List<Float> sorted, float window, int threshold,
                                     List<Column> out, boolean rightAligned) {
         float sum = 0;
         int   n   = 0;
         float last = -1000f;
         for (int i = 0; i < sorted.size(); i++) {
             float x = sorted.get(i);
-            if (n > 0 && x - last > 10f) {
+            if (n > 0 && x - last > window) {
                 if (n >= threshold) {
                     Column c = new Column();
                     c.pos = sum / n;
@@ -577,8 +609,9 @@ public class PdfTextExtractor {
         for (int i = 0; i < cols; i++) cells[i] = new StringBuilder();
         for (int k = 0; k < row.size(); k++) {
             TextChunk ch = row.get(k);
+            float perChar = isNumericCell(ch.text) ? 3.5f : 5.0f;
             float chLeft  = ch.x;
-            float chRight = ch.x + ch.text.length() * 5.0f;
+            float chRight = ch.x + ch.text.length() * perChar;
             int   best    = 0;
             float bestDist = Float.MAX_VALUE;
             for (int c = 0; c < cols; c++) {
@@ -593,7 +626,7 @@ public class PdfTextExtractor {
         StringBuilder line = new StringBuilder();
         for (int c = 0; c < cols; c++) {
             if (c > 0) line.append("  ");
-            if (cells[c].length() == 0) line.append('-');
+            if (cells[c].length() == 0) line.append("___");
             else line.append(cells[c]);
         }
         String trimmed = line.toString().trim();
