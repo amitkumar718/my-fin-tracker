@@ -384,13 +384,48 @@ public class AddPdfPatternActivity extends Activity {
         }
         p.name = name;
 
-        if (mPatternId >= 0) {
+        boolean isUpdate = mPatternId >= 0;
+        if (isUpdate) {
             p.id = mPatternId;
             mDb.updatePattern(p);
         } else {
-            mDb.insertPattern(p);
+            p.id = mDb.insertPattern(p);
         }
         Toast.makeText(this, R.string.msg_pattern_saved, Toast.LENGTH_SHORT).show();
+
+        if (isUpdate) {
+            int priorCount = mDb.countExpensesByPattern(p.id);
+            if (priorCount > 0) {
+                final ExtractionPattern pFinal = p;
+                final int countFinal = priorCount;
+                new AlertDialog.Builder(this, R.style.RoundedDialog)
+                    .setTitle("Pattern updated")
+                    .setMessage("Re-apply to " + countFinal + " existing expense"
+                        + (countFinal == 1 ? "" : "s") + "? Non-matching rows will be orphaned.")
+                    .setPositiveButton("Re-apply", new ReApplyDialogListener(this, pFinal))
+                    .setNegativeButton("Skip", new SkipDialogListener(this))
+                    .setCancelable(false)
+                    .show();
+                return;
+            }
+        }
+        setResult(RESULT_OK);
+        finish();
+    }
+
+    void startReApply(ExtractionPattern p) {
+        Toast.makeText(this, "Updating expenses…", Toast.LENGTH_SHORT).show();
+        new ReApplyThread(this, p, mDb,
+            new android.os.Handler(android.os.Looper.getMainLooper())).start();
+    }
+
+    void onReApplyDone(int updated, int orphaned) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(updated).append(" expense").append(updated == 1 ? "" : "s").append(" updated");
+        if (orphaned > 0) {
+            sb.append(", ").append(orphaned).append(" orphaned (no longer match)");
+        }
+        Toast.makeText(this, sb.toString(), Toast.LENGTH_LONG).show();
         setResult(RESULT_OK);
         finish();
     }
@@ -765,6 +800,49 @@ public class AddPdfPatternActivity extends Activity {
                 .setMessage(body.toString().trim())
                 .setPositiveButton("Close", null)
                 .show();
+        }
+    }
+
+    static class ReApplyDialogListener implements android.content.DialogInterface.OnClickListener {
+        private final AddPdfPatternActivity mA;
+        private final ExtractionPattern     mP;
+        ReApplyDialogListener(AddPdfPatternActivity a, ExtractionPattern p) { mA = a; mP = p; }
+        public void onClick(android.content.DialogInterface d, int w) { mA.startReApply(mP); }
+    }
+
+    static class SkipDialogListener implements android.content.DialogInterface.OnClickListener {
+        private final AddPdfPatternActivity mA;
+        SkipDialogListener(AddPdfPatternActivity a) { mA = a; }
+        public void onClick(android.content.DialogInterface d, int w) {
+            mA.setResult(RESULT_OK);
+            mA.finish();
+        }
+    }
+
+    static class ReApplyThread extends Thread {
+        private final AddPdfPatternActivity mA;
+        private final ExtractionPattern     mP;
+        private final ExpenseDatabase       mDb;
+        private final android.os.Handler    mH;
+        ReApplyThread(AddPdfPatternActivity a, ExtractionPattern p,
+                      ExpenseDatabase db, android.os.Handler h) {
+            mA = a; mP = p; mDb = db; mH = h;
+        }
+        public void run() {
+            ExpenseDatabase.ReApplyResult r = mDb.reApplyPattern(mP);
+            mH.post(new ReApplyDoneRunnable(mA, r.updated, r.orphaned));
+        }
+    }
+
+    static class ReApplyDoneRunnable implements Runnable {
+        private final AddPdfPatternActivity mA;
+        private final int                   mUpdated;
+        private final int                   mOrphaned;
+        ReApplyDoneRunnable(AddPdfPatternActivity a, int u, int o) {
+            mA = a; mUpdated = u; mOrphaned = o;
+        }
+        public void run() {
+            if (!mA.isFinishing()) mA.onReApplyDone(mUpdated, mOrphaned);
         }
     }
 }

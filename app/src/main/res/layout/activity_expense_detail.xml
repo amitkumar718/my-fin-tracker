@@ -142,7 +142,19 @@
                 android:text="@string/label_remarks" android:textColor="#757575" android:textSize="11sp" />
             <TextView android:id="@+id/tvRemarks" android:layout_width="match_parent"
                 android:layout_height="wrap_content" android:text="—" android:textColor="#212121"
-                android:textSize="14sp" android:layout_marginBottom="4dp" />
+                android:textSize="14sp" android:layout_marginBottom="8dp" />
+
+            <TextView android:id="@+id/tvPatternLink"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="View pattern →"
+                android:textColor="#1976D2"
+                android:textSize="13sp"
+                android:background="?android:attr/selectableItemBackground"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp"
+                android:paddingRight="8dp"
+                android:visibility="gone" />
 
         </LinearLayout>
 

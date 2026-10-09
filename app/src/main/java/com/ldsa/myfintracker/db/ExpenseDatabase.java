@@ -462,17 +462,42 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
     /** Re-runs the pattern's combined regex against each linked expense's transLine.
      *  Updates derived fields; leaves date, reason, remarks and labels untouched.
      *  Returns the number of expenses actually updated. */
-    public int reApplyPattern(ExtractionPattern p) {
-        if (p.id <= 0 || p.templateRegex == null) return 0;
+    public static class ReApplyResult {
+        public int updated;
+        public int orphaned;
+    }
+
+    public ReApplyResult reApplyPattern(ExtractionPattern p) {
+        ReApplyResult r = new ReApplyResult();
+        if (p.id <= 0 || p.templateRegex == null) return r;
         List<Expense> candidates = getExpensesByPattern(p.id);
-        int updated = 0;
         for (Expense e : candidates) {
             if (e.originalSms == null || e.originalSms.isEmpty()) continue;
             try {
                 Matcher m = Pattern.compile(p.templateRegex,
                     Pattern.CASE_INSENSITIVE | Pattern.MULTILINE).matcher(e.originalSms);
-                if (!m.find()) continue;
-                e.amount          = reParseDouble(reGrp(m, p.amountGroup));
+                if (!m.find()) {
+                    // Orphan: keep the row, drop the pattern linkage.
+                    e.patternId = -1L;
+                    updateExpense(e);
+                    r.orphaned++;
+                    continue;
+                }
+                // Credit column → debit column → legacy amount. First non-empty wins.
+                String amtStr    = "";
+                boolean isCredit = false;
+                if (p.amountCrGroup >= 0) {
+                    String cr = reGrp(m, p.amountCrGroup).replaceAll("[^0-9.]", "");
+                    if (!cr.isEmpty()) { amtStr = cr; isCredit = true; }
+                }
+                if (amtStr.isEmpty() && p.amountDbGroup >= 0) {
+                    amtStr = reGrp(m, p.amountDbGroup).replaceAll("[^0-9.]", "");
+                }
+                if (amtStr.isEmpty() && p.amountGroup >= 0) {
+                    amtStr = reGrp(m, p.amountGroup).replaceAll("[^0-9.]", "");
+                }
+                e.amount          = reParseDouble(amtStr);
+                e.isCredit        = isCredit;
                 e.merchant        = reGrp(m, p.merchantGroup).trim();
                 e.card            = reGrp(m, p.cardGroup).trim();
                 e.accountNumber   = reGrp(m, p.accountGroup).trim();
@@ -480,10 +505,10 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
                 e.transactionType = p.transactionType != null ? p.transactionType : "";
                 e.isOnline        = reIsOnline(e.transactionType);
                 updateExpense(e);
-                updated++;
+                r.updated++;
             } catch (Exception ignored) {}
         }
-        return updated;
+        return r;
     }
 
     private static String reGrp(Matcher m, int group) {

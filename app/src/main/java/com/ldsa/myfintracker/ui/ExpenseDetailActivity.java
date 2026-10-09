@@ -21,6 +21,7 @@ import android.widget.Toast;
 import com.ldsa.myfintracker.R;
 import com.ldsa.myfintracker.db.Expense;
 import com.ldsa.myfintracker.db.ExpenseDatabase;
+import com.ldsa.myfintracker.db.ExtractionPattern;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -45,6 +46,7 @@ public class ExpenseDetailActivity extends Activity {
     private TextView mTvBank;
     private TextView mTvSms;
     private TextView mTvRemarks;
+    private TextView mTvPatternLink;
 
     private EditText mEtAmount;
     private EditText mEtDate;
@@ -95,6 +97,7 @@ public class ExpenseDetailActivity extends Activity {
         mTvBank     = (TextView)  mViewMode.findViewById(R.id.tvBank);
         mTvSms      = (TextView)  mViewMode.findViewById(R.id.tvSms);
         mTvRemarks  = (TextView)  mViewMode.findViewById(R.id.tvRemarks);
+        mTvPatternLink = (TextView) mViewMode.findViewById(R.id.tvPatternLink);
 
         mEtAmount   = (EditText)  mEditMode.findViewById(R.id.etAmount);
         mEtDate     = (EditText)  mEditMode.findViewById(R.id.etDate);
@@ -186,6 +189,41 @@ public class ExpenseDetailActivity extends Activity {
         mTvBank.setText(orDash(mExpense.bank));
         mTvSms.setText(orDash(mExpense.originalSms));
         mTvRemarks.setText(orDash(mExpense.remarks));
+        bindPatternLink();
+    }
+
+    private void bindPatternLink() {
+        if (mTvPatternLink == null) return;
+        if (mExpense.patternId <= 0) {
+            mTvPatternLink.setVisibility(View.GONE);
+            mTvPatternLink.setOnClickListener(null);
+            return;
+        }
+        ExtractionPattern p = mDb.getPatternById(mExpense.patternId);
+        if (p == null) {
+            mTvPatternLink.setVisibility(View.GONE);
+            mTvPatternLink.setOnClickListener(null);
+            return;
+        }
+        String label = (p.name != null && !p.name.isEmpty())
+            ? ("View pattern: " + p.name + " →") : "View pattern →";
+        mTvPatternLink.setText(label);
+        mTvPatternLink.setVisibility(View.VISIBLE);
+        mTvPatternLink.setOnClickListener(new PatternLinkClickListener(this, p));
+    }
+
+    void openPatternEditor(ExtractionPattern p) {
+        android.content.Intent i;
+        if (p.isPdf) {
+            i = new android.content.Intent(this, AddPdfPatternActivity.class);
+            i.putExtra(AddPdfPatternActivity.EXTRA_SENDER_ID,  p.senderId);
+            i.putExtra(AddPdfPatternActivity.EXTRA_PATTERN_ID, p.id);
+        } else {
+            i = new android.content.Intent(this, SmsExtractConfigActivity.class);
+            i.putExtra(SmsExtractConfigActivity.EXTRA_SENDER_ID,  p.senderId);
+            i.putExtra(SmsExtractConfigActivity.EXTRA_PATTERN_ID, p.id);
+        }
+        startActivity(i);
     }
 
     private void bindEditMode() {
@@ -349,6 +387,13 @@ public class ExpenseDetailActivity extends Activity {
         private final ExpenseDetailActivity mA;
         SaveClickListener(ExpenseDetailActivity a) { mA = a; }
         public void onClick(View v) { mA.save(); }
+    }
+
+    static class PatternLinkClickListener implements View.OnClickListener {
+        private final ExpenseDetailActivity mA;
+        private final ExtractionPattern     mP;
+        PatternLinkClickListener(ExpenseDetailActivity a, ExtractionPattern p) { mA = a; mP = p; }
+        public void onClick(View v) { mA.openPatternEditor(mP); }
     }
 
     static class DeleteConfirmListener implements DialogInterface.OnClickListener {

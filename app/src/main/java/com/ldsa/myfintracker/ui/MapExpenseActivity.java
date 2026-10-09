@@ -628,10 +628,13 @@ public class MapExpenseActivity extends Activity {
         new ReApplyThread(this, pattern, mDb, new Handler(Looper.getMainLooper())).start();
     }
 
-    void onReApplyDone(int updated) {
-        Toast.makeText(this,
-            updated + " expense" + (updated == 1 ? "" : "s") + " updated",
-            Toast.LENGTH_SHORT).show();
+    void onReApplyDone(int updated, int orphaned) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(updated).append(" expense").append(updated == 1 ? "" : "s").append(" updated");
+        if (orphaned > 0) {
+            sb.append(", ").append(orphaned).append(" orphaned (no longer match)");
+        }
+        Toast.makeText(this, sb.toString(), Toast.LENGTH_LONG).show();
         setResult(RESULT_OK);
         finish();
     }
@@ -1467,17 +1470,20 @@ public class MapExpenseActivity extends Activity {
         }
 
         public void run() {
-            int updated = mDb.reApplyPattern(mPattern);
-            mHandler.post(new ReApplyDoneRunnable(mA, updated));
+            ExpenseDatabase.ReApplyResult r = mDb.reApplyPattern(mPattern);
+            mHandler.post(new ReApplyDoneRunnable(mA, r.updated, r.orphaned));
         }
     }
 
     static class ReApplyDoneRunnable implements Runnable {
         private final MapExpenseActivity mA;
         private final int            mUpdated;
-        ReApplyDoneRunnable(MapExpenseActivity a, int updated) { mA = a; mUpdated = updated; }
+        private final int            mOrphaned;
+        ReApplyDoneRunnable(MapExpenseActivity a, int updated, int orphaned) {
+            mA = a; mUpdated = updated; mOrphaned = orphaned;
+        }
         public void run() {
-            if (!mA.isFinishing()) mA.onReApplyDone(mUpdated);
+            if (!mA.isFinishing()) mA.onReApplyDone(mUpdated, mOrphaned);
         }
     }
 
@@ -1771,7 +1777,11 @@ public class MapExpenseActivity extends Activity {
                 mDb.insertExpense(e);
                 imported++;
             }
-            int reApplied = mDoReApply ? mDb.reApplyPattern(mPattern) : 0;
+            int reApplied = 0;
+            if (mDoReApply) {
+                ExpenseDatabase.ReApplyResult r = mDb.reApplyPattern(mPattern);
+                reApplied = r.updated;
+            }
             mHandler.post(new BulkImportDoneRunnable(mA, imported, reApplied, scanned));
         }
     }
