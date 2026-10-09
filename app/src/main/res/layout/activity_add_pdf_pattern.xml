@@ -298,7 +298,18 @@
                 android:text="Test Pattern"
                 android:textColor="#1976D2"
                 android:textSize="13sp"
-                android:background="@drawable/bg_button_secondary" />
+                android:background="@drawable/bg_button_secondary"
+                android:layout_marginBottom="8dp" />
+
+            <Button
+                android:id="@+id/btnDeletePattern"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:text="Delete Pattern"
+                android:textColor="#D32F2F"
+                android:textSize="13sp"
+                android:background="@drawable/bg_button_secondary"
+                android:visibility="gone" />
 
         </LinearLayout>
     </ScrollView>

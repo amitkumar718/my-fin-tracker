@@ -574,6 +574,16 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
         getWritableDatabase().delete(T_PATTERN, P_ID + "=?", new String[]{String.valueOf(id)});
     }
 
+    /** Sets pattern_id = -1 on every expense tied to the given pattern.
+     *  Returns the number of rows orphaned. */
+    public int orphanExpensesByPattern(long patternId) {
+        if (patternId <= 0) return 0;
+        ContentValues cv = new ContentValues();
+        cv.put(E_PATTERN_ID, -1L);
+        return getWritableDatabase().update(T_EXPENSE, cv,
+            E_PATTERN_ID + "=?", new String[]{String.valueOf(patternId)});
+    }
+
     public List<ExtractionPattern> getPatternsBySender(long senderId) {
         Cursor c = getReadableDatabase().query(T_PATTERN, null,
             P_SENDER_ID + "=?", new String[]{String.valueOf(senderId)}, null, null, P_ID + " ASC");

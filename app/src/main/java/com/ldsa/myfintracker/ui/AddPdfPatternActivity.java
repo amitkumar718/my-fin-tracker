@@ -94,6 +94,11 @@ public class AddPdfPatternActivity extends Activity {
         ((Button) findViewById(R.id.btnPickFromStatement)).setOnClickListener(new PickListener(this));
         ((Button) findViewById(R.id.btnSavePattern)).setOnClickListener(new SaveListener(this));
         ((Button) findViewById(R.id.btnTestPattern)).setOnClickListener(new TestListener(this));
+        Button btnDelete = (Button) findViewById(R.id.btnDeletePattern);
+        if (mPatternId >= 0) {
+            btnDelete.setVisibility(View.VISIBLE);
+            btnDelete.setOnClickListener(new DeleteListener(this));
+        }
 
         // Bank chips
         wireFieldChip(R.id.btnTokNameBank,    mEtBankPat,   TOK_NAME);
@@ -413,6 +418,29 @@ public class AddPdfPatternActivity extends Activity {
         finish();
     }
 
+    void confirmDeletePattern() {
+        if (mPatternId < 0) return;
+        new AlertDialog.Builder(this, R.style.RoundedDialog)
+            .setMessage("Delete this pattern? Linked expenses stay but are orphaned (pattern_id = -1).")
+            .setPositiveButton(android.R.string.ok, new DeleteConfirmListener(this))
+            .setNegativeButton(android.R.string.cancel, null)
+            .show();
+    }
+
+    void deletePattern() {
+        if (mPatternId < 0) return;
+        int orphaned = mDb.orphanExpensesByPattern(mPatternId);
+        mDb.deletePattern(mPatternId);
+        Toast.makeText(this,
+            orphaned > 0
+                ? "Pattern deleted; " + orphaned + " expense"
+                    + (orphaned == 1 ? "" : "s") + " orphaned"
+                : "Pattern deleted",
+            Toast.LENGTH_SHORT).show();
+        setResult(RESULT_OK);
+        finish();
+    }
+
     void startReApply(ExtractionPattern p) {
         Toast.makeText(this, "Updating expenses…", Toast.LENGTH_SHORT).show();
         new ReApplyThread(this, p, mDb,
@@ -595,6 +623,18 @@ public class AddPdfPatternActivity extends Activity {
         private final AddPdfPatternActivity mA;
         PickListener(AddPdfPatternActivity a) { mA = a; }
         public void onClick(View v) { mA.pickFromStatement(); }
+    }
+
+    static class DeleteListener implements View.OnClickListener {
+        private final AddPdfPatternActivity mA;
+        DeleteListener(AddPdfPatternActivity a) { mA = a; }
+        public void onClick(View v) { mA.confirmDeletePattern(); }
+    }
+
+    static class DeleteConfirmListener implements android.content.DialogInterface.OnClickListener {
+        private final AddPdfPatternActivity mA;
+        DeleteConfirmListener(AddPdfPatternActivity a) { mA = a; }
+        public void onClick(android.content.DialogInterface d, int w) { mA.deletePattern(); }
     }
 
     static class SaveListener implements View.OnClickListener {
