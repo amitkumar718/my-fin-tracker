@@ -479,18 +479,31 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
     }
 
     /** Returns PDF expenses that are no longer linked to any pattern but
-     *  belong to a statement from the given sender. Ordered by dateMs ASC so
-     *  the auto-credit classifier can chain balance deltas correctly. */
+     *  belong to the given sender. Match is lenient: either the expense's
+     *  pdf_statement_id points to a statement from this sender (interactive-
+     *  scan path, {@link com.ldsa.myfintracker.ui.StatementScanActivity}), or
+     *  — for historical rows imported via the pattern editor's bulk path which
+     *  didn't set pdf_statement_id — the expense's bank field matches the
+     *  sender's display name case-insensitively.
+     *
+     *  Ordered by dateMs ASC so the auto-credit classifier can chain balance
+     *  deltas across linked + newly-adopted candidates. */
     public List<Expense> getOrphanedPdfExpensesForSender(long senderId) {
+        SenderConfig s = getSenderById(senderId);
+        String bankName = (s != null && s.displayName != null) ? s.displayName : "";
         Cursor c = getReadableDatabase().rawQuery(
             "SELECT * FROM " + T_EXPENSE +
             " WHERE " + E_PATTERN_ID + "=-1" +
-            "   AND " + E_STMT_ID + " IN (" +
-            "     SELECT " + PS_ID + " FROM " + T_PDF_STMT +
-            "       WHERE " + PS_SENDER + "=?" +
+            "   AND " + E_SOURCE + "='pdf'" +
+            "   AND (" +
+            "        " + E_STMT_ID + " IN (" +
+            "           SELECT " + PS_ID + " FROM " + T_PDF_STMT +
+            "             WHERE " + PS_SENDER + "=?" +
+            "        )" +
+            "        OR " + E_BANK + " = ? COLLATE NOCASE" +
             "   )" +
             " ORDER BY " + E_DATE_MS + " ASC",
-            new String[]{String.valueOf(senderId)});
+            new String[]{String.valueOf(senderId), bankName});
         return expenseCursorToList(c);
     }
 

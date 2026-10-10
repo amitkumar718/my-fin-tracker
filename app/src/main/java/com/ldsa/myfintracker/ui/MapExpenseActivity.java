@@ -571,7 +571,7 @@ public class MapExpenseActivity extends Activity {
             }
             Toast.makeText(this, "Scanning " + mPdfItems.size() + " lines…", Toast.LENGTH_SHORT).show();
             new BulkImportThread(this, new ArrayList<PdfLineAdapter.PdfLine>(mPdfItems),
-                    pattern, patternId,
+                    pattern, patternId, mStatementId,
                     mEtBank.getText().toString().trim(),
                     mEtReason.getText().toString().trim(),
                     mEtRemarks.getText().toString().trim(),
@@ -855,7 +855,7 @@ public class MapExpenseActivity extends Activity {
             mPendingBulkReApply   = false;
             Toast.makeText(this, "Scanning " + mPdfItems.size() + " lines…", Toast.LENGTH_SHORT).show();
             new BulkImportThread(this, new ArrayList<PdfLineAdapter.PdfLine>(mPdfItems),
-                    p, pid,
+                    p, pid, mStatementId,
                     mEtBank.getText().toString().trim(),
                     mEtReason.getText().toString().trim(),
                     mEtRemarks.getText().toString().trim(),
@@ -1702,6 +1702,7 @@ public class MapExpenseActivity extends Activity {
         private final List<PdfLineAdapter.PdfLine> mItems;
         private final ExtractionPattern            mPattern;
         private final long                         mPatternId;
+        private final long                         mStatementId;
         private final String                       mBank;
         private final String                       mReason;
         private final String                       mRemarks;
@@ -1712,11 +1713,12 @@ public class MapExpenseActivity extends Activity {
         private final Handler                      mHandler;
 
         BulkImportThread(MapExpenseActivity a, List<PdfLineAdapter.PdfLine> items,
-                         ExtractionPattern pattern, long patternId,
+                         ExtractionPattern pattern, long patternId, long statementId,
                          String bank, String reason, String remarks,
                          boolean isOnline, String txnType, ExpenseDatabase db,
                          boolean doReApply, Handler h) {
             mA = a; mItems = items; mPattern = pattern; mPatternId = patternId;
+            mStatementId = statementId;
             mBank = bank; mReason = reason; mRemarks = remarks;
             mIsOnline = isOnline; mTxnType = txnType; mDb = db;
             mDoReApply = doReApply; mHandler = h;
@@ -1789,6 +1791,7 @@ public class MapExpenseActivity extends Activity {
                 e.patternId       = mPatternId;
                 e.createdAt       = System.currentTimeMillis();
                 e.source          = "pdf";
+                e.pdfStatementId  = mStatementId;
                 mDb.insertExpense(e);
                 imported++;
             }
