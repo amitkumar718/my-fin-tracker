@@ -473,15 +473,41 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
     public static class ReApplyResult {
         public int updated;
         public int orphaned;
+        /** Previously-orphaned expenses that now match the edited pattern and
+         *  have been re-linked to it. Only populated for PDF patterns. */
+        public int adopted;
+    }
+
+    /** Returns PDF expenses that are no longer linked to any pattern but
+     *  belong to a statement from the given sender. Ordered by dateMs ASC so
+     *  the auto-credit classifier can chain balance deltas correctly. */
+    public List<Expense> getOrphanedPdfExpensesForSender(long senderId) {
+        Cursor c = getReadableDatabase().rawQuery(
+            "SELECT * FROM " + T_EXPENSE +
+            " WHERE " + E_PATTERN_ID + "=-1" +
+            "   AND " + E_STMT_ID + " IN (" +
+            "     SELECT " + PS_ID + " FROM " + T_PDF_STMT +
+            "       WHERE " + PS_SENDER + "=?" +
+            "   )" +
+            " ORDER BY " + E_DATE_MS + " ASC",
+            new String[]{String.valueOf(senderId)});
+        return expenseCursorToList(c);
     }
 
     public ReApplyResult reApplyPattern(ExtractionPattern p) {
         ReApplyResult r = new ReApplyResult();
         if (p.id <= 0 || p.templateRegex == null) return r;
-        List<Expense> candidates = getExpensesByPattern(p.id);
 
-        // Auto-credit re-classifies by balance delta; it needs the candidates in
-        // date order so deltas chain correctly. Sort in-place by dateMs ASC.
+        List<Expense> candidates = getExpensesByPattern(p.id);
+        // For PDF patterns, also try to re-adopt this bank's orphan expenses —
+        // rows that lost their pattern link during an earlier edit and might
+        // now match the revised regex.
+        if (p.isPdf && p.senderId > 0) {
+            candidates.addAll(getOrphanedPdfExpensesForSender(p.senderId));
+        }
+
+        // Auto-credit re-classifies by balance delta; chain correctness needs
+        // date-ascending order across linked + newly-adopted candidates.
         boolean autoCredit = p.senderId > 0 && getSenderPdfAutoCredit(p.senderId);
         if (autoCredit) Collections.sort(candidates, new ExpenseByDateAsc());
         com.ldsa.myfintracker.pdf.PdfCreditClassifier classifier =
@@ -489,14 +515,18 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
 
         for (Expense e : candidates) {
             if (e.originalSms == null || e.originalSms.isEmpty()) continue;
+            boolean wasLinked = (e.patternId == p.id);
             try {
                 Matcher m = Pattern.compile(p.templateRegex,
                     Pattern.CASE_INSENSITIVE | Pattern.MULTILINE).matcher(e.originalSms);
                 if (!m.find()) {
-                    // Orphan: keep the row, drop the pattern linkage.
-                    e.patternId = -1L;
-                    updateExpense(e);
-                    r.orphaned++;
+                    // No match. If it was linked, demote to orphan; if already
+                    // orphan, leave alone (don't rewrite rows we didn't change).
+                    if (wasLinked) {
+                        e.patternId = -1L;
+                        updateExpense(e);
+                        r.orphaned++;
+                    }
                     continue;
                 }
                 // Credit column → debit column → legacy amount. First non-empty wins.
@@ -519,10 +549,14 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
                 com.ldsa.myfintracker.pdf.PdfCreditClassifier.Decision d =
                         classifier.classify(hasBalance, balance, amountCrMatched);
                 if (d.skip) {
-                    // Auto-credit decided this row has zero balance delta — drop its pattern linkage.
-                    e.patternId = -1L;
-                    updateExpense(e);
-                    r.orphaned++;
+                    // Auto-credit decided this row has zero balance delta.
+                    // Drop the pattern link if it was previously linked; leave
+                    // existing orphans alone.
+                    if (wasLinked) {
+                        e.patternId = -1L;
+                        updateExpense(e);
+                        r.orphaned++;
+                    }
                     continue;
                 }
 
@@ -534,8 +568,10 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
                 e.balance         = balance;
                 e.transactionType = p.transactionType != null ? p.transactionType : "";
                 e.isOnline        = reIsOnline(e.transactionType);
+                e.patternId       = p.id;   // (re-)adopt the orphan if that's what it was
                 updateExpense(e);
-                r.updated++;
+                if (wasLinked) r.updated++;
+                else           r.adopted++;
             } catch (Exception ignored) {}
         }
         return r;

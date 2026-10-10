@@ -447,9 +447,12 @@ public class AddPdfPatternActivity extends Activity {
             new android.os.Handler(android.os.Looper.getMainLooper())).start();
     }
 
-    void onReApplyDone(int updated, int orphaned) {
+    void onReApplyDone(int updated, int orphaned, int adopted) {
         StringBuilder sb = new StringBuilder();
         sb.append(updated).append(" expense").append(updated == 1 ? "" : "s").append(" updated");
+        if (adopted > 0) {
+            sb.append(", ").append(adopted).append(" orphan").append(adopted == 1 ? "" : "s").append(" re-adopted");
+        }
         if (orphaned > 0) {
             sb.append(", ").append(orphaned).append(" orphaned (no longer match)");
         }
@@ -870,7 +873,7 @@ public class AddPdfPatternActivity extends Activity {
         }
         public void run() {
             ExpenseDatabase.ReApplyResult r = mDb.reApplyPattern(mP);
-            mH.post(new ReApplyDoneRunnable(mA, r.updated, r.orphaned));
+            mH.post(new ReApplyDoneRunnable(mA, r.updated, r.orphaned, r.adopted));
         }
     }
 
@@ -878,11 +881,12 @@ public class AddPdfPatternActivity extends Activity {
         private final AddPdfPatternActivity mA;
         private final int                   mUpdated;
         private final int                   mOrphaned;
-        ReApplyDoneRunnable(AddPdfPatternActivity a, int u, int o) {
-            mA = a; mUpdated = u; mOrphaned = o;
+        private final int                   mAdopted;
+        ReApplyDoneRunnable(AddPdfPatternActivity a, int u, int o, int ad) {
+            mA = a; mUpdated = u; mOrphaned = o; mAdopted = ad;
         }
         public void run() {
-            if (!mA.isFinishing()) mA.onReApplyDone(mUpdated, mOrphaned);
+            if (!mA.isFinishing()) mA.onReApplyDone(mUpdated, mOrphaned, mAdopted);
         }
     }
 }
