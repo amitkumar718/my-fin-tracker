@@ -40,6 +40,7 @@ public class SettingsActivity extends Activity {
         mTvDropboxStatus  = (TextView)     findViewById(R.id.tvDropboxStatus);
         LinearLayout rowBanks    = (LinearLayout) findViewById(R.id.rowBanks);
         LinearLayout rowDropbox  = (LinearLayout) findViewById(R.id.rowDropbox);
+        LinearLayout rowDebug    = (LinearLayout) findViewById(R.id.rowDebug);
 
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
             this, R.array.landing_page_labels, android.R.layout.simple_spinner_item);
@@ -52,6 +53,7 @@ public class SettingsActivity extends Activity {
 
         rowBanks.setOnClickListener(new BanksRowClickListener(this));
         rowDropbox.setOnClickListener(new DropboxRowClickListener(this));
+        rowDebug.setOnClickListener(new DebugRowClickListener(this));
     }
 
     @Override
@@ -88,6 +90,10 @@ public class SettingsActivity extends Activity {
         startActivity(new Intent(this, BankListActivity.class));
     }
 
+    void openDebug() {
+        startActivity(new Intent(this, DebugActivity.class));
+    }
+
     // ── Static listener classes ───────────────────────────────────────────────
 
     static class LandingSelectedListener implements AdapterView.OnItemSelectedListener {
@@ -111,5 +117,11 @@ public class SettingsActivity extends Activity {
         private final SettingsActivity mA;
         DropboxRowClickListener(SettingsActivity a) { mA = a; }
         public void onClick(View v) { mA.openDropboxSettings(); }
+    }
+
+    static class DebugRowClickListener implements View.OnClickListener {
+        private final SettingsActivity mA;
+        DebugRowClickListener(SettingsActivity a) { mA = a; }
+        public void onClick(View v) { mA.openDebug(); }
     }
 }

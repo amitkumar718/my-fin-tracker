@@ -707,6 +707,14 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
         return patternCursorToList(c);
     }
 
+    /** All expenses whose pattern_id is -1 (either never linked, or orphaned by
+     *  a later pattern edit). Used by the Debug → Orphaned Transactions screen. */
+    public List<Expense> getOrphanExpenses() {
+        Cursor c = getReadableDatabase().query(T_EXPENSE, null,
+            E_PATTERN_ID + "=-1", null, null, null, E_DATE_MS + " DESC");
+        return expenseCursorToList(c);
+    }
+
     public List<ExtractionPattern> getAllPdfPatterns() {
         Cursor c = getReadableDatabase().query(T_PATTERN, null,
             P_IS_PDF + "=1 OR " + P_SENDER_ID + "=-1", null, null, null, P_ID + " ASC");

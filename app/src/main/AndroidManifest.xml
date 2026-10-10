@@ -144,6 +144,26 @@
             android:exported="false"
             android:theme="@android:style/Theme.Material.Light.NoActionBar" />
 
+        <activity
+            android:name=".ui.DebugActivity"
+            android:label="@string/title_debug"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.DebugPatternsActivity"
+            android:label="@string/title_debug_patterns"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.DebugOrphansActivity"
+            android:label="@string/title_debug_orphans"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.DebugPatternExpensesActivity"
+            android:label="@string/title_debug_pattern_expenses"
+            android:exported="false" />
+
     </application>
 
 </manifest>
