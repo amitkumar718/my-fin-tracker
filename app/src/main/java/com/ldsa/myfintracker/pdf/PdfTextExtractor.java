@@ -43,7 +43,27 @@ public class PdfTextExtractor {
         return extract(is, null);
     }
 
+    /**
+     * Debug / diagnostic entry point: returns the raw TextChunk list for every
+     * content stream, one chunk per line as TSV: {@code streamIdx\ty\tx\ttext}.
+     * Y-row grouping, continuation-row merging, and line emission are skipped —
+     * this exposes exactly what {@link #chunksFromStream} saw, so callers can
+     * inspect PDF text positioning directly. Used by the pdf-dump helper tool.
+     */
+    public static String extractChunkDump(InputStream is, String password) {
+        try {
+            byte[] raw = readFully(is);
+            return fromBytes(raw, password, true);
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
     private static String fromBytes(byte[] raw, String password) throws Exception {
+        return fromBytes(raw, password, false);
+    }
+
+    private static String fromBytes(byte[] raw, String password, boolean dumpChunks) throws Exception {
         // ISO-8859-1 maps each byte 0–255 to the same char value, preserving binary data.
         String pdf = new String(raw, "ISO-8859-1");
 
@@ -120,14 +140,30 @@ public class PdfTextExtractor {
             if (content.contains("BT")) {
                 nBT++;
                 List<TextChunk> chunks = chunksFromStream(content);
-                String lines = chunksToLines(chunks);
-                if (!lines.isEmpty()) { nText++; out.append(lines); }
+                if (dumpChunks) {
+                    if (!chunks.isEmpty()) {
+                        nText++;
+                        out.append("=== stream ").append(nStreams).append(" ===\n");
+                        for (int i = 0; i < chunks.size(); i++) {
+                            TextChunk ch = chunks.get(i);
+                            out.append(nStreams).append('\t')
+                               .append(ch.y).append('\t')
+                               .append(ch.x).append('\t')
+                               .append(ch.text).append('\n');
+                        }
+                    }
+                } else {
+                    String lines = chunksToLines(chunks);
+                    if (!lines.isEmpty()) { nText++; out.append(lines); }
+                }
             }
 
             pos = endKw + 9;
         }
 
-        String result = cleanText(out.toString());
+        // In dump mode, skip cleanText (which collapses whitespace & trims lines);
+        // chunk dump output is already one-chunk-per-line TSV and should pass through verbatim.
+        String result = dumpChunks ? out.toString() : cleanText(out.toString());
         if (result.isEmpty()) {
             String obj0 = (firstObjNumGen != null)
                     ? firstObjNumGen[0] + "g" + firstObjNumGen[1] : "none";
