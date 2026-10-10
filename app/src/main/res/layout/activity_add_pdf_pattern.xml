@@ -196,6 +196,14 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content">
 
+                    <Button android:id="@+id/btnTokAmount"
+                        android:layout_width="wrap_content" android:layout_height="26dp"
+                        android:text="Amount" android:textSize="11sp" android:textColor="#FFFFFF"
+                        android:background="@drawable/bg_button_secondary"
+                        android:backgroundTint="#6A1B9A"
+                        android:paddingLeft="10dp" android:paddingRight="10dp" android:minWidth="0dp"
+                        android:visibility="gone" />
+
                     <Button android:id="@+id/btnTokAmountDb"
                         android:layout_width="wrap_content" android:layout_height="26dp"
                         android:text="Amt Db" android:textSize="11sp" android:textColor="#FFFFFF"
@@ -267,6 +275,24 @@
                         android:paddingLeft="10dp" android:paddingRight="10dp" android:minWidth="0dp" />
 
                 </com.ldsa.myfintracker.ui.FlowLayout>
+
+                <CheckBox
+                    android:id="@+id/cbPdfAutoCredit"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/pdf_auto_credit"
+                    android:textSize="13sp"
+                    android:paddingTop="8dp" />
+
+                <TextView
+                    android:id="@+id/tvPdfAutoCreditHint"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/pdf_auto_credit_needs_balance"
+                    android:textColor="#D32F2F"
+                    android:textSize="11sp"
+                    android:paddingLeft="32dp"
+                    android:visibility="gone" />
 
             </LinearLayout>
 

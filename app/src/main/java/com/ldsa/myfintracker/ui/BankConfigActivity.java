@@ -14,7 +14,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
-import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -54,8 +53,6 @@ public class BankConfigActivity extends Activity {
     private Button       mBtnAddMorePaths;
     private TextView     mTvNoPdfPatterns;
     private TextView     mTvPdfPassword;
-    private CheckBox     mCbPdfAutoCredit;
-    private TextView     mTvPdfAutoCreditHint;
 
     long mPendingDeletePatternId  = -1L;
     long mPendingDeleteSenderIdId = -1L;
@@ -81,9 +78,6 @@ public class BankConfigActivity extends Activity {
         mTvNoSmsPatterns     = (TextView)     findViewById(R.id.tvNoSmsPatterns);
         mTvNoPdfPatterns     = (TextView)     findViewById(R.id.tvNoPdfPatterns);
         mTvPdfPassword       = (TextView)     findViewById(R.id.tvPdfPassword);
-        mCbPdfAutoCredit     = (CheckBox)     findViewById(R.id.cbPdfAutoCredit);
-        mTvPdfAutoCreditHint = (TextView)     findViewById(R.id.tvPdfAutoCreditHint);
-        mCbPdfAutoCredit.setOnCheckedChangeListener(new PdfAutoCreditChangeListener(this));
 
         ((TextView) findViewById(R.id.btnBack)).setOnClickListener(new BackClickListener(this));
         ((Button) findViewById(R.id.btnSaveIdentity)).setOnClickListener(new SaveIdentityClickListener(this));
@@ -345,42 +339,6 @@ public class BankConfigActivity extends Activity {
         boolean empty = patterns.isEmpty();
         mTvNoPdfPatterns.setVisibility(empty ? View.VISIBLE : View.GONE);
         mContainerPdfPatterns.setVisibility(empty ? View.GONE : View.VISIBLE);
-
-        // Auto-credit toggle: only meaningful once at least one PDF pattern
-        // exists. Also show a warning line when the toggle is on but no pattern
-        // captures /balance/ (classifier would silently fall back for every row).
-        boolean showAuto = !empty && mSenderId > 0;
-        mCbPdfAutoCredit.setVisibility(showAuto ? View.VISIBLE : View.GONE);
-        if (showAuto) {
-            // Rebind without re-triggering the listener while we set the saved state.
-            mCbPdfAutoCredit.setOnCheckedChangeListener(null);
-            mCbPdfAutoCredit.setChecked(mDb.getSenderPdfAutoCredit(mSenderId));
-            mCbPdfAutoCredit.setOnCheckedChangeListener(new PdfAutoCreditChangeListener(this));
-            boolean anyHasBalance = false;
-            for (ExtractionPattern p : patterns) {
-                if (p.balanceGroup >= 0) { anyHasBalance = true; break; }
-            }
-            mTvPdfAutoCreditHint.setVisibility(
-                (mCbPdfAutoCredit.isChecked() && !anyHasBalance) ? View.VISIBLE : View.GONE);
-        } else {
-            mTvPdfAutoCreditHint.setVisibility(View.GONE);
-        }
-    }
-
-    static class PdfAutoCreditChangeListener implements CompoundButton.OnCheckedChangeListener {
-        final BankConfigActivity mA;
-        PdfAutoCreditChangeListener(BankConfigActivity a) { mA = a; }
-        public void onCheckedChanged(CompoundButton button, boolean checked) {
-            if (mA.mSenderId > 0) mA.mDb.setSenderPdfAutoCredit(mA.mSenderId, checked);
-            // Re-evaluate the warning line without a full reload.
-            if (mA.mTvPdfAutoCreditHint == null) return;
-            if (!checked) { mA.mTvPdfAutoCreditHint.setVisibility(View.GONE); return; }
-            boolean anyHasBalance = false;
-            for (ExtractionPattern p : mA.mDb.getPdfPatternsBySender(mA.mSenderId)) {
-                if (p.balanceGroup >= 0) { anyHasBalance = true; break; }
-            }
-            mA.mTvPdfAutoCreditHint.setVisibility(anyHasBalance ? View.GONE : View.VISIBLE);
-        }
     }
 
     void pickPdf() {

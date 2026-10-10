@@ -8,6 +8,8 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -33,6 +35,7 @@ public class AddPdfPatternActivity extends Activity {
     public static final String EXTRA_PATTERN_ID = "pattern_id";
 
     // Transaction tokens (shared with MapExpenseActivity)
+    static final String TOK_AMOUNT    = "(/amount/)";
     static final String TOK_AMOUNT_CR = "(/amount_cr/)";
     static final String TOK_AMOUNT_DB = "(/amount_db/)";
     static final String TOK_MERCHANT  = "(/merchant/)";
@@ -49,8 +52,11 @@ public class AddPdfPatternActivity extends Activity {
     static final String TOK_MONTH    = "(/month/)";
     static final String TOK_YEAR     = "(/year/)";
 
+    // TOK_AMOUNT must come before TOK_AMOUNT_CR/_DB so the chip-color watcher's
+    // startsWith scan prefers the longer match for the cr/db variants.
     static final String[] ALL_TOKENS = {
-        TOK_AMOUNT_CR, TOK_AMOUNT_DB, TOK_MERCHANT, TOK_CARD, TOK_ACNO, TOK_UPI,
+        TOK_AMOUNT_CR, TOK_AMOUNT_DB, TOK_AMOUNT,
+        TOK_MERCHANT, TOK_CARD, TOK_ACNO, TOK_UPI,
         TOK_DATE, TOK_TIME, TOK_BALANCE, TOK_IGNORE,
         TOK_NAME, TOK_MONTH, TOK_YEAR
     };
@@ -70,6 +76,11 @@ public class AddPdfPatternActivity extends Activity {
     EditText mEtBankPat;
     EditText mEtPeriodPat;
     EditText mEtTransPat;
+    CheckBox mCbPdfAutoCredit;
+    TextView mTvPdfAutoCreditHint;
+    Button   mBtnTokAmount;
+    Button   mBtnTokAmountCr;
+    Button   mBtnTokAmountDb;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -85,10 +96,18 @@ public class AddPdfPatternActivity extends Activity {
         mEtBankPat     = (EditText) findViewById(R.id.etBankPat);
         mEtPeriodPat   = (EditText) findViewById(R.id.etPeriodPat);
         mEtTransPat    = (EditText) findViewById(R.id.etTransPat);
+        mCbPdfAutoCredit     = (CheckBox) findViewById(R.id.cbPdfAutoCredit);
+        mTvPdfAutoCreditHint = (TextView) findViewById(R.id.tvPdfAutoCreditHint);
+        mBtnTokAmount   = (Button) findViewById(R.id.btnTokAmount);
+        mBtnTokAmountCr = (Button) findViewById(R.id.btnTokAmountCr);
+        mBtnTokAmountDb = (Button) findViewById(R.id.btnTokAmountDb);
 
         mEtBankPat.addTextChangedListener(new ChipColorWatcher());
         mEtPeriodPat.addTextChangedListener(new ChipColorWatcher());
         mEtTransPat.addTextChangedListener(new ChipColorWatcher());
+        // Re-evaluate the auto-credit hint as the user edits the trans template
+        // (hint shows when auto-credit is on but the current template lacks /balance/).
+        mEtTransPat.addTextChangedListener(new AutoCreditHintWatcher(this));
 
         ((TextView) findViewById(R.id.btnBack)).setOnClickListener(new BackListener(this));
         ((Button) findViewById(R.id.btnPickFromStatement)).setOnClickListener(new PickListener(this));
@@ -110,7 +129,15 @@ public class AddPdfPatternActivity extends Activity {
 
         if (mPatternId >= 0) populateFromPattern(mPatternId);
 
+        // Auto-credit toggle (per-sender flag, surfaced here because it also
+        // decides which amount-chip variant to show in the trans chip row).
+        boolean autoCredit = mSenderId > 0 && mDb.getSenderPdfAutoCredit(mSenderId);
+        mCbPdfAutoCredit.setChecked(autoCredit);
+        mCbPdfAutoCredit.setOnCheckedChangeListener(new PdfAutoCreditChangeListener(this));
+        applyAutoCreditVisibility(autoCredit);
+
         // Trans chips
+        wireFieldChip(R.id.btnTokAmount,   mEtTransPat, TOK_AMOUNT);
         wireFieldChip(R.id.btnTokAmountCr, mEtTransPat, TOK_AMOUNT_CR);
         wireFieldChip(R.id.btnTokAmountDb, mEtTransPat, TOK_AMOUNT_DB);
         wireFieldChip(R.id.btnTokMerchant, mEtTransPat, TOK_MERCHANT);
@@ -239,6 +266,7 @@ public class AddPdfPatternActivity extends Activity {
 
 
     static String tokenLabel(String token) {
+        if (TOK_AMOUNT.equals(token))    return "AMOUNT";
         if (TOK_AMOUNT_CR.equals(token)) return "AMT CR";
         if (TOK_AMOUNT_DB.equals(token)) return "AMT DB";
         if (TOK_MERCHANT.equals(token)) return "MERCHANT";
@@ -253,6 +281,7 @@ public class AddPdfPatternActivity extends Activity {
     }
 
     static int tokenColor(String token) {
+        if (TOK_AMOUNT.equals(token))    return 0xFF6A1B9A; // purple = auto-classified amount
         if (TOK_AMOUNT_CR.equals(token)) return 0xFF2E7D32; // deeper green = credit
         if (TOK_AMOUNT_DB.equals(token)) return 0xFFC62828; // red = debit
         if (TOK_BALANCE.equals(token))  return 0xFF56B4E9;
@@ -270,6 +299,44 @@ public class AddPdfPatternActivity extends Activity {
     }
 
     static String nullToEmpty(String s) { return s != null ? s : ""; }
+
+    /** Applies the auto-credit chip layout: /amount/ visible when on;
+     *  /amount_cr/ and /amount_db/ visible when off. Also updates the
+     *  "needs /balance/" hint based on the current trans template. */
+    void applyAutoCreditVisibility(boolean on) {
+        if (mBtnTokAmount != null)   mBtnTokAmount.setVisibility(on ? View.VISIBLE : View.GONE);
+        if (mBtnTokAmountCr != null) mBtnTokAmountCr.setVisibility(on ? View.GONE : View.VISIBLE);
+        if (mBtnTokAmountDb != null) mBtnTokAmountDb.setVisibility(on ? View.GONE : View.VISIBLE);
+        refreshAutoCreditHint();
+    }
+
+    /** The hint is shown only when auto-credit is checked AND the trans
+     *  template doesn't already contain a /balance/ token — the classifier
+     *  needs that capture to compute deltas. */
+    void refreshAutoCreditHint() {
+        if (mCbPdfAutoCredit == null || mTvPdfAutoCreditHint == null) return;
+        boolean needsBalance = mCbPdfAutoCredit.isChecked()
+                && (mEtTransPat == null
+                    || !mEtTransPat.getText().toString().contains(TOK_BALANCE));
+        mTvPdfAutoCreditHint.setVisibility(needsBalance ? View.VISIBLE : View.GONE);
+    }
+
+    static class PdfAutoCreditChangeListener implements CompoundButton.OnCheckedChangeListener {
+        final AddPdfPatternActivity mA;
+        PdfAutoCreditChangeListener(AddPdfPatternActivity a) { mA = a; }
+        public void onCheckedChanged(CompoundButton button, boolean checked) {
+            if (mA.mSenderId > 0) mA.mDb.setSenderPdfAutoCredit(mA.mSenderId, checked);
+            mA.applyAutoCreditVisibility(checked);
+        }
+    }
+
+    static class AutoCreditHintWatcher implements android.text.TextWatcher {
+        final AddPdfPatternActivity mA;
+        AutoCreditHintWatcher(AddPdfPatternActivity a) { mA = a; }
+        public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+        public void onTextChanged(CharSequence s, int start, int before, int count) {}
+        public void afterTextChanged(android.text.Editable s) { mA.refreshAutoCreditHint(); }
+    }
 
     void pickFromStatement() {
         if (mSenderId < 0) {
@@ -568,6 +635,7 @@ public class AddPdfPatternActivity extends Activity {
     }
 
     private String tokenToFieldType(String token) {
+        if (TOK_AMOUNT.equals(token))    return "amount";
         if (TOK_AMOUNT_CR.equals(token)) return "amount";
         if (TOK_AMOUNT_DB.equals(token)) return "amount";
         if (TOK_BALANCE.equals(token))  return "balance";
@@ -584,8 +652,9 @@ public class AddPdfPatternActivity extends Activity {
     }
 
     private void assignGroup(ExtractionPattern p, String token, int group) {
-        if (TOK_AMOUNT_CR.equals(token)) { p.amountCrGroup = group; return; }
-        if (TOK_AMOUNT_DB.equals(token)) { p.amountDbGroup = group; return; }
+        if (TOK_AMOUNT.equals(token))    { p.amountGroup    = group; return; }
+        if (TOK_AMOUNT_CR.equals(token)) { p.amountCrGroup  = group; return; }
+        if (TOK_AMOUNT_DB.equals(token)) { p.amountDbGroup  = group; return; }
         if (TOK_BALANCE.equals(token))  { p.balanceGroup  = group; return; }
         if (TOK_MERCHANT.equals(token)) { p.merchantGroup = group; return; }
         if (TOK_CARD.equals(token))     { p.cardGroup     = group; return; }
