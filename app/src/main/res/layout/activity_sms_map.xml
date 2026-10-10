@@ -524,24 +524,6 @@
                         android:typeface="monospace"
                         android:visibility="gone" />
 
-                    <!-- Pattern hint -->
-                    <TextView
-                        android:id="@+id/tvPatternHint"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginLeft="12dp"
-                        android:layout_marginRight="12dp"
-                        android:layout_marginTop="4dp"
-                        android:background="#FFF8E1"
-                        android:paddingLeft="12dp"
-                        android:paddingRight="12dp"
-                        android:paddingTop="8dp"
-                        android:paddingBottom="8dp"
-                        android:textSize="12sp"
-                        android:textColor="#E65100"
-                        android:textStyle="italic"
-                        android:visibility="gone" />
-
                 </LinearLayout>
 
                 <!-- ── Expense Details card ── -->

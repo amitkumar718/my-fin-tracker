@@ -92,7 +92,6 @@ public class MapExpenseActivity extends Activity {
 
     private TextView mTvTransLine;
     private TextView mTvExtractPreview;
-    private TextView mTvPatternHint;
     private EditText mEtTemplate;
     private EditText mEtDate;
     private EditText mEtTime;
@@ -160,7 +159,6 @@ public class MapExpenseActivity extends Activity {
 
         mTvTransLine        = (TextView) findViewById(R.id.tvSmsBody);
         mTvExtractPreview = (TextView) findViewById(R.id.tvExtractPreview);
-        mTvPatternHint    = (TextView) findViewById(R.id.tvPatternHint);
         mEtTemplate       = (EditText) findViewById(R.id.etTemplate);
         mEtDate           = (EditText) findViewById(R.id.etDate);
         mEtTime           = (EditText) findViewById(R.id.etTime);
@@ -230,13 +228,11 @@ public class MapExpenseActivity extends Activity {
             mTaggedSpans.addAll(parseSpansFromTemplate(mTransLine, mEtTemplate.getText().toString()));
             renderTaggedSpans();
         }
-        updatePatternHint();
         updateRegexPreview();
 
         mEtTemplate.addTextChangedListener(new TemplateWatcher(this));
         mEtDate.setOnClickListener(new DateClickListener(this));
         mEtTime.setOnClickListener(new TimeClickListener(this));
-        mTvPatternHint.setOnClickListener(new PatternHintClickListener(this));
         btnSave.setOnClickListener(new SaveClickListener(this));
 
         if (mStatementId >= 0 && mPdfStatement != null && !mPdfLoaded) {
@@ -282,22 +278,6 @@ public class MapExpenseActivity extends Activity {
             if (!time.isEmpty()) tryApplyExtractedTime(time);
             return;
         }
-    }
-
-    void updatePatternHint() {
-        if (mCurrentPattern != null && mCurrentPattern.id > 0) {
-            mTvPatternHint.setVisibility(View.VISIBLE);
-            String name = (mCurrentPattern.name != null && !mCurrentPattern.name.isEmpty())
-                ? mCurrentPattern.name : "existing pattern";
-            mTvPatternHint.setText("Modifying: " + name + "  ·  tap to save as new instead");
-        } else {
-            mTvPatternHint.setVisibility(View.GONE);
-        }
-    }
-
-    void clearCurrentPattern() {
-        mCurrentPattern = null;
-        updatePatternHint();
     }
 
     // ── Point-and-label tagging (replaces regex template editing) ────────────
@@ -1450,12 +1430,6 @@ public class MapExpenseActivity extends Activity {
             }
             return false;
         }
-    }
-
-    static class PatternHintClickListener implements View.OnClickListener {
-        private final MapExpenseActivity mA;
-        PatternHintClickListener(MapExpenseActivity a) { mA = a; }
-        public void onClick(View v) { mA.clearCurrentPattern(); }
     }
 
     static class PatternUpdateDialogListener implements DialogInterface.OnClickListener {
