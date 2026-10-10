@@ -24,6 +24,7 @@ import android.widget.Toast;
 
 import com.ldsa.myfintracker.R;
 import com.ldsa.myfintracker.db.ExpenseDatabase;
+import com.ldsa.myfintracker.db.PdfSource;
 import com.ldsa.myfintracker.db.PdfStatement;
 import com.ldsa.myfintracker.pdf.DropboxPdfHelper;
 
@@ -59,6 +60,11 @@ public class DropboxPdfInboxActivity extends Activity {
     List<DropboxPdfHelper.PdfEntry> mEntries = new ArrayList<DropboxPdfHelper.PdfEntry>();
     List<Boolean>                   mSelected = new ArrayList<Boolean>();
     HashSet<String>                 mAlreadyImported = new HashSet<String>();
+
+    // Fan-out state when listing multiple Dropbox roots for the same bank.
+    int                             mPendingLists;
+    List<DropboxPdfHelper.PdfEntry> mAccumulatedEntries = new ArrayList<DropboxPdfHelper.PdfEntry>();
+    HashSet<String>                 mSeenPaths          = new HashSet<String>();
 
     // Progress of multi-file download
     int mDlTotal;
@@ -140,20 +146,64 @@ public class DropboxPdfInboxActivity extends Activity {
         mListView.setVisibility(View.GONE);
         mTvEmpty.setVisibility(View.GONE);
         mBtnDownload.setEnabled(false);
+        mAccumulatedEntries.clear();
+        mSeenPaths.clear();
+
+        List<String> roots = resolveRoots();
+        if (roots.isEmpty()) {
+            // Scoped to a bank with no Dropbox source configured — don't silently
+            // fall back to the global root (would show the wrong bank's PDFs).
+            mProgress.setVisibility(View.GONE);
+            mTvEmpty.setText(R.string.dbx_pdf_no_bank_source);
+            mTvEmpty.setVisibility(View.VISIBLE);
+            mTvStatus.setText(R.string.dbx_pdf_empty_short);
+            return;
+        }
+        mPendingLists = roots.size();
+        for (int i = 0; i < roots.size(); i++) {
+            DropboxPdfHelper.listPdfs(this, mToken, roots.get(i),
+                new ListCallbackImpl(this));
+        }
+    }
+
+    /** Returns the Dropbox folders to list from. When bound to a bank, uses the
+     *  bank's configured {@link PdfSource}s; otherwise falls back to the global
+     *  KEY_ROOT pref used by the generic Dropbox browser entry point. */
+    private List<String> resolveRoots() {
+        List<String> out = new ArrayList<String>();
+        if (mSenderId > 0) {
+            for (PdfSource s : mDb.getPdfSourcesBySender(mSenderId)) {
+                if (!s.isDropbox) continue;
+                if (s.path == null) continue;
+                String p = s.path.trim();
+                while (p.endsWith("/")) p = p.substring(0, p.length() - 1);
+                if (!p.isEmpty()) out.add(p);
+            }
+            return out;
+        }
         String root = getSharedPreferences(DropboxPdfHelper.PREF_FILE, MODE_PRIVATE)
             .getString(DropboxPdfHelper.KEY_ROOT, DropboxPdfHelper.DEFAULT_ROOT);
         if (root == null) root = DropboxPdfHelper.DEFAULT_ROOT;
-        DropboxPdfHelper.listPdfs(this, mToken, root, new ListCallbackImpl(this));
+        out.add(root);
+        return out;
     }
 
     void onListSuccess(List<DropboxPdfHelper.PdfEntry> entries) {
-        mProgress.setVisibility(View.GONE);
-        java.util.Collections.sort(entries, new ByEntryNameDesc());
-        mEntries = entries;
-        mSelected = new ArrayList<Boolean>();
-        for (int i = 0; i < entries.size(); i++) mSelected.add(Boolean.FALSE);
+        // Accumulate across multiple root listings; dedupe by pathLower so a PDF
+        // sitting under overlapping sources doesn't appear twice.
+        for (int i = 0; i < entries.size(); i++) {
+            DropboxPdfHelper.PdfEntry e = entries.get(i);
+            if (mSeenPaths.add(e.pathLower)) mAccumulatedEntries.add(e);
+        }
+        if (--mPendingLists > 0) return;
 
-        if (entries.isEmpty()) {
+        mProgress.setVisibility(View.GONE);
+        java.util.Collections.sort(mAccumulatedEntries, new ByEntryNameDesc());
+        mEntries  = new ArrayList<DropboxPdfHelper.PdfEntry>(mAccumulatedEntries);
+        mSelected = new ArrayList<Boolean>();
+        for (int i = 0; i < mEntries.size(); i++) mSelected.add(Boolean.FALSE);
+
+        if (mEntries.isEmpty()) {
             mTvEmpty.setText(R.string.dbx_pdf_empty);
             mTvEmpty.setVisibility(View.VISIBLE);
             mTvStatus.setText(R.string.dbx_pdf_empty_short);
@@ -163,7 +213,7 @@ public class DropboxPdfInboxActivity extends Activity {
         mAdapter = new DbxPdfAdapter(this);
         mListView.setAdapter(mAdapter);
         mListView.setVisibility(View.VISIBLE);
-        mTvStatus.setText(getString(R.string.dbx_pdf_found_fmt, entries.size()));
+        mTvStatus.setText(getString(R.string.dbx_pdf_found_fmt, mEntries.size()));
         updateDownloadButton();
     }
 

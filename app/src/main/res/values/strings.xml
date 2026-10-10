@@ -279,6 +279,7 @@
     <string name="debug_no_patterns">No patterns yet.</string>
     <string name="debug_no_orphans">No orphan transactions.</string>
     <string name="debug_no_expenses_for_pattern">No expenses linked to this pattern.</string>
+    <string name="dbx_pdf_no_bank_source">No Dropbox folder configured for this bank.</string>
     <string name="msg_save_bank_first">Save the bank identity first</string>
     <string name="label_pdf_sources">PDF Sources</string>
     <string name="btn_add_source">+ Add</string>
