@@ -528,8 +528,11 @@ public class MapExpenseActivity extends Activity {
             }
         }
 
-        // Auto-create a SenderConfig for a new PDF bank so the pattern isn't orphaned
-        if (!isUpdate && isPdfMode && mSenderId < 0) {
+        // Auto-create a SenderConfig for a new PDF bank so the pattern isn't
+        // orphaned. Runs for both insert (brand-new pattern) and update of an
+        // orphan pattern — the latter promotes a previously-orphan PDF pattern
+        // to a real bank once the user types the name on save.
+        if (isPdfMode && mSenderId < 0) {
             String bankName = mEtBank.getText().toString().trim();
             if (!bankName.isEmpty()) {
                 SenderConfig newSender = new SenderConfig();
@@ -545,10 +548,21 @@ public class MapExpenseActivity extends Activity {
             }
         }
 
+        // Gate: a PDF pattern must have a sender, otherwise it saves with
+        // senderId = -1 and is invisible to BankConfigActivity's per-bank list.
+        if (isPdfMode && mSenderId < 0) {
+            Toast.makeText(this, R.string.error_bank_name_required, Toast.LENGTH_SHORT).show();
+            if (mEtBank != null) mEtBank.requestFocus();
+            return;
+        }
+
         if (mSenderId >= 0 || isPdfMode) {
             if (isUpdate) {
-                pattern.id       = mCurrentPattern.id;
-                pattern.senderId = mCurrentPattern.senderId;
+                pattern.id = mCurrentPattern.id;
+                // Prefer the current mSenderId (may have been just auto-created
+                // from the bank-name field when rescuing an orphan pattern);
+                // fall back to the stored senderId for ordinary in-place edits.
+                pattern.senderId = (mSenderId > 0) ? mSenderId : mCurrentPattern.senderId;
                 mDb.updatePattern(pattern);
                 patternId = mCurrentPattern.id;
             } else {
