@@ -564,18 +564,39 @@ public class BankConfigActivity extends Activity {
 
     void confirmDeletePattern(long id) {
         mPendingDeletePatternId = id;
+        int n = mDb.countExpensesByPattern(id);
+        String msg = getString(R.string.delete_pattern_msg_fmt, n, n == 1 ? "" : "s");
         new AlertDialog.Builder(this, R.style.RoundedDialog)
-            .setMessage(R.string.confirm_delete_pattern)
-            .setPositiveButton(android.R.string.ok, new DeletePatternConfirmListener(this))
+            .setTitle(R.string.delete_pattern_title)
+            .setMessage(msg)
+            .setPositiveButton(R.string.delete_pattern_both,
+                new DeletePatternConfirmListener(this, true))
+            .setNeutralButton(R.string.delete_pattern_only,
+                new DeletePatternConfirmListener(this, false))
             .setNegativeButton(android.R.string.cancel, null)
             .show();
     }
 
-    void deletePattern() {
+    void deletePattern(boolean alsoDeleteExpenses) {
         if (mPendingDeletePatternId < 0) return;
-        mDb.deletePattern(mPendingDeletePatternId);
+        int affected;
+        String toast;
+        if (alsoDeleteExpenses) {
+            affected = mDb.deleteExpensesByPattern(mPendingDeletePatternId);
+            mDb.deletePattern(mPendingDeletePatternId);
+            toast = getString(R.string.msg_pattern_and_expenses_deleted_fmt,
+                affected, affected == 1 ? "" : "s");
+        } else {
+            // Previously called mDb.deletePattern() alone, which left expenses
+            // pointing at a now-nonexistent pattern (invisible to the orphan
+            // query). Explicitly orphan them first so the DB stays consistent.
+            affected = mDb.orphanExpensesByPattern(mPendingDeletePatternId);
+            mDb.deletePattern(mPendingDeletePatternId);
+            toast = getString(R.string.msg_pattern_deleted_orphaned_fmt,
+                affected, affected == 1 ? "" : "s");
+        }
         mPendingDeletePatternId = -1L;
-        Toast.makeText(this, R.string.msg_pattern_deleted, Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, toast, Toast.LENGTH_SHORT).show();
         reloadSmsPatterns();
         reloadPdfPatterns();
     }
@@ -679,8 +700,11 @@ public class BankConfigActivity extends Activity {
 
     static class DeletePatternConfirmListener implements DialogInterface.OnClickListener {
         private final BankConfigActivity mA;
-        DeletePatternConfirmListener(BankConfigActivity a) { mA = a; }
-        public void onClick(DialogInterface d, int w) { mA.deletePattern(); }
+        private final boolean mAlsoDeleteExpenses;
+        DeletePatternConfirmListener(BankConfigActivity a, boolean alsoDeleteExpenses) {
+            mA = a; mAlsoDeleteExpenses = alsoDeleteExpenses;
+        }
+        public void onClick(DialogInterface d, int w) { mA.deletePattern(mAlsoDeleteExpenses); }
     }
 
     static class SetPasswordClickListener implements View.OnClickListener {

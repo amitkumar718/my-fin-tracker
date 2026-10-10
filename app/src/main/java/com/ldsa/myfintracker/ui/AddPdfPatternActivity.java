@@ -487,23 +487,35 @@ public class AddPdfPatternActivity extends Activity {
 
     void confirmDeletePattern() {
         if (mPatternId < 0) return;
+        int n = mDb.countExpensesByPattern(mPatternId);
+        String msg = getString(R.string.delete_pattern_msg_fmt, n, n == 1 ? "" : "s");
         new AlertDialog.Builder(this, R.style.RoundedDialog)
-            .setMessage("Delete this pattern? Linked expenses stay but are orphaned (pattern_id = -1).")
-            .setPositiveButton(android.R.string.ok, new DeleteConfirmListener(this))
+            .setTitle(R.string.delete_pattern_title)
+            .setMessage(msg)
+            .setPositiveButton(R.string.delete_pattern_both,
+                new DeleteConfirmListener(this, true))
+            .setNeutralButton(R.string.delete_pattern_only,
+                new DeleteConfirmListener(this, false))
             .setNegativeButton(android.R.string.cancel, null)
             .show();
     }
 
-    void deletePattern() {
+    void deletePattern(boolean alsoDeleteExpenses) {
         if (mPatternId < 0) return;
-        int orphaned = mDb.orphanExpensesByPattern(mPatternId);
-        mDb.deletePattern(mPatternId);
-        Toast.makeText(this,
-            orphaned > 0
-                ? "Pattern deleted; " + orphaned + " expense"
-                    + (orphaned == 1 ? "" : "s") + " orphaned"
-                : "Pattern deleted",
-            Toast.LENGTH_SHORT).show();
+        int affected;
+        String toast;
+        if (alsoDeleteExpenses) {
+            affected = mDb.deleteExpensesByPattern(mPatternId);
+            mDb.deletePattern(mPatternId);
+            toast = getString(R.string.msg_pattern_and_expenses_deleted_fmt,
+                affected, affected == 1 ? "" : "s");
+        } else {
+            affected = mDb.orphanExpensesByPattern(mPatternId);
+            mDb.deletePattern(mPatternId);
+            toast = getString(R.string.msg_pattern_deleted_orphaned_fmt,
+                affected, affected == 1 ? "" : "s");
+        }
+        Toast.makeText(this, toast, Toast.LENGTH_SHORT).show();
         setResult(RESULT_OK);
         finish();
     }
@@ -703,8 +715,13 @@ public class AddPdfPatternActivity extends Activity {
 
     static class DeleteConfirmListener implements android.content.DialogInterface.OnClickListener {
         private final AddPdfPatternActivity mA;
-        DeleteConfirmListener(AddPdfPatternActivity a) { mA = a; }
-        public void onClick(android.content.DialogInterface d, int w) { mA.deletePattern(); }
+        private final boolean mAlsoDeleteExpenses;
+        DeleteConfirmListener(AddPdfPatternActivity a, boolean alsoDeleteExpenses) {
+            mA = a; mAlsoDeleteExpenses = alsoDeleteExpenses;
+        }
+        public void onClick(android.content.DialogInterface d, int w) {
+            mA.deletePattern(mAlsoDeleteExpenses);
+        }
     }
 
     static class SaveListener implements View.OnClickListener {

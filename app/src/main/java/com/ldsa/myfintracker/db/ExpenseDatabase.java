@@ -695,6 +695,15 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
             E_PATTERN_ID + "=?", new String[]{String.valueOf(patternId)});
     }
 
+    /** Deletes every expense tied to the given pattern. Returns the number of
+     *  rows removed. Used by the Delete-Pattern "+ expenses" option so the
+     *  user can redo an import cleanly instead of inheriting stale rows. */
+    public int deleteExpensesByPattern(long patternId) {
+        if (patternId <= 0) return 0;
+        return getWritableDatabase().delete(T_EXPENSE,
+            E_PATTERN_ID + "=?", new String[]{String.valueOf(patternId)});
+    }
+
     public List<ExtractionPattern> getPatternsBySender(long senderId) {
         Cursor c = getReadableDatabase().query(T_PATTERN, null,
             P_SENDER_ID + "=?", new String[]{String.valueOf(senderId)}, null, null, P_ID + " ASC");
