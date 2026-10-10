@@ -11,6 +11,8 @@ import org.json.JSONException;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -20,7 +22,7 @@ import java.util.regex.Pattern;
 public class ExpenseDatabase extends SQLiteOpenHelper {
 
     private static final String DB_NAME    = "fin_tracker.db";
-    private static final int    DB_VERSION = 17;
+    private static final int    DB_VERSION = 18;
 
     // ── expenses ──────────────────────────────────────────────────
     static final String T_EXPENSE    = "expenses";
@@ -50,6 +52,7 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
     static final String S_PATTERN  = "pattern";
     static final String S_NAME     = "display_name";
     static final String S_REGEX    = "is_regex";
+    static final String S_PDF_AUTO_CRED = "pdf_auto_credit";
 
     // ── extraction_patterns ───────────────────────────────────────
     static final String T_PATTERN    = "extraction_patterns";
@@ -153,7 +156,8 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
             S_ID      + " INTEGER PRIMARY KEY AUTOINCREMENT," +
             S_PATTERN + " TEXT NOT NULL," +
             S_NAME    + " TEXT," +
-            S_REGEX   + " INTEGER NOT NULL DEFAULT 0" +
+            S_REGEX   + " INTEGER NOT NULL DEFAULT 0," +
+            S_PDF_AUTO_CRED + " INTEGER NOT NULL DEFAULT 0" +
         ")");
 
         db.execSQL("CREATE TABLE " + T_PATTERN + " (" +
@@ -319,6 +323,10 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
                     "WHERE " + P_TEMPLATE + " LIKE '%(/amount/)%'");
             } catch (Exception ignored) {}
         }
+        if (oldVersion < 18) {
+            try { db.execSQL("ALTER TABLE " + T_SENDER +
+                " ADD COLUMN " + S_PDF_AUTO_CRED + " INTEGER NOT NULL DEFAULT 0"); } catch (Exception ignored) {}
+        }
     }
 
     // ==================== EXPENSE ====================
@@ -471,6 +479,14 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
         ReApplyResult r = new ReApplyResult();
         if (p.id <= 0 || p.templateRegex == null) return r;
         List<Expense> candidates = getExpensesByPattern(p.id);
+
+        // Auto-credit re-classifies by balance delta; it needs the candidates in
+        // date order so deltas chain correctly. Sort in-place by dateMs ASC.
+        boolean autoCredit = p.senderId > 0 && getSenderPdfAutoCredit(p.senderId);
+        if (autoCredit) Collections.sort(candidates, new ExpenseByDateAsc());
+        com.ldsa.myfintracker.pdf.PdfCreditClassifier classifier =
+                new com.ldsa.myfintracker.pdf.PdfCreditClassifier(autoCredit);
+
         for (Expense e : candidates) {
             if (e.originalSms == null || e.originalSms.isEmpty()) continue;
             try {
@@ -485,10 +501,10 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
                 }
                 // Credit column → debit column → legacy amount. First non-empty wins.
                 String amtStr    = "";
-                boolean isCredit = false;
+                boolean amountCrMatched = false;
                 if (p.amountCrGroup >= 0) {
                     String cr = reGrp(m, p.amountCrGroup).replaceAll("[^0-9.]", "");
-                    if (!cr.isEmpty()) { amtStr = cr; isCredit = true; }
+                    if (!cr.isEmpty()) { amtStr = cr; amountCrMatched = true; }
                 }
                 if (amtStr.isEmpty() && p.amountDbGroup >= 0) {
                     amtStr = reGrp(m, p.amountDbGroup).replaceAll("[^0-9.]", "");
@@ -496,12 +512,26 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
                 if (amtStr.isEmpty() && p.amountGroup >= 0) {
                     amtStr = reGrp(m, p.amountGroup).replaceAll("[^0-9.]", "");
                 }
+                String balRaw = reGrp(m, p.balanceGroup).replaceAll("[^0-9.,]", "").replace(",", "");
+                boolean hasBalance = !balRaw.isEmpty();
+                double balance = hasBalance ? reParseDouble(balRaw) : 0;
+
+                com.ldsa.myfintracker.pdf.PdfCreditClassifier.Decision d =
+                        classifier.classify(hasBalance, balance, amountCrMatched);
+                if (d.skip) {
+                    // Auto-credit decided this row has zero balance delta — drop its pattern linkage.
+                    e.patternId = -1L;
+                    updateExpense(e);
+                    r.orphaned++;
+                    continue;
+                }
+
                 e.amount          = reParseDouble(amtStr);
-                e.isCredit        = isCredit;
+                e.isCredit        = d.isCredit;
                 e.merchant        = reGrp(m, p.merchantGroup).trim();
                 e.card            = reGrp(m, p.cardGroup).trim();
                 e.accountNumber   = reGrp(m, p.accountGroup).trim();
-                e.balance         = reParseDouble(reGrp(m, p.balanceGroup));
+                e.balance         = balance;
                 e.transactionType = p.transactionType != null ? p.transactionType : "";
                 e.isOnline        = reIsOnline(e.transactionType);
                 updateExpense(e);
@@ -509,6 +539,20 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
             } catch (Exception ignored) {}
         }
         return r;
+    }
+
+    // Raw Comparator (no generic parameter) to match the erased signature that
+    // the device-side d8 expects — same pattern as the comparators in PdfTextExtractor.
+    private static class ExpenseByDateAsc implements Comparator {
+        public int compare(Object oa, Object ob) {
+            Expense a = (Expense) oa;
+            Expense b = (Expense) ob;
+            if (a.dateMs < b.dateMs) return -1;
+            if (a.dateMs > b.dateMs) return 1;
+            if (a.id < b.id) return -1;
+            if (a.id > b.id) return 1;
+            return 0;
+        }
     }
 
     private static String reGrp(Matcher m, int group) {
@@ -557,6 +601,24 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
             S_ID + "=?", new String[]{String.valueOf(id)}, null, null, null);
         List<SenderConfig> list = senderCursorToList(c);
         return list.isEmpty() ? null : list.get(0);
+    }
+
+    /** Convenience wrapper so callers can toggle the PDF auto-credit flag
+     *  without round-tripping through {@link #updateSender(SenderConfig)}. */
+    public void setSenderPdfAutoCredit(long senderId, boolean on) {
+        ContentValues cv = new ContentValues();
+        cv.put(S_PDF_AUTO_CRED, on ? 1 : 0);
+        getWritableDatabase().update(T_SENDER, cv,
+            S_ID + "=?", new String[]{String.valueOf(senderId)});
+    }
+
+    public boolean getSenderPdfAutoCredit(long senderId) {
+        Cursor c = getReadableDatabase().query(T_SENDER, new String[]{S_PDF_AUTO_CRED},
+            S_ID + "=?", new String[]{String.valueOf(senderId)}, null, null, null);
+        try {
+            if (c.moveToFirst()) return c.getInt(0) != 0;
+        } finally { c.close(); }
+        return false;
     }
 
     // ==================== EXTRACTION PATTERN ====================
@@ -922,6 +984,8 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
         s.pattern     = c.getString(c.getColumnIndexOrThrow(S_PATTERN));
         s.displayName = c.getString(c.getColumnIndexOrThrow(S_NAME));
         s.isRegex     = c.getInt(c.getColumnIndexOrThrow(S_REGEX)) != 0;
+        int acIdx = c.getColumnIndex(S_PDF_AUTO_CRED);
+        s.pdfAutoCredit = (acIdx >= 0) && c.getInt(acIdx) != 0;
         return s;
     }
 
@@ -930,6 +994,7 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
         cv.put(S_PATTERN, s.pattern);
         cv.put(S_NAME,    s.displayName);
         cv.put(S_REGEX,   s.isRegex ? 1 : 0);
+        cv.put(S_PDF_AUTO_CRED, s.pdfAutoCredit ? 1 : 0);
         return cv;
     }
 

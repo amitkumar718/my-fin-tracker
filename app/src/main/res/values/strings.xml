@@ -262,6 +262,8 @@
     <string name="label_pdf_patterns_section">PDF Patterns</string>
     <string name="no_sms_patterns">No SMS patterns yet.</string>
     <string name="no_pdf_patterns_bank">No PDF patterns yet.</string>
+    <string name="pdf_auto_credit">Auto-detect credit via balance changes</string>
+    <string name="pdf_auto_credit_needs_balance">Needs a /balance/ token in at least one pattern.</string>
     <string name="msg_save_bank_first">Save the bank identity first</string>
     <string name="label_pdf_sources">PDF Sources</string>
     <string name="btn_add_source">+ Add</string>

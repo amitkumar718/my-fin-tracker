@@ -416,6 +416,25 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical" />
 
+                <CheckBox
+                    android:id="@+id/cbPdfAutoCredit"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/pdf_auto_credit"
+                    android:textSize="13sp"
+                    android:paddingTop="6dp"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/tvPdfAutoCreditHint"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/pdf_auto_credit_needs_balance"
+                    android:textColor="#D32F2F"
+                    android:textSize="11sp"
+                    android:paddingLeft="32dp"
+                    android:visibility="gone" />
+
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"

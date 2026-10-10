@@ -309,15 +309,23 @@ public class StatementScanActivity extends Activity {
             // 4. Scan lines against patterns
             List<String> lines = PdfInboxActivity.splitLines(text);
             List<Candidate> candidates = new ArrayList<Candidate>();
+            // Auto-credit infers debit/credit from balance deltas; disabled unless
+            // the sender has it toggled on. When on, consecutive candidates are
+            // classified in document order (the extractor now emits pages in
+            // /Pages tree order so this is chronologically sound).
+            boolean autoCredit = (senderId > 0) && mDb.getSenderPdfAutoCredit(senderId);
+            com.ldsa.myfintracker.pdf.PdfCreditClassifier classifier =
+                    new com.ldsa.myfintracker.pdf.PdfCreditClassifier(autoCredit);
+
             for (String line : lines) {
                 for (ExtractionPattern p : patterns) {
                     if (!p.matches(line)) continue;
                     // Try credit first, then debit, then legacy amount. First non-empty wins.
                     String amtStr    = "";
-                    boolean isCredit = false;
+                    boolean amountCrMatched = false;
                     if (p.amountCrGroup >= 0) {
                         amtStr = p.extractGroup(line, p.amountCrGroup).replaceAll("[^0-9.]", "");
-                        if (!amtStr.isEmpty()) isCredit = true;
+                        if (!amtStr.isEmpty()) amountCrMatched = true;
                     }
                     if (amtStr.isEmpty() && p.amountDbGroup >= 0) {
                         amtStr = p.extractGroup(line, p.amountDbGroup).replaceAll("[^0-9.]", "");
@@ -332,10 +340,17 @@ public class StatementScanActivity extends Activity {
 
                     String balStr = p.extractGroup(line, p.balanceGroup)
                                      .replaceAll("[^0-9.,]", "").replace(",", "");
+                    boolean hasBalance = !balStr.isEmpty();
                     double balance = 0;
-                    if (!balStr.isEmpty()) {
+                    if (hasBalance) {
                         try { balance = Double.parseDouble(balStr); }
-                        catch (NumberFormatException ignored) {}
+                        catch (NumberFormatException ignored) { hasBalance = false; }
+                    }
+
+                    com.ldsa.myfintracker.pdf.PdfCreditClassifier.Decision cd =
+                            classifier.classify(hasBalance, balance, amountCrMatched);
+                    if (cd.skip) {
+                        break; // zero balance delta — drop this row
                     }
 
                     String dateStr = p.extractGroup(line, p.dateGroup).trim();
@@ -346,7 +361,7 @@ public class StatementScanActivity extends Activity {
 
                     Candidate c = new Candidate();
                     c.amount          = amount;
-                    c.isCredit        = isCredit;
+                    c.isCredit        = cd.isCredit;
                     c.dateMs          = dateMs;
                     c.merchant        = p.extractGroup(line, p.merchantGroup).trim();
                     c.card            = p.extractGroup(line, p.cardGroup).trim();

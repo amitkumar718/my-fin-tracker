@@ -7,7 +7,11 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
 
@@ -86,21 +90,35 @@ public class PdfTextExtractor {
         }
 
         StringBuilder out = new StringBuilder();
-        int pos = 0;
         int nStreams = 0, nFlate = 0, nInflated = 0, nBT = 0, nText = 0;
         int[] firstObjNumGen = null;
 
-        while (pos < pdf.length()) {
-            int kw = pdf.indexOf("stream", pos);
-            if (kw < 0) break;
+        // Pass 1: collect every content-stream keyword in file order.
+        List<Integer> allStreamKws = findAllStreamKws(pdf);
 
-            // Confirm this is a real stream keyword: preceding non-whitespace must be '>'
-            int pre = kw - 1;
-            while (pre >= 0 && isWs(pdf.charAt(pre))) pre--;
-            if (pre < 0 || pdf.charAt(pre) != '>') {
-                pos = kw + 6;
-                continue;
-            }
+        // Pass 2: reorder them to /Pages tree traversal order so page N's content
+        // comes out before page N+1's. PDF object numbers are not laid out in page
+        // order, so file-order processing scrambles pages. The reorder returns
+        // null (and emits a diagnostic marker) if the catalog/pages tree can't be
+        // resolved — then the fallback preserves today's file-order behaviour.
+        StreamOrder order = tryPageOrder(pdf, allStreamKws);
+        List<Integer> orderedKws;
+        int pageTreeCount;
+        if (order == null) {
+            out.append("[######### PDF /Pages tree could not be resolved — using file order #########]\n");
+            orderedKws = allStreamKws;
+            pageTreeCount = 0;
+        } else {
+            orderedKws = order.kws;
+            pageTreeCount = order.pageCount;
+        }
+
+        // Pass 3: process each stream in resolved order.
+        for (int streamIdx = 0; streamIdx < orderedKws.size(); streamIdx++) {
+            int kw = orderedKws.get(streamIdx);
+            // When page-tree resolution succeeded, streams past pageTreeCount
+            // were not reached by walking /Pages — flag them so output readers can tell.
+            boolean notInPageTree = (order != null) && (streamIdx >= pageTreeCount);
 
             // Data starts after "stream" + optional \r + mandatory \n
             int dataStart = kw + 6;
@@ -108,7 +126,7 @@ public class PdfTextExtractor {
             if (dataStart < pdf.length() && pdf.charAt(dataStart) == '\n') dataStart++;
 
             int endKw = pdf.indexOf("endstream", dataStart);
-            if (endKw < 0) break;
+            if (endKw < 0) continue;
 
             nStreams++;
 
@@ -140,13 +158,18 @@ public class PdfTextExtractor {
             if (content.contains("BT")) {
                 nBT++;
                 List<TextChunk> chunks = chunksFromStream(content);
+                int streamLabel = streamIdx + 1;
                 if (dumpChunks) {
                     if (!chunks.isEmpty()) {
                         nText++;
-                        out.append("=== stream ").append(nStreams).append(" ===\n");
+                        out.append("=== stream ").append(streamLabel).append(" ===\n");
+                        if (notInPageTree) {
+                            out.append("[######### Stream ").append(streamLabel)
+                               .append(" has text but was not referenced from /Pages tree #########]\n");
+                        }
                         for (int i = 0; i < chunks.size(); i++) {
                             TextChunk ch = chunks.get(i);
-                            out.append(nStreams).append('\t')
+                            out.append(streamLabel).append('\t')
                                .append(ch.y).append('\t')
                                .append(ch.x).append('\t')
                                .append(ch.text).append('\n');
@@ -154,11 +177,16 @@ public class PdfTextExtractor {
                     }
                 } else {
                     String lines = chunksToLines(chunks);
-                    if (!lines.isEmpty()) { nText++; out.append(lines); }
+                    if (!lines.isEmpty()) {
+                        nText++;
+                        if (notInPageTree) {
+                            out.append("[######### Stream ").append(streamLabel)
+                               .append(" has text but was not referenced from /Pages tree #########]\n");
+                        }
+                        out.append(lines);
+                    }
                 }
             }
-
-            pos = endKw + 9;
         }
 
         // In dump mode, skip cleanText (which collapses whitespace & trims lines);
@@ -202,6 +230,248 @@ public class PdfTextExtractor {
             } catch (NumberFormatException ignored) {}
         }
         return found ? new int[]{objNum, genNum} : new int[]{0, 0};
+    }
+
+    // ── Page-order resolution ────────────────────────────────────────────────
+    //
+    // PDF objects are not stored in page order; the catalog's /Pages tree is
+    // the authoritative source for reading order. These helpers resolve that
+    // tree so content streams can be processed page-by-page instead of in
+    // file-object order (which scrambles pages for most banks' statements).
+
+    private static final java.util.regex.Pattern REF_PATTERN =
+            java.util.regex.Pattern.compile("(\\d+)\\s+(\\d+)\\s+R");
+
+    /** Result of a successful page-tree walk. First {@code pageCount} entries
+     *  of {@code kws} are stream offsets in /Pages document order; the
+     *  remainder are streams found elsewhere in the file (fonts, metadata,
+     *  xobjects) appended so no text is dropped. */
+    private static class StreamOrder {
+        List<Integer> kws;
+        int pageCount;
+    }
+
+    /** First pass: find every content-stream keyword that follows an obj dict's
+     *  closing '>'. Returns offsets in file order. */
+    private static List<Integer> findAllStreamKws(String pdf) {
+        List<Integer> kws = new ArrayList<Integer>();
+        int pos = 0;
+        while (pos < pdf.length()) {
+            int kw = pdf.indexOf("stream", pos);
+            if (kw < 0) break;
+            int pre = kw - 1;
+            while (pre >= 0 && isWs(pdf.charAt(pre))) pre--;
+            if (pre < 0 || pdf.charAt(pre) != '>') { pos = kw + 6; continue; }
+            kws.add(kw);
+            int ds = kw + 6;
+            if (ds < pdf.length() && pdf.charAt(ds) == '\r') ds++;
+            if (ds < pdf.length() && pdf.charAt(ds) == '\n') ds++;
+            int end = pdf.indexOf("endstream", ds);
+            if (end < 0) break;
+            pos = end + 9;
+        }
+        return kws;
+    }
+
+    /** Attempts to reorder streamKws to match /Pages tree traversal order.
+     *  Returns null if the catalog or pages tree can't be resolved; the caller
+     *  then emits a diagnostic marker and falls back to file-order. */
+    private static StreamOrder tryPageOrder(String pdf, List<Integer> allStreamKws) {
+        if (allStreamKws.isEmpty()) return null;
+
+        // Map (objNum, genNum) → streamKw by scanning backward from each stream
+        // to its enclosing "N G obj" header.
+        Map<Long, Integer> objToStreamKw = new HashMap<Long, Integer>();
+        for (int i = 0; i < allStreamKws.size(); i++) {
+            int kw = allStreamKws.get(i);
+            int[] og = objNumGen(pdf, kw);
+            if (og[0] <= 0) continue;
+            long key = ((long) og[0] << 32) | (og[1] & 0xFFFFFFFFL);
+            objToStreamKw.put(key, kw);
+        }
+
+        // Index every top-level "N G obj" header → body range.
+        Map<Long, int[]> objIdx = indexObjects(pdf, allStreamKws);
+        if (objIdx.isEmpty()) return null;
+
+        // Resolve /Root (catalog) → /Pages → walk the pages tree.
+        int[] rootRef = findRootRef(pdf);
+        if (rootRef == null) return null;
+        long catKey = ((long) rootRef[0] << 32) | (rootRef[1] & 0xFFFFFFFFL);
+        int[] catRange = objIdx.get(catKey);
+        if (catRange == null) return null;
+        int[] pagesRef = parseIndirectRef(pdf.substring(catRange[0], catRange[1]), "/Pages");
+        if (pagesRef == null) return null;
+
+        List<long[]> contentRefs = new ArrayList<long[]>();
+        collectPageContents(pdf, pagesRef[0], pagesRef[1], objIdx, contentRefs, 0);
+        if (contentRefs.isEmpty()) return null;
+
+        // Convert content refs to streamKws in order; append any streams not reached by the tree.
+        List<Integer> ordered = new ArrayList<Integer>();
+        Set<Integer> used = new HashSet<Integer>();
+        for (int i = 0; i < contentRefs.size(); i++) {
+            long[] ref = contentRefs.get(i);
+            long key = (ref[0] << 32) | (ref[1] & 0xFFFFFFFFL);
+            Integer kw = objToStreamKw.get(key);
+            if (kw != null) { ordered.add(kw); used.add(kw); }
+        }
+        int pageCount = ordered.size();
+        for (int i = 0; i < allStreamKws.size(); i++) {
+            Integer kw = allStreamKws.get(i);
+            if (!used.contains(kw)) ordered.add(kw);
+        }
+        StreamOrder so = new StreamOrder();
+        so.kws = ordered;
+        so.pageCount = pageCount;
+        return so;
+    }
+
+    /** Builds (objNum,genNum) → (bodyStart, endobjOffset) for every "N G obj"
+     *  header that lies outside a stream's data region. */
+    private static Map<Long, int[]> indexObjects(String pdf, List<Integer> streamKws) {
+        Map<Long, int[]> idx = new HashMap<Long, int[]>();
+        // Compute stream data ranges (so we can skip "N G obj" matches that
+        // happen to land inside compressed stream bytes).
+        List<int[]> streamRanges = new ArrayList<int[]>();
+        for (int i = 0; i < streamKws.size(); i++) {
+            int kw = streamKws.get(i);
+            int ds = kw + 6;
+            if (ds < pdf.length() && pdf.charAt(ds) == '\r') ds++;
+            if (ds < pdf.length() && pdf.charAt(ds) == '\n') ds++;
+            int end = pdf.indexOf("endstream", ds);
+            if (end > 0) streamRanges.add(new int[]{ds, end});
+        }
+        java.util.regex.Matcher m = OBJ_PATTERN.matcher(pdf);
+        int rangeIdx = 0;
+        while (m.find()) {
+            int pos = m.start();
+            while (rangeIdx < streamRanges.size() && streamRanges.get(rangeIdx)[1] <= pos) rangeIdx++;
+            if (rangeIdx < streamRanges.size()
+                    && pos >= streamRanges.get(rangeIdx)[0]
+                    && pos <  streamRanges.get(rangeIdx)[1]) continue;
+            try {
+                int n = Integer.parseInt(m.group(1));
+                int g = Integer.parseInt(m.group(2));
+                long k = ((long) n << 32) | (g & 0xFFFFFFFFL);
+                int bodyStart = m.end();
+                int endPos = pdf.indexOf("endobj", bodyStart);
+                if (endPos < 0) continue;
+                idx.put(k, new int[]{bodyStart, endPos});
+            } catch (NumberFormatException ignored) {}
+        }
+        return idx;
+    }
+
+    /** Resolves the /Root ref from the trailer dict, falling back to any
+     *  "/Root N G R" appearance in the file (handles cross-reference-stream
+     *  layouts where the dict lives inside an xref stream object). */
+    private static int[] findRootRef(String pdf) {
+        int trailerKw = pdf.lastIndexOf("trailer");
+        if (trailerKw >= 0) {
+            int ds = pdf.indexOf("<<", trailerKw);
+            if (ds >= 0) {
+                int de = findMatchingDictEnd(pdf, ds);
+                if (de > 0) {
+                    int[] r = parseIndirectRef(pdf.substring(ds, de), "/Root");
+                    if (r != null) return r;
+                }
+            }
+        }
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile(
+                "/Root\\s+(\\d+)\\s+(\\d+)\\s+R").matcher(pdf);
+        int lastN = -1, lastG = -1;
+        while (m.find()) {
+            try {
+                lastN = Integer.parseInt(m.group(1));
+                lastG = Integer.parseInt(m.group(2));
+            } catch (NumberFormatException ignored) {}
+        }
+        return lastN >= 0 ? new int[]{lastN, lastG} : null;
+    }
+
+    /** Returns the offset just past the matching ">>" for a dict starting at ds. */
+    private static int findMatchingDictEnd(String pdf, int ds) {
+        int depth = 1;
+        int i = ds + 2;
+        while (i + 1 < pdf.length()) {
+            char c = pdf.charAt(i);
+            char n = pdf.charAt(i + 1);
+            if (c == '<' && n == '<') { depth++; i += 2; continue; }
+            if (c == '>' && n == '>') { depth--; if (depth == 0) return i + 2; i += 2; continue; }
+            i++;
+        }
+        return -1;
+    }
+
+    /** Finds "/KeyName N G R" in the given dict text; returns {N, G} or null. */
+    private static int[] parseIndirectRef(String dict, String keyName) {
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile(
+                java.util.regex.Pattern.quote(keyName) + "\\s+(\\d+)\\s+(\\d+)\\s+R").matcher(dict);
+        if (m.find()) {
+            try {
+                return new int[]{Integer.parseInt(m.group(1)), Integer.parseInt(m.group(2))};
+            } catch (NumberFormatException ignored) {}
+        }
+        return null;
+    }
+
+    /** Walks the /Pages tree depth-first starting at (objNum, genNum),
+     *  pushing each leaf page's content-stream refs to out in document order.
+     *  A depth cap prevents infinite loops on malformed PDFs with cyclic /Kids. */
+    private static void collectPageContents(String pdf, int objNum, int genNum,
+                                            Map<Long, int[]> objIdx,
+                                            List<long[]> out, int depth) {
+        if (depth > 32) return;
+        long key = ((long) objNum << 32) | (genNum & 0xFFFFFFFFL);
+        int[] range = objIdx.get(key);
+        if (range == null) return;
+        String body = pdf.substring(range[0], range[1]);
+
+        // Branch node: /Kids [ N G R ... ] — recurse on each kid in order.
+        int kidsIdx = body.indexOf("/Kids");
+        if (kidsIdx >= 0) {
+            int bo = body.indexOf('[', kidsIdx);
+            if (bo >= 0) {
+                int bc = body.indexOf(']', bo);
+                if (bc > bo) {
+                    java.util.regex.Matcher km = REF_PATTERN.matcher(body.substring(bo + 1, bc));
+                    while (km.find()) {
+                        try {
+                            int kn = Integer.parseInt(km.group(1));
+                            int kg = Integer.parseInt(km.group(2));
+                            collectPageContents(pdf, kn, kg, objIdx, out, depth + 1);
+                        } catch (NumberFormatException ignored) {}
+                    }
+                    return;
+                }
+            }
+        }
+
+        // Leaf page: /Contents is a single ref or an array of refs.
+        int contIdx = body.indexOf("/Contents");
+        if (contIdx < 0) return;
+        int vp = contIdx + "/Contents".length();
+        while (vp < body.length() && isWs(body.charAt(vp))) vp++;
+        if (vp >= body.length()) return;
+        if (body.charAt(vp) == '[') {
+            int bc = body.indexOf(']', vp);
+            if (bc < 0) return;
+            java.util.regex.Matcher am = REF_PATTERN.matcher(body.substring(vp + 1, bc));
+            while (am.find()) {
+                try {
+                    out.add(new long[]{Integer.parseInt(am.group(1)), Integer.parseInt(am.group(2))});
+                } catch (NumberFormatException ignored) {}
+            }
+        } else {
+            // Expect "N G R" immediately after /Contents.
+            java.util.regex.Matcher sm = REF_PATTERN.matcher(body);
+            if (sm.find(vp) && sm.start() <= vp + 2) {
+                try {
+                    out.add(new long[]{Integer.parseInt(sm.group(1)), Integer.parseInt(sm.group(2))});
+                } catch (NumberFormatException ignored) {}
+            }
+        }
     }
 
     // ── Decompression ─────────────────────────────────────────────────────────
@@ -481,16 +751,26 @@ public class PdfTextExtractor {
         // continuation row is NOT merged and will appear as a separate orphan line.
         // See limitations.md for the full list of PDF extraction constraints.
         float contThresh = leftmostX + 30f;
+        float contUpperX = leftmostX + 100f;   // Details column usually starts within here.
         List<List<TextChunk>> merged = new ArrayList<List<TextChunk>>();
         for (int k = 0; k < rows.size(); k++) {
             List<TextChunk> row = rows.get(k);
             float minX = Float.MAX_VALUE;
+            boolean hasNumeric = false;
             for (int j = 0; j < row.size(); j++) {
-                if (row.get(j).x < minX) minX = row.get(j).x;
+                TextChunk ch = row.get(j);
+                if (ch.x < minX) minX = ch.x;
+                if (isNumericCell(ch.text)) hasNumeric = true;
             }
+            // A continuation should (a) start near the Details column, not
+            // further right (which would indicate centred footer text like
+            // "Closing Balance"), and (b) contain no numeric chunks (so section
+            // totals or standalone amounts don't get swallowed into a tx row).
             boolean isCont = !merged.isEmpty()
                     && row.size() <= 2          // ≤2 wrapping columns — see assumption above
-                    && minX > contThresh;        // not in the leftmost (date) column
+                    && minX > contThresh         // not in the leftmost (date) column
+                    && minX < contUpperX         // not centred-footer text
+                    && !hasNumeric;              // no amount-looking tokens
             if (isCont) {
                 merged.get(merged.size() - 1).addAll(row);
             } else {
@@ -503,6 +783,21 @@ public class PdfTextExtractor {
             appendRow(sb, merged.get(k));
         }
         return sb.toString();
+    }
+
+    /** Chunk looks like an amount / balance: has digits, no spaces, and at
+     *  least 60% of its characters are digits/commas/dots. Used by the
+     *  continuation-row merge guard to avoid swallowing section totals or
+     *  stray numeric footers into a transaction row. */
+    private static boolean isNumericCell(String s) {
+        if (s == null || s.isEmpty()) return false;
+        int digits = 0, len = s.length();
+        for (int i = 0; i < len; i++) {
+            char ch = s.charAt(i);
+            if (ch == ' ') return false;
+            if ((ch >= '0' && ch <= '9') || ch == ',' || ch == '.') digits++;
+        }
+        return digits > 0 && digits * 10 >= len * 6;
     }
 
     private static void appendRow(StringBuilder sb, List<TextChunk> row) {

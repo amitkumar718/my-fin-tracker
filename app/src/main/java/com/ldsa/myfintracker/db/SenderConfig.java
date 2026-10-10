@@ -7,6 +7,7 @@ public class SenderConfig {
     public String pattern;
     public String displayName;
     public boolean isRegex;
+    public boolean pdfAutoCredit;
 
     public boolean matches(String address) {
         if (address == null || pattern == null) return false;

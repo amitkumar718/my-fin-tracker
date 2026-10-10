@@ -1722,15 +1722,20 @@ public class MapExpenseActivity extends Activity {
             Set<String> already = mDb.getAppliedSmsBodies();
             int imported = 0;
             int scanned  = mItems.size();
+            boolean autoCredit = mPattern.senderId > 0
+                    && mDb.getSenderPdfAutoCredit(mPattern.senderId);
+            com.ldsa.myfintracker.pdf.PdfCreditClassifier classifier =
+                    new com.ldsa.myfintracker.pdf.PdfCreditClassifier(autoCredit);
+
             for (PdfLineAdapter.PdfLine item : mItems) {
                 if (!mPattern.matches(item.text)) continue;
                 if (already.contains(item.text)) continue;
                 String amtStr    = "";
-                boolean isCredit = false;
+                boolean amountCrMatched = false;
                 if (mPattern.amountCrGroup >= 0) {
                     amtStr = mPattern.extractGroup(item.text, mPattern.amountCrGroup)
                                      .replaceAll("[^0-9.]", "");
-                    if (!amtStr.isEmpty()) isCredit = true;
+                    if (!amtStr.isEmpty()) amountCrMatched = true;
                 }
                 if (amtStr.isEmpty() && mPattern.amountDbGroup >= 0) {
                     amtStr = mPattern.extractGroup(item.text, mPattern.amountDbGroup)
@@ -1743,14 +1748,20 @@ public class MapExpenseActivity extends Activity {
                 if (amtStr.isEmpty()) continue;
                 double amount;
                 try { amount = Double.parseDouble(amtStr); }
-                catch (NumberFormatException e) { continue; }
+                catch (NumberFormatException ex) { continue; }
                 String balStr = mPattern.extractGroup(item.text, mPattern.balanceGroup)
                                         .replaceAll("[^0-9.,]", "").replace(",", "");
+                boolean hasBalance = !balStr.isEmpty();
                 double balance = 0;
-                if (!balStr.isEmpty()) {
+                if (hasBalance) {
                     try { balance = Double.parseDouble(balStr); }
-                    catch (NumberFormatException ignored) {}
+                    catch (NumberFormatException ignored) { hasBalance = false; }
                 }
+
+                com.ldsa.myfintracker.pdf.PdfCreditClassifier.Decision cd =
+                        classifier.classify(hasBalance, balance, amountCrMatched);
+                if (cd.skip) continue;  // zero balance delta — drop
+
                 String dateStr = mPattern.extractGroup(item.text, mPattern.dateGroup).trim();
                 String timeStr = mPattern.extractGroup(item.text, mPattern.timeGroup).trim();
                 long dateMs = parseDateMs(dateStr);
@@ -1759,7 +1770,7 @@ public class MapExpenseActivity extends Activity {
 
                 Expense e = new Expense();
                 e.amount          = amount;
-                e.isCredit        = isCredit;
+                e.isCredit        = cd.isCredit;
                 e.dateMs          = dateMs;
                 e.merchant        = mPattern.extractGroup(item.text, mPattern.merchantGroup).trim();
                 e.card            = mPattern.extractGroup(item.text, mPattern.cardGroup).trim();
