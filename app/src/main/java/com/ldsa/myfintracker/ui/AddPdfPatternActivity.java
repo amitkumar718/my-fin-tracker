@@ -485,39 +485,56 @@ public class AddPdfPatternActivity extends Activity {
         finish();
     }
 
+    // Delete-pattern dialog actions. Indices match the item list below.
+    static final int DEL_BOTH          = 0;
+    static final int DEL_PATTERN_ONLY  = 1;
+    static final int DEL_EXPENSES_ONLY = 2;
+    static final int DEL_CANCEL        = 3;
+
     void confirmDeletePattern() {
         if (mPatternId < 0) return;
         int n = mDb.countExpensesByPattern(mPatternId);
-        String msg = getString(R.string.delete_pattern_msg_fmt, n, n == 1 ? "" : "s");
+        String title = getString(R.string.delete_pattern_title)
+            + "  " + getString(R.string.delete_pattern_msg_fmt, n, n == 1 ? "" : "s");
+        CharSequence[] items = new CharSequence[]{
+            getString(R.string.delete_pattern_both),
+            getString(R.string.delete_pattern_only),
+            getString(R.string.delete_expenses_only),
+            getString(android.R.string.cancel)
+        };
         new AlertDialog.Builder(this, R.style.RoundedDialog)
-            .setTitle(R.string.delete_pattern_title)
-            .setMessage(msg)
-            .setPositiveButton(R.string.delete_pattern_both,
-                new DeleteConfirmListener(this, true))
-            .setNeutralButton(R.string.delete_pattern_only,
-                new DeleteConfirmListener(this, false))
-            .setNegativeButton(android.R.string.cancel, null)
+            .setTitle(title)
+            .setItems(items, new DeleteConfirmListener(this))
             .show();
     }
 
-    void deletePattern(boolean alsoDeleteExpenses) {
+    void deletePattern(int action) {
         if (mPatternId < 0) return;
         int affected;
         String toast;
-        if (alsoDeleteExpenses) {
+        if (action == DEL_BOTH) {
             affected = mDb.deleteExpensesByPattern(mPatternId);
             mDb.deletePattern(mPatternId);
             toast = getString(R.string.msg_pattern_and_expenses_deleted_fmt,
                 affected, affected == 1 ? "" : "s");
-        } else {
+            Toast.makeText(this, toast, Toast.LENGTH_SHORT).show();
+            setResult(RESULT_OK);
+            finish();
+        } else if (action == DEL_PATTERN_ONLY) {
             affected = mDb.orphanExpensesByPattern(mPatternId);
             mDb.deletePattern(mPatternId);
             toast = getString(R.string.msg_pattern_deleted_orphaned_fmt,
                 affected, affected == 1 ? "" : "s");
+            Toast.makeText(this, toast, Toast.LENGTH_SHORT).show();
+            setResult(RESULT_OK);
+            finish();
+        } else if (action == DEL_EXPENSES_ONLY) {
+            affected = mDb.deleteExpensesByPattern(mPatternId);
+            toast = getString(R.string.msg_expenses_deleted_fmt,
+                affected, affected == 1 ? "" : "s");
+            Toast.makeText(this, toast, Toast.LENGTH_SHORT).show();
+            // Keep editing — the pattern survives.
         }
-        Toast.makeText(this, toast, Toast.LENGTH_SHORT).show();
-        setResult(RESULT_OK);
-        finish();
     }
 
     void startReApply(ExtractionPattern p) {
@@ -715,12 +732,10 @@ public class AddPdfPatternActivity extends Activity {
 
     static class DeleteConfirmListener implements android.content.DialogInterface.OnClickListener {
         private final AddPdfPatternActivity mA;
-        private final boolean mAlsoDeleteExpenses;
-        DeleteConfirmListener(AddPdfPatternActivity a, boolean alsoDeleteExpenses) {
-            mA = a; mAlsoDeleteExpenses = alsoDeleteExpenses;
-        }
-        public void onClick(android.content.DialogInterface d, int w) {
-            mA.deletePattern(mAlsoDeleteExpenses);
+        DeleteConfirmListener(AddPdfPatternActivity a) { mA = a; }
+        public void onClick(android.content.DialogInterface d, int which) {
+            if (which == DEL_CANCEL) { d.dismiss(); return; }
+            mA.deletePattern(which);
         }
     }
 

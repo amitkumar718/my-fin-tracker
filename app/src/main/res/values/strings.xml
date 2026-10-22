@@ -284,8 +284,10 @@
     <string name="delete_pattern_msg_fmt">%1$d linked expense%2$s.</string>
     <string name="delete_pattern_both">Pattern + expenses</string>
     <string name="delete_pattern_only">Pattern only</string>
+    <string name="delete_expenses_only">Expenses only</string>
     <string name="msg_pattern_and_expenses_deleted_fmt">Pattern deleted; %1$d expense%2$s removed</string>
     <string name="msg_pattern_deleted_orphaned_fmt">Pattern deleted; %1$d expense%2$s orphaned</string>
+    <string name="msg_expenses_deleted_fmt">%1$d expense%2$s removed; pattern kept</string>
     <string name="msg_save_bank_first">Save the bank identity first</string>
     <string name="label_pdf_sources">PDF Sources</string>
     <string name="btn_add_source">+ Add</string>

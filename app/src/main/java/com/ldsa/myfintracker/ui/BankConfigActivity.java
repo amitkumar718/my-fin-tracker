@@ -562,37 +562,49 @@ public class BankConfigActivity extends Activity {
 
     // ── Delete pattern ────────────────────────────────────────────────────────
 
+    // Delete-pattern dialog actions. Indices match the item list in confirmDeletePattern.
+    static final int DEL_BOTH          = 0;
+    static final int DEL_PATTERN_ONLY  = 1;
+    static final int DEL_EXPENSES_ONLY = 2;
+    static final int DEL_CANCEL        = 3;
+
     void confirmDeletePattern(long id) {
         mPendingDeletePatternId = id;
         int n = mDb.countExpensesByPattern(id);
-        String msg = getString(R.string.delete_pattern_msg_fmt, n, n == 1 ? "" : "s");
+        String title = getString(R.string.delete_pattern_title)
+            + "  " + getString(R.string.delete_pattern_msg_fmt, n, n == 1 ? "" : "s");
+        CharSequence[] items = new CharSequence[]{
+            getString(R.string.delete_pattern_both),
+            getString(R.string.delete_pattern_only),
+            getString(R.string.delete_expenses_only),
+            getString(android.R.string.cancel)
+        };
         new AlertDialog.Builder(this, R.style.RoundedDialog)
-            .setTitle(R.string.delete_pattern_title)
-            .setMessage(msg)
-            .setPositiveButton(R.string.delete_pattern_both,
-                new DeletePatternConfirmListener(this, true))
-            .setNeutralButton(R.string.delete_pattern_only,
-                new DeletePatternConfirmListener(this, false))
-            .setNegativeButton(android.R.string.cancel, null)
+            .setTitle(title)
+            .setItems(items, new DeletePatternConfirmListener(this))
             .show();
     }
 
-    void deletePattern(boolean alsoDeleteExpenses) {
+    void deletePattern(int action) {
         if (mPendingDeletePatternId < 0) return;
+        long id = mPendingDeletePatternId;
         int affected;
         String toast;
-        if (alsoDeleteExpenses) {
-            affected = mDb.deleteExpensesByPattern(mPendingDeletePatternId);
-            mDb.deletePattern(mPendingDeletePatternId);
+        if (action == DEL_BOTH) {
+            affected = mDb.deleteExpensesByPattern(id);
+            mDb.deletePattern(id);
             toast = getString(R.string.msg_pattern_and_expenses_deleted_fmt,
                 affected, affected == 1 ? "" : "s");
-        } else {
-            // Previously called mDb.deletePattern() alone, which left expenses
-            // pointing at a now-nonexistent pattern (invisible to the orphan
-            // query). Explicitly orphan them first so the DB stays consistent.
-            affected = mDb.orphanExpensesByPattern(mPendingDeletePatternId);
-            mDb.deletePattern(mPendingDeletePatternId);
+        } else if (action == DEL_PATTERN_ONLY) {
+            // Explicitly orphan first so expenses don't dangle on a dead
+            // pattern_id (would be invisible to the orphan query).
+            affected = mDb.orphanExpensesByPattern(id);
+            mDb.deletePattern(id);
             toast = getString(R.string.msg_pattern_deleted_orphaned_fmt,
+                affected, affected == 1 ? "" : "s");
+        } else { // DEL_EXPENSES_ONLY
+            affected = mDb.deleteExpensesByPattern(id);
+            toast = getString(R.string.msg_expenses_deleted_fmt,
                 affected, affected == 1 ? "" : "s");
         }
         mPendingDeletePatternId = -1L;
@@ -700,11 +712,11 @@ public class BankConfigActivity extends Activity {
 
     static class DeletePatternConfirmListener implements DialogInterface.OnClickListener {
         private final BankConfigActivity mA;
-        private final boolean mAlsoDeleteExpenses;
-        DeletePatternConfirmListener(BankConfigActivity a, boolean alsoDeleteExpenses) {
-            mA = a; mAlsoDeleteExpenses = alsoDeleteExpenses;
+        DeletePatternConfirmListener(BankConfigActivity a) { mA = a; }
+        public void onClick(DialogInterface d, int which) {
+            if (which == DEL_CANCEL) { d.dismiss(); return; }
+            mA.deletePattern(which);
         }
-        public void onClick(DialogInterface d, int w) { mA.deletePattern(mAlsoDeleteExpenses); }
     }
 
     static class SetPasswordClickListener implements View.OnClickListener {
