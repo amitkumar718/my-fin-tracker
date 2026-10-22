@@ -13,6 +13,12 @@ Components library, no Kotlin).
 | `03_delete_dialog.svg` | Delete-pattern dialog — before (bare `setItems` list) vs after (rows with sub-text, destructive action in red, Cancel segregated). |
 | `04_landing.svg` | Landing — current month (`LIVE`). Spent-only hero + clock badge, SMS-tagged recent rows. |
 | `04b_landing_past.svg` | Landing — past month (`RECONCILED`). PDF-tagged rows + an UNMATCHED SMS row surfaced in the recent list and attention row. |
+| `04c_landing_stacked_ctas.svg` | Variant C — stacked bottom CTAs **replace** the quick-action tile row. Two full-width CTAs (Add expense / Import PDF) + a text link to the rest. |
+| `04d_landing_allocation_bar.svg` | Variant D — hero gains a 3-segment bank-split allocation bar. Quick-action tiles kept. |
+| `04e_landing_kitchen_sink.svg` | Variant E — both: allocation bar in hero AND stacked bottom CTAs replacing tiles. |
+| `05_landing_bottomnav.svg` | Landing with a 5-slot pinned bottom nav bar — `Home · Expenses · [+] · Trips · More`. `+` is a bigger filled blue square in the centre. |
+| `06_add_sheet.svg` | Bottom sheet opened by the `+` slot — primary CTA (Add expense), 2-grid (Import PDF / Scan SMS), Recent uploads list. |
+| `07_more_sheet.svg` | Bottom sheet opened by the `More` slot — Statements · Banks · Settings · Debug. |
 
 ## Nothing is final
 

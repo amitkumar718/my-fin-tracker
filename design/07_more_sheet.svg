@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 820" font-family="Roboto, 'Segoe UI', system-ui, sans-serif">
+  <rect width="480" height="820" fill="#ECEFF1"/>
+
+  <g transform="translate(60,20)">
+    <rect width="360" height="780" rx="28" fill="#F5F7FA" stroke="#CFD8DC"/>
+
+    <!-- status bar -->
+    <rect y="0" width="360" height="28" rx="28" fill="#1565C0"/><rect y="12" width="360" height="16" fill="#1565C0"/>
+
+    <!-- muted content behind -->
+    <rect y="28" width="360" height="400" fill="#CFD8DC" opacity="0.3"/>
+    <text x="20" y="60" font-size="12" fill="#90A4AE">(dashboard dimmed behind sheet)</text>
+
+    <!-- Dim overlay -->
+    <rect y="28" width="360" height="422" fill="#000" opacity="0.3"/>
+
+    <!-- Bottom sheet (slightly shorter than Add sheet) -->
+    <path d="M 0,450 Q 0,436 14,436 L 346,436 Q 360,436 360,450 L 360,780 L 0,780 Z" fill="#F5F7FA"/>
+
+    <!-- Grab bar -->
+    <rect x="166" y="444" width="28" height="4" rx="2" fill="#CFD8DC"/>
+
+    <!-- Title row -->
+    <text x="20" y="486" font-size="20" font-weight="500" fill="#212121">More</text>
+    <text x="340" y="488" font-size="18" fill="#616161" text-anchor="end">✕</text>
+
+    <!-- 4-item list -->
+    <g transform="translate(12,504)">
+      <!-- Statements -->
+      <g>
+        <rect width="336" height="54" rx="10" fill="#FFFFFF" stroke="#E0E0E0"/>
+        <circle cx="28" cy="27" r="16" fill="#FFF3E0"/>
+        <text x="28" y="31" font-size="11" font-weight="700" fill="#EF6C00" text-anchor="middle">PDF</text>
+        <text x="56" y="24" font-size="15" font-weight="700" fill="#212121">Statements</text>
+        <text x="56" y="42" font-size="11" fill="#616161">All imported PDFs · 7 banks</text>
+        <text x="320" y="34" font-size="18" fill="#9E9E9E" text-anchor="end">›</text>
+      </g>
+
+      <!-- Banks -->
+      <g transform="translate(0,60)">
+        <rect width="336" height="54" rx="10" fill="#FFFFFF" stroke="#E0E0E0"/>
+        <circle cx="28" cy="27" r="16" fill="#E3F2FD"/>
+        <text x="28" y="31" font-size="12" fill="#1976D2" text-anchor="middle">🏦</text>
+        <text x="56" y="24" font-size="15" font-weight="700" fill="#212121">Banks</text>
+        <text x="56" y="42" font-size="11" fill="#616161">3 configured</text>
+        <text x="320" y="34" font-size="18" fill="#9E9E9E" text-anchor="end">›</text>
+      </g>
+
+      <!-- Settings -->
+      <g transform="translate(0,120)">
+        <rect width="336" height="54" rx="10" fill="#FFFFFF" stroke="#E0E0E0"/>
+        <circle cx="28" cy="27" r="16" fill="#F5F5F5"/>
+        <!-- gear icon -->
+        <g transform="translate(28,27)" stroke="#616161" stroke-width="1.8" fill="none" stroke-linecap="round">
+          <circle cx="0" cy="0" r="3"/>
+          <line x1="0" y1="-8" x2="0" y2="-5"/>
+          <line x1="0" y1="5" x2="0" y2="8"/>
+          <line x1="-8" y1="0" x2="-5" y2="0"/>
+          <line x1="5" y1="0" x2="8" y2="0"/>
+        </g>
+        <text x="56" y="24" font-size="15" font-weight="700" fill="#212121">Settings</text>
+        <text x="56" y="42" font-size="11" fill="#616161">Landing · Dropbox · Debug</text>
+        <text x="320" y="34" font-size="18" fill="#9E9E9E" text-anchor="end">›</text>
+      </g>
+
+      <!-- Debug -->
+      <g transform="translate(0,180)">
+        <rect width="336" height="54" rx="10" fill="#FFFFFF" stroke="#E0E0E0"/>
+        <circle cx="28" cy="27" r="16" fill="#FFF5F5"/>
+        <text x="28" y="32" font-size="14" fill="#D32F2F" text-anchor="middle">◉</text>
+        <text x="56" y="24" font-size="15" font-weight="700" fill="#212121">Debug</text>
+        <text x="56" y="42" font-size="11" fill="#616161">Patterns · 5 orphan transactions</text>
+        <text x="320" y="34" font-size="18" fill="#9E9E9E" text-anchor="end">›</text>
+      </g>
+    </g>
+
+    <!-- Hint -->
+    <text x="180" y="750" font-size="11" fill="#9E9E9E" text-anchor="middle">Tap outside or swipe down to close</text>
+
+    <!-- Caption -->
+    <text x="180" y="800" font-size="10" font-weight="700" fill="#1565C0" text-anchor="middle" letter-spacing="1.2">07 · MORE SHEET (opens from More)</text>
+  </g>
+</svg>

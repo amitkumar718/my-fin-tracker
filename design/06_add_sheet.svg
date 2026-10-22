@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 820" font-family="Roboto, 'Segoe UI', system-ui, sans-serif">
+  <rect width="480" height="820" fill="#ECEFF1"/>
+
+  <g transform="translate(60,20)">
+    <rect width="360" height="780" rx="28" fill="#F5F7FA" stroke="#CFD8DC"/>
+
+    <!-- status bar + dimmed background hint -->
+    <rect y="0" width="360" height="28" rx="28" fill="#1565C0"/><rect y="12" width="360" height="16" fill="#1565C0"/>
+    <!-- muted content peeking from behind -->
+    <rect y="28" width="360" height="200" fill="#CFD8DC" opacity="0.3"/>
+    <text x="20" y="60" font-size="12" fill="#90A4AE">(dashboard dimmed behind sheet)</text>
+
+    <!-- Dim overlay for the top portion -->
+    <rect y="28" width="360" height="222" fill="#000" opacity="0.3"/>
+
+    <!-- Bottom sheet -->
+    <path d="M 0,250 Q 0,236 14,236 L 346,236 Q 360,236 360,250 L 360,780 L 0,780 Z" fill="#F5F7FA"/>
+
+    <!-- Grab bar -->
+    <rect x="166" y="244" width="28" height="4" rx="2" fill="#CFD8DC"/>
+
+    <!-- Title row -->
+    <text x="20" y="286" font-size="20" font-weight="500" fill="#212121">Add</text>
+    <text x="340" y="288" font-size="18" fill="#616161" text-anchor="end">✕</text>
+
+    <!-- Primary CTA (filled) -->
+    <g transform="translate(12,306)">
+      <rect width="336" height="60" rx="12" fill="#1976D2"/>
+      <circle cx="28" cy="30" r="14" fill="#FFFFFF" fill-opacity="0.18"/>
+      <text x="28" y="35" font-size="20" fill="#FFFFFF" text-anchor="middle">+</text>
+      <text x="52" y="26" font-size="15" font-weight="700" fill="#FFFFFF">Add expense</text>
+      <text x="52" y="44" font-size="11" fill="#BBDEFB">Cash, UPI or any manual entry</text>
+    </g>
+
+    <!-- 2-grid of secondary options -->
+    <g transform="translate(12,376)">
+      <!-- Import PDF (left) -->
+      <g>
+        <rect width="164" height="76" rx="12" fill="#FFFFFF" stroke="#E0E0E0"/>
+        <circle cx="24" cy="22" r="14" fill="#FFF3E0"/>
+        <text x="24" y="26" font-size="11" font-weight="700" fill="#EF6C00" text-anchor="middle">PDF</text>
+        <text x="12" y="54" font-size="13" font-weight="700" fill="#212121">Import PDF</text>
+        <text x="12" y="68" font-size="10" fill="#616161">Bank statement</text>
+      </g>
+      <!-- Scan SMS (right) -->
+      <g transform="translate(172,0)">
+        <rect width="164" height="76" rx="12" fill="#FFFFFF" stroke="#E0E0E0"/>
+        <circle cx="24" cy="22" r="14" fill="#E0F2F1"/>
+        <text x="24" y="26" font-size="11" font-weight="700" fill="#00695C" text-anchor="middle">SMS</text>
+        <text x="12" y="54" font-size="13" font-weight="700" fill="#212121">Scan SMS</text>
+        <text x="12" y="68" font-size="10" fill="#616161">Map texts to expenses</text>
+      </g>
+    </g>
+
+    <!-- Recent uploads -->
+    <text x="20" y="488" font-size="10" font-weight="700" fill="#616161" letter-spacing="1.5">RECENT UPLOADS</text>
+    <g transform="translate(12,498)">
+      <rect width="336" height="46" rx="10" fill="#FFFFFF" stroke="#E0E0E0"/>
+      <text x="12" y="20" font-size="13" font-weight="700" fill="#212121">HDFC_Oct2026.pdf</text>
+      <text x="12" y="36" font-size="10" fill="#616161">HDFC Bank · 22 Oct · 58 rows imported</text>
+      <g transform="translate(290,15)">
+        <rect width="38" height="16" rx="8" fill="#E8F5E9"/>
+        <text x="19" y="12" font-size="9" font-weight="700" fill="#2E7D32" text-anchor="middle">DONE</text>
+      </g>
+
+      <g transform="translate(0,52)">
+        <rect width="336" height="46" rx="10" fill="#FFFFFF" stroke="#E0E0E0"/>
+        <text x="12" y="20" font-size="13" font-weight="700" fill="#212121">ICICI_Sep2026.pdf</text>
+        <text x="12" y="36" font-size="10" fill="#616161">ICICI Bank · 15 Oct · 2 orphans</text>
+        <g transform="translate(290,15)">
+          <rect width="38" height="16" rx="8" fill="#FFF3E0"/>
+          <text x="19" y="12" font-size="9" font-weight="700" fill="#EF6C00" text-anchor="middle">CHECK</text>
+        </g>
+      </g>
+
+      <g transform="translate(0,104)">
+        <rect width="336" height="46" rx="10" fill="#FFFFFF" stroke="#E0E0E0"/>
+        <text x="12" y="20" font-size="13" font-weight="700" fill="#212121">Axis_Sep2026.pdf</text>
+        <text x="12" y="36" font-size="10" fill="#616161">Axis Bank · 10 Oct · 24 rows imported</text>
+        <g transform="translate(290,15)">
+          <rect width="38" height="16" rx="8" fill="#E8F5E9"/>
+          <text x="19" y="12" font-size="9" font-weight="700" fill="#2E7D32" text-anchor="middle">DONE</text>
+        </g>
+      </g>
+    </g>
+
+    <!-- Hint for the user -->
+    <text x="180" y="680" font-size="11" fill="#9E9E9E" text-anchor="middle">Tap outside or swipe down to close</text>
+
+    <!-- Caption -->
+    <text x="180" y="800" font-size="10" font-weight="700" fill="#1565C0" text-anchor="middle" letter-spacing="1.2">06 · ADD SHEET (opens from +)</text>
+  </g>
+</svg>

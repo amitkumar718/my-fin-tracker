@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 820" font-family="Roboto, 'Segoe UI', system-ui, sans-serif">
+  <rect width="480" height="820" fill="#ECEFF1"/>
+
+  <g transform="translate(60,20)">
+    <rect width="360" height="780" rx="28" fill="#F5F7FA" stroke="#CFD8DC"/>
+
+    <!-- status bar + app bar -->
+    <rect y="0" width="360" height="28" rx="28" fill="#1565C0"/><rect y="12" width="360" height="16" fill="#1565C0"/>
+    <rect y="28" width="360" height="48" fill="#FFFFFF"/><rect y="74" width="360" height="2" fill="#E0E0E0"/>
+    <text x="20" y="58" font-size="18" font-weight="500" fill="#212121">my-fin-tracker</text>
+    <g transform="translate(324,38)">
+      <circle cx="12" cy="12" r="4" fill="none" stroke="#616161" stroke-width="2"/>
+      <g stroke="#616161" stroke-width="2" stroke-linecap="round">
+        <line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/>
+        <line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/>
+        <line x1="5" y1="5" x2="8" y2="8"/><line x1="16" y1="16" x2="19" y2="19"/>
+        <line x1="5" y1="19" x2="8" y2="16"/><line x1="16" y1="8" x2="19" y2="5"/>
+      </g>
+    </g>
+
+    <!-- Month pager -->
+    <g transform="translate(12,84)">
+      <rect width="336" height="32" rx="16" fill="#FFFFFF" stroke="#E0E0E0"/>
+      <text x="20" y="21" font-size="16" fill="#1976D2" text-anchor="middle">‹</text>
+      <text x="146" y="21" font-size="13" font-weight="500" fill="#212121" text-anchor="middle">October 2026</text>
+      <circle cx="178" cy="16" r="4" fill="#FB8C00"/>
+      <text x="316" y="21" font-size="16" fill="#1976D2" text-anchor="middle">›</text>
+    </g>
+
+    <!-- Hero (compact, SPENT only) -->
+    <g transform="translate(12,122)">
+      <rect width="336" height="78" rx="12" fill="#FFFFFF" stroke="#E0E0E0"/>
+      <text x="12" y="20" font-size="10" font-weight="700" fill="#616161" letter-spacing="1.5">SPENT THIS MONTH</text>
+      <g transform="translate(272,8)">
+        <rect width="56" height="18" rx="9" fill="#FFF3E0" stroke="#FFCC80"/>
+        <circle cx="10" cy="9" r="3" fill="#FB8C00"/>
+        <text x="18" y="13" font-size="9" font-weight="700" fill="#E65100" letter-spacing="0.8">LIVE</text>
+      </g>
+      <text x="12" y="52" font-size="24" font-weight="500" fill="#212121">₹68,210</text>
+      <g transform="translate(130,37)">
+        <circle cx="8" cy="8" r="7" fill="none" stroke="#FB8C00" stroke-width="1.2"/>
+        <polyline points="8,4 8,8 11,10" fill="none" stroke="#FB8C00" stroke-width="1.2" stroke-linecap="round"/>
+      </g>
+      <text x="12" y="70" font-size="11" fill="#616161">42 transactions · HDFC, ICICI, Axis</text>
+    </g>
+
+    <!-- Attention row -->
+    <text x="16" y="222" font-size="10" font-weight="700" fill="#616161" letter-spacing="1.5">NEEDS ATTENTION</text>
+    <g transform="translate(12,230)" font-size="11">
+      <g>
+        <rect width="106" height="26" rx="13" fill="#E3F2FD" stroke="#90CAF9"/>
+        <circle cx="14" cy="13" r="3" fill="#1976D2"/>
+        <text x="24" y="17" font-weight="500" fill="#0D47A1">2 PDFs to scan</text>
+      </g>
+      <g transform="translate(112,0)">
+        <rect width="82" height="26" rx="13" fill="#FFF5F5" stroke="#F8D7DA"/>
+        <circle cx="14" cy="13" r="3" fill="#D32F2F"/>
+        <text x="24" y="17" font-weight="500" fill="#B71C1C">5 orphans</text>
+      </g>
+      <g transform="translate(200,0)">
+        <rect width="130" height="26" rx="13" fill="#FFF8E1" stroke="#FFE082"/>
+        <circle cx="14" cy="13" r="3" fill="#F9A825"/>
+        <text x="24" y="17" font-weight="500" fill="#795548">2 months awaiting</text>
+      </g>
+    </g>
+
+    <!-- Recent header + 4 rows -->
+    <g transform="translate(16,278)">
+      <text y="10" font-size="10" font-weight="700" fill="#616161" letter-spacing="1.5">RECENT</text>
+      <text x="320" y="10" font-size="11" font-weight="700" fill="#1976D2" text-anchor="end">View all ›</text>
+    </g>
+    <g transform="translate(12,288)">
+      <rect width="336" height="38" rx="10" fill="#FFFFFF" stroke="#E0E0E0"/>
+      <g transform="translate(10,10)"><rect width="24" height="12" rx="6" fill="#26A69A"/><text x="12" y="9" font-size="7" font-weight="700" fill="#FFFFFF" text-anchor="middle">SMS</text></g>
+      <text x="40" y="19" font-size="13" font-weight="700" fill="#212121">Satheesh (UPI)</text>
+      <text x="10" y="33" font-size="10" fill="#616161">Today · 09:42 · HDFC</text>
+      <text x="326" y="19" font-size="13" font-weight="700" fill="#212121" text-anchor="end">₹3,000.00</text>
+
+      <g transform="translate(0,40)">
+        <rect width="336" height="38" rx="10" fill="#FFFFFF" stroke="#E0E0E0"/>
+        <g transform="translate(10,10)"><rect width="24" height="12" rx="6" fill="#26A69A"/><text x="12" y="9" font-size="7" font-weight="700" fill="#FFFFFF" text-anchor="middle">SMS</text></g>
+        <text x="40" y="19" font-size="13" font-weight="700" fill="#212121">Zomato</text>
+        <text x="10" y="33" font-size="10" fill="#616161">Yesterday · Axis Credit</text>
+        <text x="326" y="19" font-size="13" font-weight="700" fill="#212121" text-anchor="end">₹524.00</text>
+      </g>
+      <g transform="translate(0,80)">
+        <rect width="336" height="38" rx="10" fill="#FFFFFF" stroke="#E0E0E0"/>
+        <g transform="translate(10,10)"><rect width="24" height="12" rx="6" fill="#26A69A"/><text x="12" y="9" font-size="7" font-weight="700" fill="#FFFFFF" text-anchor="middle">SMS</text></g>
+        <text x="40" y="19" font-size="13" font-weight="700" fill="#212121">BESCOM Electricity</text>
+        <text x="10" y="33" font-size="10" fill="#616161">20 Oct · HDFC</text>
+        <text x="326" y="19" font-size="13" font-weight="700" fill="#212121" text-anchor="end">₹2,210.00</text>
+      </g>
+      <g transform="translate(0,120)">
+        <rect width="336" height="38" rx="10" fill="#FFFFFF" stroke="#E0E0E0"/>
+        <g transform="translate(10,10)"><rect width="26" height="12" rx="6" fill="#9E9E9E"/><text x="13" y="9" font-size="7" font-weight="700" fill="#FFFFFF" text-anchor="middle">MAN</text></g>
+        <text x="42" y="19" font-size="13" font-weight="700" fill="#212121">Chai thela (cash)</text>
+        <text x="10" y="33" font-size="10" fill="#616161">18 Oct</text>
+        <text x="326" y="19" font-size="13" font-weight="700" fill="#212121" text-anchor="end">₹30.00</text>
+      </g>
+      <g transform="translate(0,160)">
+        <rect width="336" height="38" rx="10" fill="#FFFFFF" stroke="#E0E0E0"/>
+        <g transform="translate(10,10)"><rect width="24" height="12" rx="6" fill="#26A69A"/><text x="12" y="9" font-size="7" font-weight="700" fill="#FFFFFF" text-anchor="middle">SMS</text></g>
+        <text x="40" y="19" font-size="13" font-weight="700" fill="#212121">UPI/Swiggy</text>
+        <text x="10" y="33" font-size="10" fill="#616161">16 Oct · HDFC</text>
+        <text x="326" y="19" font-size="13" font-weight="700" fill="#212121" text-anchor="end">₹342.00</text>
+      </g>
+    </g>
+
+    <!-- Bottom nav bar — pinned -->
+    <rect y="708" width="360" height="2" fill="#E0E0E0"/>
+    <rect y="710" width="360" height="70" fill="#FFFFFF"/>
+
+    <g transform="translate(0,718)" font-size="10" font-weight="700" fill="#616161" letter-spacing="0.4">
+      <!-- Slot 1: Home (active) -->
+      <g transform="translate(36,0)">
+        <!-- icon: house -->
+        <g stroke="#1976D2" stroke-width="2" fill="none" stroke-linejoin="round">
+          <path d="M-10,8 L0,-2 L10,8 L10,18 L-10,18 Z"/>
+        </g>
+        <text y="36" fill="#1976D2" text-anchor="middle">Home</text>
+      </g>
+
+      <!-- Slot 2: Expenses -->
+      <g transform="translate(108,0)">
+        <!-- icon: list bars -->
+        <g stroke="#9E9E9E" stroke-width="2" stroke-linecap="round">
+          <line x1="-10" y1="2" x2="10" y2="2"/>
+          <line x1="-10" y1="8" x2="10" y2="8"/>
+          <line x1="-10" y1="14" x2="4"  y2="14"/>
+        </g>
+        <text y="36" fill="#9E9E9E" text-anchor="middle">Expenses</text>
+      </g>
+
+      <!-- Slot 3: + (prominent filled square) -->
+      <g transform="translate(180,-10)">
+        <rect x="-22" y="-6" width="44" height="44" rx="12" fill="#1976D2"/>
+        <text x="0" y="24" font-size="24" font-weight="500" fill="#FFFFFF" text-anchor="middle">+</text>
+      </g>
+
+      <!-- Slot 4: Trips -->
+      <g transform="translate(252,0)">
+        <!-- icon: paper plane / briefcase -->
+        <g stroke="#9E9E9E" stroke-width="2" fill="none" stroke-linejoin="round">
+          <path d="M-10,-2 L10,8 L-10,18 L-6,8 Z"/>
+        </g>
+        <text y="36" fill="#9E9E9E" text-anchor="middle">Trips</text>
+      </g>
+
+      <!-- Slot 5: More -->
+      <g transform="translate(324,0)">
+        <!-- icon: hamburger / horizontal lines -->
+        <g stroke="#9E9E9E" stroke-width="2" stroke-linecap="round">
+          <line x1="-10" y1="2" x2="10" y2="2"/>
+          <line x1="-10" y1="9" x2="10" y2="9"/>
+          <line x1="-10" y1="16" x2="10" y2="16"/>
+        </g>
+        <text y="36" fill="#9E9E9E" text-anchor="middle">More</text>
+      </g>
+    </g>
+
+    <!-- Caption below the frame -->
+    <text x="180" y="800" font-size="10" font-weight="700" fill="#1565C0" text-anchor="middle" letter-spacing="1.2">05 · DASHBOARD WITH BOTTOM NAV</text>
+  </g>
+</svg>
