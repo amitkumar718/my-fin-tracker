@@ -1,11 +1,16 @@
 package com.ldsa.myfintracker.ui;
 
 import android.app.Activity;
+import android.app.Dialog;
 import android.content.Intent;
 import android.content.res.ColorStateList;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -60,15 +65,14 @@ public class LandingActivity extends Activity {
 
         findViewById(R.id.btnPrevMonth).setOnClickListener(new MonthStepListener(this, -1));
         findViewById(R.id.btnNextMonth).setOnClickListener(new MonthStepListener(this, +1));
-        findViewById(R.id.btnSettings)  .setOnClickListener(new OpenActivityListener(this, SettingsActivity.class));
-        findViewById(R.id.tileAdd)      .setOnClickListener(new OpenActivityListener(this, AddExpenseActivity.class));
-        findViewById(R.id.tileImport)   .setOnClickListener(new OpenActivityListener(this, PdfInboxActivity.class));
-        findViewById(R.id.tileScan)     .setOnClickListener(new OpenActivityListener(this, SmsInboxActivity.class));
-        findViewById(R.id.tileTrip)     .setOnClickListener(new OpenActivityListener(this, EditTripActivity.class));
-        findViewById(R.id.btnViewAll)   .setOnClickListener(new OpenActivityListener(this, MainActivity.class));
-        findViewById(R.id.linkAllExpenses).setOnClickListener(new OpenActivityListener(this, MainActivity.class));
-        findViewById(R.id.linkTrips)      .setOnClickListener(new OpenActivityListener(this, TripListActivity.class));
-        findViewById(R.id.linkBanks)      .setOnClickListener(new OpenActivityListener(this, BankListActivity.class));
+        findViewById(R.id.btnSettings) .setOnClickListener(new OpenActivityListener(this, SettingsActivity.class));
+        findViewById(R.id.btnViewAll)  .setOnClickListener(new OpenActivityListener(this, MainActivity.class));
+
+        // Bottom nav wiring. Home has no listener — we're already on this screen.
+        findViewById(R.id.navExpenses).setOnClickListener(new OpenActivityListener(this, MainActivity.class));
+        findViewById(R.id.navAdd)     .setOnClickListener(new OpenAddSheetListener(this));
+        findViewById(R.id.navTrips)   .setOnClickListener(new OpenActivityListener(this, TripListActivity.class));
+        findViewById(R.id.navMore)    .setOnClickListener(new OpenMoreSheetListener(this));
     }
 
     @Override
@@ -295,6 +299,44 @@ public class LandingActivity extends Activity {
         startActivity(i);
     }
 
+    // ── Bottom sheets (plain Dialog with window gravity = bottom) ────────────
+
+    void openAddSheet() {
+        Dialog d = buildBottomSheet(R.layout.sheet_add);
+        d.findViewById(R.id.btnSheetClose) .setOnClickListener(new DismissListener(d));
+        d.findViewById(R.id.sheetAddExpense).setOnClickListener(new SheetItemListener(this, d, AddExpenseActivity.class));
+        d.findViewById(R.id.sheetImportPdf).setOnClickListener(new SheetItemListener(this, d, PdfInboxActivity.class));
+        d.findViewById(R.id.sheetScanSms)  .setOnClickListener(new SheetItemListener(this, d, SmsInboxActivity.class));
+        d.show();
+    }
+
+    void openMoreSheet() {
+        Dialog d = buildBottomSheet(R.layout.sheet_more);
+        d.findViewById(R.id.btnSheetClose).setOnClickListener(new DismissListener(d));
+        d.findViewById(R.id.sheetStatements).setOnClickListener(new SheetItemListener(this, d, PdfInboxActivity.class));
+        d.findViewById(R.id.sheetBanks)     .setOnClickListener(new SheetItemListener(this, d, BankListActivity.class));
+        d.findViewById(R.id.sheetSettings)  .setOnClickListener(new SheetItemListener(this, d, SettingsActivity.class));
+        d.findViewById(R.id.sheetDebug)     .setOnClickListener(new SheetItemListener(this, d, DebugActivity.class));
+        d.show();
+    }
+
+    private Dialog buildBottomSheet(int layoutRes) {
+        Dialog d = new Dialog(this);
+        d.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        d.setContentView(layoutRes);
+        d.setCanceledOnTouchOutside(true);
+        Window w = d.getWindow();
+        if (w != null) {
+            w.setBackgroundDrawable(new ColorDrawable(0));   // transparent window; sheet drawable supplies the surface
+            w.setLayout(WindowManager.LayoutParams.MATCH_PARENT,
+                        WindowManager.LayoutParams.WRAP_CONTENT);
+            w.setGravity(Gravity.BOTTOM);
+            w.setDimAmount(0.4f);
+        }
+        return d;
+    }
+
+
     // ── helpers ──────────────────────────────────────────────────────────────
 
     private int countPdfsPendingScan() {
@@ -436,5 +478,36 @@ public class LandingActivity extends Activity {
         private final long            mId;
         ExpenseDetailListener(LandingActivity a, long id) { mA = a; mId = id; }
         public void onClick(View v) { mA.openExpenseDetail(mId); }
+    }
+
+    static class OpenAddSheetListener implements View.OnClickListener {
+        private final LandingActivity mA;
+        OpenAddSheetListener(LandingActivity a) { mA = a; }
+        public void onClick(View v) { mA.openAddSheet(); }
+    }
+
+    static class OpenMoreSheetListener implements View.OnClickListener {
+        private final LandingActivity mA;
+        OpenMoreSheetListener(LandingActivity a) { mA = a; }
+        public void onClick(View v) { mA.openMoreSheet(); }
+    }
+
+    static class DismissListener implements View.OnClickListener {
+        private final Dialog mDialog;
+        DismissListener(Dialog d) { mDialog = d; }
+        public void onClick(View v) { mDialog.dismiss(); }
+    }
+
+    static class SheetItemListener implements View.OnClickListener {
+        private final LandingActivity mA;
+        private final Dialog          mDialog;
+        private final Class<?>        mTarget;
+        SheetItemListener(LandingActivity a, Dialog d, Class<?> target) {
+            mA = a; mDialog = d; mTarget = target;
+        }
+        public void onClick(View v) {
+            mDialog.dismiss();
+            mA.startActivity(new Intent(mA, mTarget));
+        }
     }
 }

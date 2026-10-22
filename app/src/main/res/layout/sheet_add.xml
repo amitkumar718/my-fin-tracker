@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bg_sheet"
+    android:paddingBottom="20dp">
+
+    <!-- Grab bar -->
+    <View
+        android:layout_width="40dp"
+        android:layout_height="4dp"
+        android:layout_marginTop="8dp"
+        android:layout_gravity="center_horizontal"
+        android:background="@drawable/bg_pill"
+        android:backgroundTint="#CFD8DC" />
+
+    <!-- Title row -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingLeft="20dp"
+        android:paddingRight="12dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="8dp">
+        <TextView
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="@string/sheet_add_title"
+            android:textColor="@color/textPrimary"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+        <Button
+            android:id="@+id/btnSheetClose"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:text="✕"
+            android:textSize="16sp"
+            android:textColor="@color/textMuted"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:minWidth="0dp"
+            android:minHeight="0dp"
+            android:padding="0dp" />
+    </LinearLayout>
+
+    <!-- Primary CTA: Add expense -->
+    <LinearLayout
+        android:id="@+id/sheetAddExpense"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="@drawable/bg_nav_add"
+        android:layout_marginLeft="12dp"
+        android:layout_marginRight="12dp"
+        android:layout_marginBottom="10dp"
+        android:paddingLeft="12dp"
+        android:paddingRight="12dp"
+        android:foreground="?android:attr/selectableItemBackground">
+        <TextView
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:text="+"
+            android:textSize="20sp"
+            android:textColor="@color/white"
+            android:gravity="center"
+            android:background="@drawable/bg_circle"
+            android:backgroundTint="#2E86D5" />
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginLeft="12dp">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/sheet_add_primary"
+                android:textColor="@color/white"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/sheet_add_primary_sub"
+                android:textColor="#BBDEFB"
+                android:textSize="11sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- 2-grid secondary -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginLeft="12dp"
+        android:layout_marginRight="12dp"
+        android:weightSum="2">
+
+        <LinearLayout
+            android:id="@+id/sheetImportPdf"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="76dp"
+            android:orientation="vertical"
+            android:gravity="center_vertical"
+            android:background="@drawable/bg_card"
+            android:paddingLeft="12dp"
+            android:paddingRight="12dp"
+            android:layout_marginRight="4dp"
+            android:foreground="?android:attr/selectableItemBackground">
+            <TextView
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:text="PDF"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:textColor="#EF6C00"
+                android:gravity="center"
+                android:background="@drawable/bg_circle"
+                android:backgroundTint="@color/tileImportBg" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="@string/sheet_add_import_pdf"
+                android:textColor="@color/textPrimary"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/sheet_add_import_pdf_sub"
+                android:textColor="@color/textMuted"
+                android:textSize="10sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/sheetScanSms"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="76dp"
+            android:orientation="vertical"
+            android:gravity="center_vertical"
+            android:background="@drawable/bg_card"
+            android:paddingLeft="12dp"
+            android:paddingRight="12dp"
+            android:layout_marginLeft="4dp"
+            android:foreground="?android:attr/selectableItemBackground">
+            <TextView
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:text="SMS"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:textColor="#00695C"
+                android:gravity="center"
+                android:background="@drawable/bg_circle"
+                android:backgroundTint="@color/tileScanBg" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="@string/sheet_add_scan_sms"
+                android:textColor="@color/textPrimary"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/sheet_add_scan_sms_sub"
+                android:textColor="@color/textMuted"
+                android:textSize="10sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+</LinearLayout>

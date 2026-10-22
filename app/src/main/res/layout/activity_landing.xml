@@ -1,436 +1,386 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/landingBackground"
-    android:fillViewport="true">
+    android:orientation="vertical"
+    android:background="@color/landingBackground">
 
+    <!-- Top app bar -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:paddingBottom="16dp">
-
-        <!-- Top app bar -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:background="@color/appBarWhite"
-            android:paddingLeft="20dp"
-            android:paddingRight="12dp">
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/title_landing"
-                android:textColor="@color/textPrimary"
-                android:textSize="20sp"
-                android:textStyle="normal" />
-            <Button
-                android:id="@+id/btnSettings"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:text="⚙"
-                android:textSize="18sp"
-                android:textColor="@color/textMuted"
-                android:background="?android:attr/selectableItemBackgroundBorderless"
-                android:minWidth="0dp"
-                android:minHeight="0dp"
-                android:padding="0dp" />
-        </LinearLayout>
-        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/hairline" />
-
-        <!-- Month pager -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:background="@drawable/bg_card"
-            android:layout_marginLeft="12dp"
-            android:layout_marginRight="12dp"
-            android:layout_marginTop="8dp"
-            android:paddingTop="0dp"
-            android:paddingBottom="0dp">
-            <Button
-                android:id="@+id/btnPrevMonth"
-                android:layout_width="40dp"
-                android:layout_height="32dp"
-                android:text="‹"
-                android:textSize="18sp"
-                android:textColor="@color/colorPrimary"
-                android:background="?android:attr/selectableItemBackgroundBorderless"
-                android:minWidth="0dp"
-                android:minHeight="0dp"
-                android:padding="0dp" />
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="horizontal"
-                android:gravity="center">
-                <TextView
-                    android:id="@+id/tvMonthLabel"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/textPrimary"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
-                <View
-                    android:id="@+id/vMonthDot"
-                    android:layout_width="8dp"
-                    android:layout_height="8dp"
-                    android:layout_marginLeft="8dp"
-                    android:background="@drawable/bg_circle"
-                    android:backgroundTint="@color/statusLiveDot" />
-            </LinearLayout>
-            <Button
-                android:id="@+id/btnNextMonth"
-                android:layout_width="40dp"
-                android:layout_height="32dp"
-                android:text="›"
-                android:textSize="18sp"
-                android:textColor="@color/colorPrimary"
-                android:background="?android:attr/selectableItemBackgroundBorderless"
-                android:minWidth="0dp"
-                android:minHeight="0dp"
-                android:padding="0dp" />
-        </LinearLayout>
-
-        <!-- Hero card -->
-        <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@drawable/bg_card"
-            android:layout_marginLeft="12dp"
-            android:layout_marginRight="12dp"
-            android:layout_marginTop="6dp"
-            android:paddingLeft="12dp"
-            android:paddingRight="12dp"
-            android:paddingTop="10dp"
-            android:paddingBottom="10dp">
-            <TextView
-                android:id="@+id/tvHeroHeader"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="@color/textMuted"
-                android:textSize="11sp"
-                android:textStyle="bold"
-                android:letterSpacing="0.06" />
-            <LinearLayout
-                android:id="@+id/pillStatus"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentRight="true"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:background="@drawable/bg_pill"
-                android:paddingLeft="8dp"
-                android:paddingRight="10dp"
-                android:paddingTop="3dp"
-                android:paddingBottom="3dp">
-                <View
-                    android:id="@+id/vStatusDot"
-                    android:layout_width="6dp"
-                    android:layout_height="6dp"
-                    android:layout_marginRight="6dp"
-                    android:background="@drawable/bg_circle" />
-                <TextView
-                    android:id="@+id/tvStatusText"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textSize="10sp"
-                    android:textStyle="bold"
-                    android:letterSpacing="0.08" />
-            </LinearLayout>
-            <LinearLayout
-                android:id="@+id/rowSpent"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_below="@id/tvHeroHeader"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:layout_marginTop="4dp">
-                <TextView
-                    android:id="@+id/tvHeroAmount"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/textPrimary"
-                    android:textSize="24sp" />
-                <TextView
-                    android:id="@+id/tvProvisional"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginLeft="6dp"
-                    android:text="🕐"
-                    android:textSize="14sp" />
-            </LinearLayout>
-            <TextView
-                android:id="@+id/tvHeroCaption"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_below="@id/rowSpent"
-                android:layout_marginTop="2dp"
-                android:textColor="@color/textMuted"
-                android:textSize="12sp" />
-        </RelativeLayout>
-
-        <!-- Attention section -->
+        android:layout_height="56dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="@color/appBarWhite"
+        android:paddingLeft="20dp"
+        android:paddingRight="12dp">
         <TextView
-            android:id="@+id/tvAttentionHeader"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="@string/landing_section_attention"
+            android:layout_weight="1"
+            android:text="@string/title_landing"
+            android:textColor="@color/textPrimary"
+            android:textSize="20sp" />
+        <Button
+            android:id="@+id/btnSettings"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:text="⚙"
+            android:textSize="18sp"
             android:textColor="@color/textMuted"
-            android:textSize="11sp"
-            android:textStyle="bold"
-            android:letterSpacing="0.06"
-            android:layout_marginLeft="16dp"
-            android:layout_marginRight="16dp"
-            android:layout_marginTop="10dp" />
-        <com.ldsa.myfintracker.ui.FlowLayout
-            android:id="@+id/attentionContainer"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="8dp"
-            android:layout_marginRight="8dp"
-            android:layout_marginTop="4dp" />
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:minWidth="0dp"
+            android:minHeight="0dp"
+            android:padding="0dp" />
+    </LinearLayout>
+    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/hairline" />
 
-        <!-- Quick actions -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/landing_section_actions"
-            android:textColor="@color/textMuted"
-            android:textSize="11sp"
-            android:textStyle="bold"
-            android:letterSpacing="0.06"
-            android:layout_marginLeft="16dp"
-            android:layout_marginRight="16dp"
-            android:layout_marginTop="10dp" />
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginLeft="12dp"
-            android:layout_marginRight="12dp"
-            android:layout_marginTop="4dp"
-            android:weightSum="4">
-
-            <LinearLayout
-                android:id="@+id/tileAdd"
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:layout_height="68dp"
-                android:orientation="vertical"
-                android:gravity="center"
-                android:background="@drawable/bg_card"
-                android:layout_marginRight="4dp"
-                android:foreground="?android:attr/selectableItemBackground">
-                <TextView
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
-                    android:text="+"
-                    android:textSize="22sp"
-                    android:textColor="@color/colorPrimary"
-                    android:gravity="center"
-                    android:background="@drawable/bg_circle"
-                    android:backgroundTint="@color/tileAddBg" />
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="@string/landing_action_add"
-                    android:textColor="@color/textPrimary"
-                    android:textSize="11sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/tileImport"
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:layout_height="68dp"
-                android:orientation="vertical"
-                android:gravity="center"
-                android:background="@drawable/bg_card"
-                android:layout_marginLeft="4dp"
-                android:layout_marginRight="4dp"
-                android:foreground="?android:attr/selectableItemBackground">
-                <TextView
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
-                    android:text="PDF"
-                    android:textSize="12sp"
-                    android:textStyle="bold"
-                    android:textColor="#EF6C00"
-                    android:gravity="center"
-                    android:background="@drawable/bg_circle"
-                    android:backgroundTint="@color/tileImportBg" />
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="@string/landing_action_import"
-                    android:textColor="@color/textPrimary"
-                    android:textSize="11sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/tileScan"
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:layout_height="68dp"
-                android:orientation="vertical"
-                android:gravity="center"
-                android:background="@drawable/bg_card"
-                android:layout_marginLeft="4dp"
-                android:layout_marginRight="4dp"
-                android:foreground="?android:attr/selectableItemBackground">
-                <TextView
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
-                    android:text="SMS"
-                    android:textSize="12sp"
-                    android:textStyle="bold"
-                    android:textColor="#00695C"
-                    android:gravity="center"
-                    android:background="@drawable/bg_circle"
-                    android:backgroundTint="@color/tileScanBg" />
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="@string/landing_action_scan"
-                    android:textColor="@color/textPrimary"
-                    android:textSize="11sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/tileTrip"
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:layout_height="68dp"
-                android:orientation="vertical"
-                android:gravity="center"
-                android:background="@drawable/bg_card"
-                android:layout_marginLeft="4dp"
-                android:foreground="?android:attr/selectableItemBackground">
-                <TextView
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
-                    android:text="✈"
-                    android:textSize="18sp"
-                    android:textColor="@color/autoAmount"
-                    android:gravity="center"
-                    android:background="@drawable/bg_circle"
-                    android:backgroundTint="@color/tileTripBg" />
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="@string/landing_action_trip"
-                    android:textColor="@color/textPrimary"
-                    android:textSize="11sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-        </LinearLayout>
-
-        <!-- Recent -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginLeft="16dp"
-            android:layout_marginRight="16dp"
-            android:layout_marginTop="10dp">
-            <TextView
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:layout_height="wrap_content"
-                android:text="@string/landing_section_recent"
-                android:textColor="@color/textMuted"
-                android:textSize="11sp"
-                android:textStyle="bold"
-                android:letterSpacing="0.06" />
-            <TextView
-                android:id="@+id/btnViewAll"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/landing_recent_view_all"
-                android:textColor="@color/colorPrimary"
-                android:textSize="12sp"
-                android:textStyle="bold" />
-        </LinearLayout>
+    <!-- Scrollable content -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true">
 
         <LinearLayout
-            android:id="@+id/recentContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:layout_marginLeft="12dp"
-            android:layout_marginRight="12dp"
-            android:layout_marginTop="4dp" />
+            android:paddingBottom="12dp">
 
-        <TextView
-            android:id="@+id/tvRecentEmpty"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/landing_no_recent"
-            android:textColor="@color/textHint"
-            android:textSize="12sp"
-            android:gravity="center"
-            android:padding="24dp"
-            android:visibility="gone" />
+            <!-- Month pager -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/bg_card"
+                android:layout_marginLeft="12dp"
+                android:layout_marginRight="12dp"
+                android:layout_marginTop="8dp">
+                <Button
+                    android:id="@+id/btnPrevMonth"
+                    android:layout_width="40dp"
+                    android:layout_height="32dp"
+                    android:text="‹"
+                    android:textSize="18sp"
+                    android:textColor="@color/colorPrimary"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:minWidth="0dp"
+                    android:minHeight="0dp"
+                    android:padding="0dp" />
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="horizontal"
+                    android:gravity="center">
+                    <TextView
+                        android:id="@+id/tvMonthLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/textPrimary"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+                    <View
+                        android:id="@+id/vMonthDot"
+                        android:layout_width="8dp"
+                        android:layout_height="8dp"
+                        android:layout_marginLeft="8dp"
+                        android:background="@drawable/bg_circle"
+                        android:backgroundTint="@color/statusLiveDot" />
+                </LinearLayout>
+                <Button
+                    android:id="@+id/btnNextMonth"
+                    android:layout_width="40dp"
+                    android:layout_height="32dp"
+                    android:text="›"
+                    android:textSize="18sp"
+                    android:textColor="@color/colorPrimary"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:minWidth="0dp"
+                    android:minHeight="0dp"
+                    android:padding="0dp" />
+            </LinearLayout>
 
-        <!-- Footer links -->
+            <!-- Hero card -->
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_card"
+                android:layout_marginLeft="12dp"
+                android:layout_marginRight="12dp"
+                android:layout_marginTop="6dp"
+                android:paddingLeft="12dp"
+                android:paddingRight="12dp"
+                android:paddingTop="10dp"
+                android:paddingBottom="10dp">
+                <TextView
+                    android:id="@+id/tvHeroHeader"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/textMuted"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.06" />
+                <LinearLayout
+                    android:id="@+id/pillStatus"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:background="@drawable/bg_pill"
+                    android:paddingLeft="8dp"
+                    android:paddingRight="10dp"
+                    android:paddingTop="3dp"
+                    android:paddingBottom="3dp">
+                    <View
+                        android:id="@+id/vStatusDot"
+                        android:layout_width="6dp"
+                        android:layout_height="6dp"
+                        android:layout_marginRight="6dp"
+                        android:background="@drawable/bg_circle" />
+                    <TextView
+                        android:id="@+id/tvStatusText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="10sp"
+                        android:textStyle="bold"
+                        android:letterSpacing="0.08" />
+                </LinearLayout>
+                <LinearLayout
+                    android:id="@+id/rowSpent"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/tvHeroHeader"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginTop="4dp">
+                    <TextView
+                        android:id="@+id/tvHeroAmount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/textPrimary"
+                        android:textSize="24sp" />
+                    <TextView
+                        android:id="@+id/tvProvisional"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="6dp"
+                        android:text="🕐"
+                        android:textSize="14sp" />
+                </LinearLayout>
+                <TextView
+                    android:id="@+id/tvHeroCaption"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/rowSpent"
+                    android:layout_marginTop="2dp"
+                    android:textColor="@color/textMuted"
+                    android:textSize="12sp" />
+            </RelativeLayout>
+
+            <!-- Attention section -->
+            <TextView
+                android:id="@+id/tvAttentionHeader"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/landing_section_attention"
+                android:textColor="@color/textMuted"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.06"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginTop="10dp" />
+            <com.ldsa.myfintracker.ui.FlowLayout
+                android:id="@+id/attentionContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="8dp"
+                android:layout_marginRight="8dp"
+                android:layout_marginTop="4dp" />
+
+            <!-- Recent -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginTop="10dp">
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:text="@string/landing_section_recent"
+                    android:textColor="@color/textMuted"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.06" />
+                <TextView
+                    android:id="@+id/btnViewAll"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/landing_recent_view_all"
+                    android:textColor="@color/colorPrimary"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/recentContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginLeft="12dp"
+                android:layout_marginRight="12dp"
+                android:layout_marginTop="4dp" />
+
+            <TextView
+                android:id="@+id/tvRecentEmpty"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/landing_no_recent"
+                android:textColor="@color/textHint"
+                android:textSize="12sp"
+                android:gravity="center"
+                android:padding="24dp"
+                android:visibility="gone" />
+
+        </LinearLayout>
+    </ScrollView>
+
+    <!-- Bottom nav bar — pinned -->
+    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/hairline" />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="64dp"
+        android:orientation="horizontal"
+        android:background="@color/appBarWhite"
+        android:weightSum="5">
+
+        <!-- Home (active) -->
         <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginLeft="16dp"
-            android:layout_marginRight="16dp"
-            android:layout_marginTop="14dp">
+            android:id="@+id/navHome"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:background="?android:attr/selectableItemBackground">
             <TextView
-                android:id="@+id/linkAllExpenses"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/landing_footer_all"
-                android:textColor="@color/colorPrimary"
-                android:textSize="12sp"
-                android:textStyle="bold"
-                android:paddingLeft="4dp"
-                android:paddingRight="4dp"
-                android:background="?android:attr/selectableItemBackground" />
+                android:text="⌂"
+                android:textSize="18sp"
+                android:textColor="@color/colorPrimary" />
             <TextView
-                android:id="@+id/linkTrips"
+                android:id="@+id/lblNavHome"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="16dp"
-                android:text="@string/landing_footer_trips"
-                android:textColor="@color/colorPrimary"
-                android:textSize="12sp"
+                android:layout_marginTop="2dp"
+                android:text="@string/nav_home"
+                android:textSize="10sp"
                 android:textStyle="bold"
-                android:paddingLeft="4dp"
-                android:paddingRight="4dp"
-                android:background="?android:attr/selectableItemBackground" />
+                android:textColor="@color/colorPrimary" />
+        </LinearLayout>
+
+        <!-- Expenses -->
+        <LinearLayout
+            android:id="@+id/navExpenses"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:background="?android:attr/selectableItemBackground">
             <TextView
-                android:id="@+id/linkBanks"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="16dp"
-                android:text="@string/landing_footer_banks"
-                android:textColor="@color/colorPrimary"
-                android:textSize="12sp"
+                android:text="☰"
+                android:textSize="18sp"
+                android:textColor="@color/textHint" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="@string/nav_expenses"
+                android:textSize="10sp"
                 android:textStyle="bold"
-                android:paddingLeft="4dp"
-                android:paddingRight="4dp"
-                android:background="?android:attr/selectableItemBackground" />
+                android:textColor="@color/textHint" />
+        </LinearLayout>
+
+        <!-- + (filled blue square) -->
+        <LinearLayout
+            android:id="@+id/navAdd"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:background="?android:attr/selectableItemBackground">
+            <TextView
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:text="+"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:textColor="@color/white"
+                android:gravity="center"
+                android:background="@drawable/bg_nav_add" />
+        </LinearLayout>
+
+        <!-- Trips -->
+        <LinearLayout
+            android:id="@+id/navTrips"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:background="?android:attr/selectableItemBackground">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="✈"
+                android:textSize="18sp"
+                android:textColor="@color/textHint" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="@string/nav_trips"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:textColor="@color/textHint" />
+        </LinearLayout>
+
+        <!-- More -->
+        <LinearLayout
+            android:id="@+id/navMore"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:background="?android:attr/selectableItemBackground">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="⋯"
+                android:textSize="18sp"
+                android:textColor="@color/textHint" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="@string/nav_more"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:textColor="@color/textHint" />
         </LinearLayout>
 
     </LinearLayout>
-</ScrollView>
+</LinearLayout>

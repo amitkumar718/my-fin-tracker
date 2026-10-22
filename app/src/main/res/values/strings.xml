@@ -318,6 +318,28 @@
     <string name="landing_tag_sms">SMS</string>
     <string name="landing_tag_pdf">PDF</string>
     <string name="landing_tag_manual">MAN</string>
+
+    <!-- bottom nav + sheets -->
+    <string name="nav_home">Home</string>
+    <string name="nav_expenses">Expenses</string>
+    <string name="nav_trips">Trips</string>
+    <string name="nav_more">More</string>
+    <string name="sheet_add_title">Add</string>
+    <string name="sheet_add_primary">Add expense</string>
+    <string name="sheet_add_primary_sub">Cash, UPI or any manual entry</string>
+    <string name="sheet_add_import_pdf">Import PDF</string>
+    <string name="sheet_add_import_pdf_sub">Bank statement</string>
+    <string name="sheet_add_scan_sms">Scan SMS</string>
+    <string name="sheet_add_scan_sms_sub">Map texts to expenses</string>
+    <string name="sheet_more_title">More</string>
+    <string name="sheet_more_statements">Statements</string>
+    <string name="sheet_more_statements_sub">All imported PDFs</string>
+    <string name="sheet_more_banks">Banks</string>
+    <string name="sheet_more_banks_sub">Senders and PDF patterns</string>
+    <string name="sheet_more_settings">Settings</string>
+    <string name="sheet_more_settings_sub">Landing · Dropbox · Debug</string>
+    <string name="sheet_more_debug">Debug</string>
+    <string name="sheet_more_debug_sub">Patterns and orphan transactions</string>
     <string name="msg_save_bank_first">Save the bank identity first</string>
     <string name="label_pdf_sources">PDF Sources</string>
     <string name="btn_add_source">+ Add</string>
