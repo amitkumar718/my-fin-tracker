@@ -479,6 +479,20 @@ public class LandingActivity extends Activity {
         OpenActivityListener(Activity a, Class<?> target) { mA = a; mTarget = target; }
         public void onClick(View v) { mA.startActivity(new Intent(mA, mTarget)); }
     }
+    static class ViewAllClickListener implements View.OnClickListener {
+        private final LandingActivity mA;
+        ViewAllClickListener(LandingActivity a) { mA = a; }
+        public void onClick(View v) {
+            long[] range = monthRange(mA.mCursor);
+            java.text.SimpleDateFormat fmt = new java.text.SimpleDateFormat("MMMM yyyy", java.util.Locale.getDefault());
+            String label = fmt.format(new java.util.Date(range[0]));
+            Intent i = new Intent(mA, MainActivity.class);
+            i.putExtra(MainActivity.EXTRA_MONTH_START, range[0]);
+            i.putExtra(MainActivity.EXTRA_MONTH_END,   range[1]);
+            i.putExtra(MainActivity.EXTRA_MONTH_LABEL, label);
+            mA.startActivity(i);
+        }
+    }
 
     static class ExpenseDetailListener implements View.OnClickListener {
         private final LandingActivity mA;
