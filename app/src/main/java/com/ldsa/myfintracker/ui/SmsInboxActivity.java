@@ -131,11 +131,9 @@ public class SmsInboxActivity extends Activity {
         new AutoCreateThread(this, toCreate, mDb, new Handler(Looper.getMainLooper())).start();
     }
 
-    void onAutoCreateDone(int count) {
-        Toast.makeText(this,
-            count + " expense" + (count == 1 ? "" : "s") + " created",
-            Toast.LENGTH_SHORT).show();
-        loadSms(); // reload so isNewMatch resets for created items
+    void onAutoCreateDone(int count, String log) {
+        Toast.makeText(this, log, Toast.LENGTH_LONG).show();
+        loadSms();
     }
 
     void loadSms() {
@@ -251,9 +249,13 @@ public class SmsInboxActivity extends Activity {
                     Matcher m = Pattern.compile(p.templateRegex,
                         Pattern.CASE_INSENSITIVE | Pattern.MULTILINE).matcher(body);
                     if (!m.find()) continue;
+                    // Resolve amount: legacy single group first, then debit, then credit columns.
+                    String amt = grp(m, p.amountGroup);
+                    if (amt.isEmpty()) amt = grp(m, p.amountDbGroup);
+                    if (amt.isEmpty()) amt = grp(m, p.amountCrGroup);
                     item.hasExtraction     = true;
                     item.matchedPatternId  = p.id;
-                    item.extractedAmount   = grp(m, p.amountGroup).replaceAll("[^0-9.,]", "");
+                    item.extractedAmount   = amt.replaceAll("[^0-9.,]", "");
                     item.extractedBalance  = grp(m, p.balanceGroup).replaceAll("[^0-9.,]", "");
                     item.extractedMerchant = grp(m, p.merchantGroup);
                     item.extractedCard     = grp(m, p.cardGroup);
@@ -284,11 +286,14 @@ public class SmsInboxActivity extends Activity {
 
         public void run() {
             int count = 0;
+            int skippedNoAmt = 0;
+            int skippedExc   = 0;
+            String lastExc   = "";
             for (SmsAdapter.ListItem item : mItems) {
                 try {
-                    String amtStr = item.extractedAmount
-                        .replaceAll(",", "").replaceAll("[^0-9.]", "");
-                    if (amtStr.isEmpty()) continue;
+                    String raw = item.extractedAmount != null ? item.extractedAmount : "";
+                    String amtStr = raw.replaceAll(",", "").replaceAll("[^0-9.]", "");
+                    if (amtStr.isEmpty()) { skippedNoAmt++; continue; }
                     double amount = Double.parseDouble(amtStr);
 
                     double balance = 0;
@@ -313,15 +318,22 @@ public class SmsInboxActivity extends Activity {
                                         && !item.senderConfig.displayName.isEmpty())
                                        ? item.senderConfig.displayName
                                        : item.senderConfig.pattern;
+                    e.source         = "sms";
                     e.originalSms    = item.sms.body;
                     e.patternId      = item.matchedPatternId;
                     e.createdAt      = System.currentTimeMillis();
                     mDb.insertExpense(e);
                     count++;
-                } catch (Exception ignored) {}
+                } catch (Exception ex) {
+                    skippedExc++;
+                    lastExc = ex.getClass().getSimpleName() + ": " + ex.getMessage();
+                }
             }
-            final int finalCount = count;
-            mHandler.post(new AutoCreateDoneRunnable(mActivity, finalCount));
+            StringBuilder log = new StringBuilder();
+            log.append(count).append(" created");
+            if (skippedNoAmt > 0) log.append(", ").append(skippedNoAmt).append(" no-amt");
+            if (skippedExc   > 0) log.append(", ").append(skippedExc).append(" exc(").append(lastExc).append(")");
+            mHandler.post(new AutoCreateDoneRunnable(mActivity, count, log.toString()));
         }
 
         private static boolean isOnlineType(String type) {
@@ -333,9 +345,12 @@ public class SmsInboxActivity extends Activity {
     static class AutoCreateDoneRunnable implements Runnable {
         private final SmsInboxActivity mActivity;
         private final int              mCount;
-        AutoCreateDoneRunnable(SmsInboxActivity a, int count) { mActivity = a; mCount = count; }
+        private final String           mLog;
+        AutoCreateDoneRunnable(SmsInboxActivity a, int count, String log) {
+            mActivity = a; mCount = count; mLog = log;
+        }
         public void run() {
-            if (!mActivity.isFinishing()) mActivity.onAutoCreateDone(mCount);
+            if (!mActivity.isFinishing()) mActivity.onAutoCreateDone(mCount, mLog);
         }
     }
 
