@@ -247,7 +247,8 @@ public class LandingActivity extends Activity {
         container.removeAllViews();
 
         // monthExpenses from getExpensesInRange is already sorted by date desc.
-        int shown = Math.min(5, monthExpenses.size());
+        // Show up to 15 rows; the outer ScrollView handles overflow.
+        int shown = Math.min(15, monthExpenses.size());
         if (shown == 0) {
             empty.setVisibility(View.VISIBLE);
             container.setVisibility(View.GONE);
@@ -287,6 +288,12 @@ public class LandingActivity extends Activity {
             cap.append(mFmtRecentDate.format(new Date(e.dateMs)));
             if (e.bank != null && !e.bank.isEmpty()) cap.append(" · ").append(e.bank);
             caption.setText(cap.toString());
+
+            // Tint the whole row light-green for credits, matching the expense
+            // list's convention (ExpenseAdapter.getExpenseView).
+            row.setBackgroundTintList(e.isCredit
+                ? ColorStateList.valueOf(0xFFE8F5E9)
+                : null);
 
             row.setOnClickListener(new ExpenseDetailListener(this, e.id));
             container.addView(row);

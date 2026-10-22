@@ -3,11 +3,12 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="@drawable/bg_card"
-    android:paddingLeft="10dp"
-    android:paddingRight="10dp"
+    android:elevation="1dp"
+    android:paddingLeft="12dp"
+    android:paddingRight="12dp"
     android:paddingTop="6dp"
     android:paddingBottom="6dp"
-    android:layout_marginBottom="2dp"
+    android:layout_marginBottom="3dp"
     android:foreground="?android:attr/selectableItemBackground">
 
     <TextView
@@ -30,9 +31,8 @@
         android:layout_height="wrap_content"
         android:layout_toRightOf="@id/tvRecentTag"
         android:layout_marginLeft="6dp"
-        android:textSize="13sp"
-        android:textStyle="bold"
-        android:textColor="@color/textPrimary"
+        android:textSize="12sp"
+        android:textColor="#424242"
         android:maxLines="1"
         android:ellipsize="end" />
 
@@ -42,7 +42,7 @@
         android:layout_height="wrap_content"
         android:layout_alignParentRight="true"
         android:layout_alignBottom="@id/tvRecentMerchant"
-        android:textSize="13sp"
+        android:textSize="15sp"
         android:textStyle="bold"
         android:textColor="@color/textPrimary" />
 
@@ -52,6 +52,6 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/tvRecentMerchant"
         android:layout_marginTop="1dp"
-        android:textSize="10sp"
-        android:textColor="@color/textMuted" />
+        android:textSize="11sp"
+        android:textColor="#9E9E9E" />
 </RelativeLayout>
