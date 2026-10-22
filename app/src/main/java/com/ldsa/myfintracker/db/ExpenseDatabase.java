@@ -22,7 +22,7 @@ import java.util.regex.Pattern;
 public class ExpenseDatabase extends SQLiteOpenHelper {
 
     private static final String DB_NAME    = "fin_tracker.db";
-    private static final int    DB_VERSION = 18;
+    private static final int    DB_VERSION = 19;
 
     // ── expenses ──────────────────────────────────────────────────
     static final String T_EXPENSE    = "expenses";
@@ -44,7 +44,8 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
     static final String E_PATTERN_ID  = "pattern_id";
     static final String E_STMT_ID     = "pdf_statement_id";
     static final String E_SOURCE      = "source";
-    static final String E_IS_CREDIT   = "is_credit";
+    static final String E_IS_CREDIT        = "is_credit";
+    static final String E_RECONCILED_WITH  = "reconciled_with_id";
 
     // ── sender_configs ────────────────────────────────────────────
     static final String T_SENDER   = "sender_configs";
@@ -147,8 +148,9 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
             E_REMARKS     + " TEXT," +
             E_PATTERN_ID  + " INTEGER NOT NULL DEFAULT -1," +
             E_STMT_ID     + " INTEGER NOT NULL DEFAULT -1," +
-            E_SOURCE      + " TEXT NOT NULL DEFAULT 'sms'," +
-            E_IS_CREDIT   + " INTEGER NOT NULL DEFAULT 0" +
+            E_SOURCE           + " TEXT NOT NULL DEFAULT 'sms'," +
+            E_IS_CREDIT        + " INTEGER NOT NULL DEFAULT 0," +
+            E_RECONCILED_WITH  + " INTEGER NOT NULL DEFAULT -1" +
         ")");
         db.execSQL("CREATE INDEX idx_date ON " + T_EXPENSE + "(" + E_DATE_MS + ")");
 
@@ -327,6 +329,10 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
             try { db.execSQL("ALTER TABLE " + T_SENDER +
                 " ADD COLUMN " + S_PDF_AUTO_CRED + " INTEGER NOT NULL DEFAULT 0"); } catch (Exception ignored) {}
         }
+        if (oldVersion < 19) {
+            try { db.execSQL("ALTER TABLE " + T_EXPENSE +
+                " ADD COLUMN " + E_RECONCILED_WITH + " INTEGER NOT NULL DEFAULT -1"); } catch (Exception ignored) {}
+        }
     }
 
     // ==================== EXPENSE ====================
@@ -341,7 +347,83 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
     }
 
     public void deleteExpense(long id) {
+        // If this expense is reconciled with another, clear the other side first.
+        Expense e = getExpenseById(id);
+        if (e != null && e.reconciledWithId > 0) {
+            ContentValues cv = new ContentValues();
+            cv.put(E_RECONCILED_WITH, -1L);
+            getWritableDatabase().update(T_EXPENSE, cv,
+                E_ID + "=?", new String[]{String.valueOf(e.reconciledWithId)});
+        }
         getWritableDatabase().delete(T_EXPENSE, E_ID + "=?", new String[]{String.valueOf(id)});
+    }
+
+    /** Links two expenses to each other as a reconciled SMS+PDF pair. */
+    public void reconcileExpenses(long smsId, long pdfId) {
+        ContentValues cv = new ContentValues();
+        cv.put(E_RECONCILED_WITH, pdfId);
+        getWritableDatabase().update(T_EXPENSE, cv,
+            E_ID + "=?", new String[]{String.valueOf(smsId)});
+        cv.put(E_RECONCILED_WITH, smsId);
+        getWritableDatabase().update(T_EXPENSE, cv,
+            E_ID + "=?", new String[]{String.valueOf(pdfId)});
+    }
+
+    /** Removes the reconcile link from both sides of a pair. */
+    public void unreconcileExpense(long id) {
+        Expense e = getExpenseById(id);
+        if (e == null) return;
+        ContentValues cv = new ContentValues();
+        cv.put(E_RECONCILED_WITH, -1L);
+        getWritableDatabase().update(T_EXPENSE, cv,
+            E_ID + "=?", new String[]{String.valueOf(id)});
+        if (e.reconciledWithId > 0) {
+            getWritableDatabase().update(T_EXPENSE, cv,
+                E_ID + "=?", new String[]{String.valueOf(e.reconciledWithId)});
+        }
+    }
+
+    /**
+     * Default expense list view: all PDF expenses + all manual expenses +
+     * SMS expenses that have NOT been reconciled with a PDF.
+     */
+    public List<Expense> getExpensesForList(String filter, String sortCol, boolean sortDesc) {
+        String baseSel =
+            "(" + E_SOURCE + "='pdf'" +
+            " OR " + E_SOURCE + "='manual'" +
+            " OR (" + E_SOURCE + "='sms' AND " + E_RECONCILED_WITH + "=-1))";
+        String filterSel  = null;
+        String[] filterArgs = null;
+        if ("online".equals(filter)) {
+            filterSel = E_ONLINE + "=1";
+        } else if ("offline".equals(filter)) {
+            filterSel = E_ONLINE + "=0";
+        } else if ("month".equals(filter)) {
+            Calendar cal = Calendar.getInstance();
+            cal.set(Calendar.DAY_OF_MONTH, 1);
+            cal.set(Calendar.HOUR_OF_DAY, 0);
+            cal.set(Calendar.MINUTE, 0);
+            cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.MILLISECOND, 0);
+            filterSel  = E_DATE_MS + ">=?";
+            filterArgs = new String[]{String.valueOf(cal.getTimeInMillis())};
+        }
+        String sel;
+        String[] args;
+        if (filterSel != null) {
+            sel  = baseSel + " AND " + filterSel;
+            args = filterArgs != null ? filterArgs : null;
+        } else {
+            sel  = baseSel;
+            args = null;
+        }
+        String col;
+        if ("amount".equals(sortCol))        col = E_AMOUNT;
+        else if ("merchant".equals(sortCol)) col = E_MERCHANT + " COLLATE NOCASE";
+        else                                 col = E_DATE_MS;
+        Cursor c = getReadableDatabase().query(T_EXPENSE, null, sel, args, null, null,
+            col + (sortDesc ? " DESC" : " ASC"));
+        return expenseCursorToList(c);
     }
 
     public Expense getExpenseById(long id) {
@@ -436,11 +518,16 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
     }
 
     public List<Expense> searchExpenses(String query) {
-        if (query == null || query.isEmpty()) return getExpenses("all", "date_ms", true);
+        if (query == null || query.isEmpty()) return getExpensesForList("all", "date_ms", true);
         String like = "%" + query + "%";
-        Cursor c = getReadableDatabase().query(T_EXPENSE, null,
-            E_MERCHANT + " LIKE ? OR " + E_REASON + " LIKE ? OR " +
-            E_BANK + " LIKE ? OR " + E_CARD + " LIKE ?",
+        String reconciledFilter =
+            " AND (" + E_SOURCE + "='pdf'" +
+            " OR "   + E_SOURCE + "='manual'" +
+            " OR ("  + E_SOURCE + "='sms' AND " + E_RECONCILED_WITH + "=-1))";
+        String sel =
+            "(" + E_MERCHANT + " LIKE ? OR " + E_REASON + " LIKE ? OR " +
+            E_BANK + " LIKE ? OR " + E_CARD + " LIKE ?)" + reconciledFilter;
+        Cursor c = getReadableDatabase().query(T_EXPENSE, null, sel,
             new String[]{like, like, like, like}, null, null, E_DATE_MS + " DESC");
         return expenseCursorToList(c);
     }
@@ -936,6 +1023,22 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
         return expenseCursorToList(c);
     }
 
+    /**
+     * Like getExpensesInRange but applies the same "reconciled view" filter:
+     * PDF + manual + unreconciled SMS only. Used by the landing page month view.
+     */
+    public List<Expense> getExpensesInRangeForList(long startMs, long endMs) {
+        String sel =
+            E_DATE_MS + " >= ? AND " + E_DATE_MS + " <= ?" +
+            " AND (" + E_SOURCE + "='pdf'" +
+            " OR "  + E_SOURCE + "='manual'" +
+            " OR (" + E_SOURCE + "='sms' AND " + E_RECONCILED_WITH + "=-1))";
+        Cursor c = getReadableDatabase().query(T_EXPENSE, null, sel,
+            new String[]{String.valueOf(startMs), String.valueOf(endMs)},
+            null, null, E_DATE_MS + " DESC");
+        return expenseCursorToList(c);
+    }
+
     /** Adds the trip name as a label to every expense whose date falls within the trip range. */
     public void addTripLabel(Trip t) {
         List<Expense> inRange = getExpensesInRange(t.startMs, t.endMs);
@@ -1012,6 +1115,8 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
         e.source = (srcIdx >= 0 && !c.isNull(srcIdx)) ? c.getString(srcIdx) : "sms";
         int crIdx = c.getColumnIndex(E_IS_CREDIT);
         e.isCredit = (crIdx >= 0 && !c.isNull(crIdx)) && c.getInt(crIdx) != 0;
+        int rwIdx = c.getColumnIndex(E_RECONCILED_WITH);
+        e.reconciledWithId = (rwIdx >= 0 && !c.isNull(rwIdx)) ? c.getLong(rwIdx) : -1L;
         return e;
     }
 
@@ -1033,8 +1138,9 @@ public class ExpenseDatabase extends SQLiteOpenHelper {
         cv.put(E_REMARKS,      e.remarks);
         cv.put(E_PATTERN_ID,   e.patternId);
         cv.put(E_STMT_ID,      e.pdfStatementId);
-        cv.put(E_SOURCE,       e.source != null ? e.source : "sms");
-        cv.put(E_IS_CREDIT,    e.isCredit ? 1 : 0);
+        cv.put(E_SOURCE,          e.source != null ? e.source : "sms");
+        cv.put(E_IS_CREDIT,       e.isCredit ? 1 : 0);
+        cv.put(E_RECONCILED_WITH, e.reconciledWithId);
         return cv;
     }
 

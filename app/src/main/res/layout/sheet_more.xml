@@ -46,6 +46,59 @@
             android:padding="0dp" />
     </LinearLayout>
 
+    <!-- Reconcile -->
+    <LinearLayout
+        android:id="@+id/sheetReconcile"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="@drawable/bg_card"
+        android:layout_marginLeft="12dp"
+        android:layout_marginRight="12dp"
+        android:layout_marginBottom="6dp"
+        android:paddingLeft="12dp"
+        android:paddingRight="12dp"
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp"
+        android:foreground="?android:attr/selectableItemBackground">
+        <TextView
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:text="⇄"
+            android:textSize="16sp"
+            android:textColor="#1565C0"
+            android:gravity="center"
+            android:background="@drawable/bg_circle"
+            android:backgroundTint="#E3F2FD" />
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginLeft="12dp">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/sheet_more_reconcile"
+                android:textColor="@color/textPrimary"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/sheet_more_reconcile_sub"
+                android:textColor="@color/textMuted"
+                android:textSize="11sp" />
+        </LinearLayout>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="›"
+            android:textColor="@color/textHint"
+            android:textSize="18sp" />
+    </LinearLayout>
+
     <!-- Statements -->
     <LinearLayout
         android:id="@+id/sheetStatements"

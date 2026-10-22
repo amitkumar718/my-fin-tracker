@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/landingBackground">
+
+    <!-- Top bar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="@color/appBarWhite"
+        android:paddingLeft="4dp"
+        android:paddingRight="4dp">
+        <Button
+            android:id="@+id/btnBack"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:text="←"
+            android:textSize="18sp"
+            android:textColor="@color/colorPrimary"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:minWidth="0dp"
+            android:minHeight="0dp"
+            android:padding="0dp" />
+        <TextView
+            android:id="@+id/tvTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Reconcile"
+            android:textColor="@color/textPrimary"
+            android:textSize="20sp"
+            android:paddingLeft="4dp" />
+    </LinearLayout>
+    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/hairline" />
+
+    <!-- Summary strip -->
+    <LinearLayout
+        android:id="@+id/layoutSummary"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="@color/appBarWhite"
+        android:paddingLeft="12dp"
+        android:paddingRight="12dp"
+        android:paddingTop="6dp"
+        android:paddingBottom="6dp"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/tvSummaryPairs"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textSize="12sp"
+            android:textColor="#E53935"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvSummarySms"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textSize="12sp"
+            android:textColor="#1976D2"
+            android:gravity="center" />
+
+        <TextView
+            android:id="@+id/tvSummaryPdf"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textSize="12sp"
+            android:textColor="#2E7D32"
+            android:gravity="end" />
+
+        <Button
+            android:id="@+id/btnAcceptAll"
+            android:layout_width="wrap_content"
+            android:layout_height="28dp"
+            android:text="✓ Accept All"
+            android:textSize="11sp"
+            android:textColor="#FFFFFF"
+            android:background="@drawable/bg_button_primary"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:minWidth="0dp"
+            android:layout_marginLeft="8dp"
+            android:visibility="gone" />
+
+    </LinearLayout>
+    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/hairline" />
+
+    <ListView
+        android:id="@+id/listReconcile"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:divider="@null"
+        android:dividerHeight="0dp" />
+
+</LinearLayout>

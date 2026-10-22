@@ -217,6 +217,79 @@
                 android:paddingRight="8dp"
                 android:visibility="gone" />
 
+            <!-- Linked expense card — shown when reconciledWithId != -1 -->
+            <LinearLayout
+                android:id="@+id/layoutLinkedExpense"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="#EEF2F7"
+                android:padding="10dp"
+                android:layout_marginTop="8dp"
+                android:visibility="gone">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="6dp">
+
+                    <TextView
+                        android:id="@+id/tvLinkedTag"
+                        android:layout_width="32dp"
+                        android:layout_height="18dp"
+                        android:textSize="9sp"
+                        android:textColor="#FFFFFF"
+                        android:gravity="center"
+                        android:layout_marginRight="8dp" />
+
+                    <TextView
+                        android:id="@+id/tvLinkedHeader"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textSize="11sp"
+                        android:textColor="#546E7A"
+                        android:textStyle="bold" />
+
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tvLinkedMerchant"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="13sp"
+                    android:textColor="#212121"
+                    android:layout_marginBottom="2dp" />
+
+                <TextView
+                    android:id="@+id/tvLinkedDate"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="11sp"
+                    android:textColor="#9E9E9E"
+                    android:layout_marginBottom="4dp" />
+
+                <TextView
+                    android:id="@+id/tvLinkedSmsBody"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="11sp"
+                    android:textColor="#37474F"
+                    android:fontFamily="monospace"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/btnUnreconcile"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="✕ Unlink"
+                    android:textSize="11sp"
+                    android:textColor="#E53935"
+                    android:layout_marginTop="6dp" />
+
+            </LinearLayout>
+
         </LinearLayout>
 
         <!-- EDIT MODE card -->

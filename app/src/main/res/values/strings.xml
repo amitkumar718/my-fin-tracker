@@ -331,6 +331,8 @@
     <string name="sheet_add_scan_sms">Scan SMS</string>
     <string name="sheet_add_scan_sms_sub">Map texts to expenses</string>
     <string name="sheet_more_title">More</string>
+    <string name="sheet_more_reconcile">Reconcile</string>
+    <string name="sheet_more_reconcile_sub">Match SMS vs PDF by month</string>
     <string name="sheet_more_statements">Statements</string>
     <string name="sheet_more_statements_sub">All imported PDFs</string>
     <string name="sheet_more_banks">Banks</string>

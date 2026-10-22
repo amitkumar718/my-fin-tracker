@@ -161,6 +161,55 @@ public class ExpenseDetailActivity extends Activity {
         mTvSms.setText(orDash(mExpense.originalSms));
         mTvRemarks.setText(orDash(mExpense.remarks));
         bindPatternLink();
+        bindLinkedExpense();
+    }
+
+    private void bindLinkedExpense() {
+        LinearLayout card = (LinearLayout) mViewMode.findViewById(R.id.layoutLinkedExpense);
+        if (mExpense.reconciledWithId <= 0) {
+            card.setVisibility(View.GONE);
+            return;
+        }
+        Expense linked = mDb.getExpenseById(mExpense.reconciledWithId);
+        if (linked == null) {
+            card.setVisibility(View.GONE);
+            return;
+        }
+        boolean linkedIsSms = "sms".equals(linked.source);
+        TextView tag = (TextView) card.findViewById(R.id.tvLinkedTag);
+        tag.setText(linkedIsSms ? "SMS" : "PDF");
+        tag.setBackgroundColor(linkedIsSms ? 0xFF1976D2 : 0xFF2E7D32);
+
+        TextView header = (TextView) card.findViewById(R.id.tvLinkedHeader);
+        header.setText(linkedIsSms ? "Linked SMS expense" : "Linked PDF expense");
+
+        String merchant = (linked.merchant != null && !linked.merchant.isEmpty())
+            ? linked.merchant
+            : (linked.reason != null && !linked.reason.isEmpty() ? linked.reason : "—");
+        ((TextView) card.findViewById(R.id.tvLinkedMerchant)).setText(merchant);
+
+        SimpleDateFormat fmt = new SimpleDateFormat("dd MMM yyyy · HH:mm", Locale.getDefault());
+        ((TextView) card.findViewById(R.id.tvLinkedDate))
+            .setText(linked.dateMs > 0 ? fmt.format(linked.dateMs) : "—");
+
+        TextView tvBody = (TextView) card.findViewById(R.id.tvLinkedSmsBody);
+        if (linkedIsSms && linked.originalSms != null && !linked.originalSms.isEmpty()) {
+            tvBody.setText(linked.originalSms);
+            tvBody.setVisibility(View.VISIBLE);
+        } else {
+            tvBody.setVisibility(View.GONE);
+        }
+
+        card.findViewById(R.id.btnUnreconcile)
+            .setOnClickListener(new UnreconcileListener(this));
+        card.setVisibility(View.VISIBLE);
+    }
+
+    void doUnreconcile() {
+        mDb.unreconcileExpense(mExpense.id);
+        mExpense = mDb.getExpenseById(mExpense.id);
+        if (mExpense != null) bindLinkedExpense();
+        Toast.makeText(this, "Unlinked", Toast.LENGTH_SHORT).show();
     }
 
     private void bindPatternLink() {
@@ -405,6 +454,12 @@ public class ExpenseDetailActivity extends Activity {
         private final ExpenseDetailActivity mA;
         DeleteConfirmListener(ExpenseDetailActivity a) { mA = a; }
         public void onClick(DialogInterface d, int which) { mA.deleteExpense(); }
+    }
+
+    static class UnreconcileListener implements View.OnClickListener {
+        private final ExpenseDetailActivity mA;
+        UnreconcileListener(ExpenseDetailActivity a) { mA = a; }
+        public void onClick(View v) { mA.doUnreconcile(); }
     }
 
     static class DateClickListener implements View.OnClickListener {

@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Matched SMS+PDF pair — likely duplicate -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="#FFFFFF"
+    android:layout_marginLeft="12dp"
+    android:layout_marginRight="12dp"
+    android:layout_marginBottom="6dp"
+    android:paddingLeft="12dp"
+    android:paddingRight="12dp"
+    android:paddingTop="10dp"
+    android:paddingBottom="10dp">
+
+    <!-- Duplicate warning + accept button -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="6dp">
+
+        <TextView
+            android:id="@+id/tvPairWarning"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="⚠ Likely duplicate"
+            android:textSize="10sp"
+            android:textColor="#E53935"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/btnAcceptPair"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="✓ Accept"
+            android:textSize="11sp"
+            android:textColor="#2E7D32"
+            android:textStyle="bold"
+            android:padding="4dp" />
+
+    </LinearLayout>
+
+    <!-- SMS row -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="4dp">
+
+        <TextView
+            android:layout_width="32dp"
+            android:layout_height="18dp"
+            android:text="SMS"
+            android:textSize="9sp"
+            android:textColor="#FFFFFF"
+            android:background="#1976D2"
+            android:gravity="center"
+            android:layout_marginRight="8dp" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tvSmsMerchant"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="13sp"
+                android:textColor="#212121"
+                android:singleLine="true"
+                android:ellipsize="end" />
+
+            <TextView
+                android:id="@+id/tvSmsDate"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="11sp"
+                android:textColor="#9E9E9E" />
+
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvSmsAmount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="13sp"
+            android:textColor="#212121"
+            android:textStyle="bold"
+            android:layout_marginRight="8dp" />
+
+        <TextView
+            android:id="@+id/btnDeleteSms"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🗑"
+            android:textSize="14sp"
+            android:textColor="#E53935"
+            android:padding="4dp" />
+
+    </LinearLayout>
+
+    <!-- PDF row -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:layout_width="32dp"
+            android:layout_height="18dp"
+            android:text="PDF"
+            android:textSize="9sp"
+            android:textColor="#FFFFFF"
+            android:background="#2E7D32"
+            android:gravity="center"
+            android:layout_marginRight="8dp" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tvPdfMerchant"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="13sp"
+                android:textColor="#212121"
+                android:singleLine="true"
+                android:ellipsize="end" />
+
+            <TextView
+                android:id="@+id/tvPdfDate"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="11sp"
+                android:textColor="#9E9E9E" />
+
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvPdfAmount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="13sp"
+            android:textColor="#212121"
+            android:textStyle="bold"
+            android:layout_marginRight="8dp" />
+
+        <TextView
+            android:id="@+id/btnDeletePdf"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🗑"
+            android:textSize="14sp"
+            android:textColor="#E53935"
+            android:padding="4dp" />
+
+    </LinearLayout>
+
+</LinearLayout>

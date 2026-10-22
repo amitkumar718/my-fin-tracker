@@ -24,6 +24,7 @@ public class Expense {
     public long   patternId = -1;
     public long   pdfStatementId = -1;
     public String source;   // "sms", "pdf", or "manual"
+    public long   reconciledWithId = -1;  // id of the paired expense; -1 = not reconciled
 
     public List<String> getLabels() {
         List<String> labels = new ArrayList<String>();

@@ -60,6 +60,7 @@ public class MainActivity extends Activity {
     private Button       mBtnTabPdf;
     private LinearLayout mRowMonthChip;
     private TextView     mTvMonthChip;
+    private TextView     mBtnReconcileMonth;
 
     private ExpenseAdapter  mAdapter;
     private ExpenseDatabase mDb;
@@ -70,7 +71,7 @@ public class MainActivity extends Activity {
     boolean mSortDesc    = true;
     int     mSortIdx     = 0;
     boolean mReady       = false;
-    String  mSourceTab   = "sms";
+    String  mSourceTab   = "default";
     boolean mSearchOpen  = false;
 
     // Month filter from landing's View all (0 = no filter)
@@ -131,13 +132,16 @@ public class MainActivity extends Activity {
         mSpinnerSort   = (Spinner)      findViewById(R.id.spinnerSort);
         mBtnTabSms     = (Button)       findViewById(R.id.btnTabSms);
         mBtnTabPdf     = (Button)       findViewById(R.id.btnTabPdf);
-        mRowMonthChip  = (LinearLayout) findViewById(R.id.rowMonthChip);
-        mTvMonthChip   = (TextView)     findViewById(R.id.tvMonthChip);
+        mRowMonthChip      = (LinearLayout) findViewById(R.id.rowMonthChip);
+        mTvMonthChip       = (TextView)     findViewById(R.id.tvMonthChip);
+        mBtnReconcileMonth = (TextView)     findViewById(R.id.btnReconcileMonth);
 
         // Show month chip if launched with a month filter
         if (mMonthStart > 0 && monthLabel != null) {
             mTvMonthChip.setText("Showing: " + monthLabel);
             mRowMonthChip.setVisibility(View.VISIBLE);
+            mBtnReconcileMonth.setVisibility(View.VISIBLE);
+            mBtnReconcileMonth.setOnClickListener(new ReconcileMonthListener(this, mMonthStart, mMonthEnd, monthLabel));
         }
 
         // Restore saved prefs
@@ -196,6 +200,8 @@ public class MainActivity extends Activity {
         List<Expense> raw;
         if (!search.isEmpty()) {
             raw = mDb.searchExpenses(search);
+        } else if ("default".equals(mSourceTab)) {
+            raw = mDb.getExpensesForList(mFilter, mSortCol, mSortDesc);
         } else {
             raw = mDb.getExpensesBySource(mSourceTab, mFilter, mSortCol, mSortDesc);
         }
@@ -220,14 +226,16 @@ public class MainActivity extends Activity {
 
     void updateTabAppearance() {
         boolean smsActive = "sms".equals(mSourceTab);
-        mBtnTabSms.setBackgroundResource(smsActive  ? R.drawable.bg_tab_active : R.drawable.bg_tab_inactive);
-        mBtnTabPdf.setBackgroundResource(!smsActive ? R.drawable.bg_tab_active : R.drawable.bg_tab_inactive);
-        mBtnTabSms.setTextColor(smsActive  ? Color.WHITE : Color.parseColor("#B0BEC5"));
-        mBtnTabPdf.setTextColor(!smsActive ? Color.WHITE : Color.parseColor("#B0BEC5"));
+        boolean pdfActive = "pdf".equals(mSourceTab);
+        mBtnTabSms.setBackgroundResource(smsActive ? R.drawable.bg_tab_active : R.drawable.bg_tab_inactive);
+        mBtnTabPdf.setBackgroundResource(pdfActive ? R.drawable.bg_tab_active : R.drawable.bg_tab_inactive);
+        mBtnTabSms.setTextColor(smsActive ? Color.WHITE : Color.parseColor("#B0BEC5"));
+        mBtnTabPdf.setTextColor(pdfActive ? Color.WHITE : Color.parseColor("#B0BEC5"));
     }
 
     void onTabSelected(String src) {
-        mSourceTab = src;
+        // Tapping the active tab deselects it and returns to the default reconciled view.
+        mSourceTab = mSourceTab.equals(src) ? "default" : src;
         reload();
     }
 
@@ -251,6 +259,7 @@ public class MainActivity extends Activity {
         mMonthStart = 0;
         mMonthEnd   = 0;
         mRowMonthChip.setVisibility(View.GONE);
+        mBtnReconcileMonth.setVisibility(View.GONE);
         if (mReady) reload();
     }
 
@@ -398,5 +407,21 @@ public class MainActivity extends Activity {
         private final MainActivity mMain;
         ClearMonthListener(MainActivity m) { mMain = m; }
         public void onClick(View v) { mMain.clearMonthFilter(); }
+    }
+
+    static class ReconcileMonthListener implements View.OnClickListener {
+        private final MainActivity mMain;
+        private final long mStart, mEnd;
+        private final String mLabel;
+        ReconcileMonthListener(MainActivity m, long start, long end, String label) {
+            mMain = m; mStart = start; mEnd = end; mLabel = label;
+        }
+        public void onClick(View v) {
+            android.content.Intent i = new android.content.Intent(mMain, ReconcileActivity.class);
+            i.putExtra(ReconcileActivity.EXTRA_MONTH_START, mStart);
+            i.putExtra(ReconcileActivity.EXTRA_MONTH_END,   mEnd);
+            i.putExtra(ReconcileActivity.EXTRA_MONTH_LABEL, mLabel);
+            mMain.startActivity(i);
+        }
     }
 }

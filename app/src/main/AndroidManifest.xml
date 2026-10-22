@@ -162,6 +162,18 @@
             android:exported="false" />
 
         <activity
+            android:name=".ui.ReconcileAllActivity"
+            android:label="Reconcile"
+            android:theme="@android:style/Theme.Material.Light.NoActionBar"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.ReconcileActivity"
+            android:label="Reconcile"
+            android:theme="@android:style/Theme.Material.Light.NoActionBar"
+            android:exported="false" />
+
+        <activity
             android:name=".ui.DebugActivity"
             android:label="@string/title_debug"
             android:theme="@android:style/Theme.Material.Light.NoActionBar"

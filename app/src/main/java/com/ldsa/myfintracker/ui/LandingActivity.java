@@ -76,6 +76,7 @@ public class LandingActivity extends Activity {
         findViewById(R.id.btnNextMonth).setOnClickListener(new MonthStepListener(this, +1));
         findViewById(R.id.btnSearch)   .setOnClickListener(new SearchClickListener(this));
         findViewById(R.id.btnViewAll)  .setOnClickListener(new ViewAllClickListener(this));
+        findViewById(R.id.btnReconcile).setOnClickListener(new ReconcileClickListener(this));
 
         // Bottom nav wiring. Home has no listener — we're already on this screen.
         findViewById(R.id.navExpenses).setOnClickListener(new OpenActivityListener(this, MainActivity.class));
@@ -114,7 +115,7 @@ public class LandingActivity extends Activity {
 
     private void render() {
         long[] range = monthRange(mCursor);
-        List<Expense> monthExpenses = mDb.getExpensesInRange(range[0], range[1]);
+        List<Expense> monthExpenses = mDb.getExpensesInRangeForList(range[0], range[1]);
         boolean isCurrent = isCurrentMonth(mCursor);
 
         renderMonthPager(isCurrent);
@@ -279,6 +280,17 @@ public class LandingActivity extends Activity {
         TextView empty = (TextView) findViewById(R.id.tvRecentEmpty);
         container.removeAllViews();
 
+        // Show ⇄ only when both SMS and PDF expenses exist in this month.
+        boolean hasSms = false, hasPdf = false;
+        for (int i = 0; i < monthExpenses.size(); i++) {
+            String src = monthExpenses.get(i).source;
+            if ("sms".equals(src))    hasSms = true;
+            if ("pdf".equals(src))    hasPdf = true;
+            if (hasSms && hasPdf)     break;
+        }
+        findViewById(R.id.btnReconcile).setVisibility(
+            (hasSms && hasPdf) ? View.VISIBLE : View.GONE);
+
         // monthExpenses from getExpensesInRange is already sorted by date desc.
         // Show up to 15 rows; the outer ScrollView handles overflow.
         int shown = Math.min(15, monthExpenses.size());
@@ -353,6 +365,7 @@ public class LandingActivity extends Activity {
     void openMoreSheet() {
         Dialog d = buildBottomSheet(R.layout.sheet_more);
         d.findViewById(R.id.btnSheetClose).setOnClickListener(new DismissListener(d));
+        d.findViewById(R.id.sheetReconcile) .setOnClickListener(new SheetItemListener(this, d, ReconcileAllActivity.class));
         d.findViewById(R.id.sheetStatements).setOnClickListener(new SheetItemListener(this, d, PdfInboxActivity.class));
         d.findViewById(R.id.sheetBanks)     .setOnClickListener(new SheetItemListener(this, d, BankListActivity.class));
         d.findViewById(R.id.sheetSettings)  .setOnClickListener(new SheetItemListener(this, d, SettingsActivity.class));
@@ -534,6 +547,21 @@ public class LandingActivity extends Activity {
             i.putExtra(MainActivity.EXTRA_MONTH_START, range[0]);
             i.putExtra(MainActivity.EXTRA_MONTH_END,   range[1]);
             i.putExtra(MainActivity.EXTRA_MONTH_LABEL, label);
+            mA.startActivity(i);
+        }
+    }
+
+    static class ReconcileClickListener implements View.OnClickListener {
+        private final LandingActivity mA;
+        ReconcileClickListener(LandingActivity a) { mA = a; }
+        public void onClick(View v) {
+            long[] range = monthRange(mA.mCursor);
+            java.text.SimpleDateFormat fmt = new java.text.SimpleDateFormat("MMMM yyyy", java.util.Locale.getDefault());
+            String label = fmt.format(new java.util.Date(range[0]));
+            Intent i = new Intent(mA, ReconcileActivity.class);
+            i.putExtra(ReconcileActivity.EXTRA_MONTH_START, range[0]);
+            i.putExtra(ReconcileActivity.EXTRA_MONTH_END,   range[1]);
+            i.putExtra(ReconcileActivity.EXTRA_MONTH_LABEL, label);
             mA.startActivity(i);
         }
     }
