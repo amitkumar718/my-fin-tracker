@@ -272,7 +272,7 @@ public class MainActivity extends Activity {
             cal.setTimeInMillis(e.dateMs);
             String key = cal.get(Calendar.YEAR) + "-" + cal.get(Calendar.MONTH);
             Double prev = totals.get(key);
-            totals.put(key, (prev == null ? 0 : prev) + e.amount);
+            totals.put(key, (prev == null ? 0 : prev) + (e.isCredit ? 0 : e.amount));
             if (!labels.containsKey(key)) {
                 labels.put(key, labelFmt.format(new Date(e.dateMs)));
             }
