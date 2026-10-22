@@ -15,8 +15,26 @@ android {
         versionName "1.0"
     }
 
+    // Sign with the project-local keystore so WSL (Gradle) and Termux
+    // (build-local.sh) emit APKs with identical signatures. Without this
+    // Gradle falls back to ~/.android/debug.keystore and `adb install -r`
+    // fails with INSTALL_FAILED_UPDATE_INCOMPATIBLE when swapping sides.
+    // The keystore file itself is gitignored — sync it between machines
+    // out of band (see Termux: ~/android-apps/my-fin-tracker/.local-keystore/).
+    signingConfigs {
+        debug {
+            storeFile rootProject.file('.local-keystore/myfintracker-debug.keystore')
+            storePassword 'myfintracker_debug'
+            keyAlias 'myfintracker'
+            keyPassword 'myfintracker_debug'
+        }
+    }
+
     buildTypes {
-        debug { debuggable true }
+        debug {
+            debuggable true
+            signingConfig signingConfigs.debug
+        }
         release { minifyEnabled false }
     }
 
