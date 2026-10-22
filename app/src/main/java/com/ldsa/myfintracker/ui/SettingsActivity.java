@@ -41,7 +41,6 @@ public class SettingsActivity extends Activity {
         LinearLayout rowBanks    = (LinearLayout) findViewById(R.id.rowBanks);
         LinearLayout rowDropbox  = (LinearLayout) findViewById(R.id.rowDropbox);
         LinearLayout rowDebug    = (LinearLayout) findViewById(R.id.rowDebug);
-        LinearLayout rowTryLanding = (LinearLayout) findViewById(R.id.rowTryLanding);
 
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
             this, R.array.landing_page_labels, android.R.layout.simple_spinner_item);
@@ -49,13 +48,27 @@ public class SettingsActivity extends Activity {
         mSpinnerLanding.setAdapter(adapter);
 
         SharedPreferences prefs = getSharedPreferences(PREF_FILE, MODE_PRIVATE);
-        mSpinnerLanding.setSelection("sms".equals(prefs.getString(PREF_LANDING, "expenses")) ? 1 : 0);
+        mSpinnerLanding.setSelection(landingPrefToIndex(prefs.getString(PREF_LANDING, "home")));
         mSpinnerLanding.setOnItemSelectedListener(new LandingSelectedListener(this));
 
         rowBanks.setOnClickListener(new BanksRowClickListener(this));
         rowDropbox.setOnClickListener(new DropboxRowClickListener(this));
         rowDebug.setOnClickListener(new DebugRowClickListener(this));
-        rowTryLanding.setOnClickListener(new TryLandingRowClickListener(this));
+    }
+
+    // Mapping between the four spinner positions and the pref value.
+    // 0=home, 1=expenses, 2=trips, 3=sms. Keep in sync with landing_page_labels.
+    private static int landingPrefToIndex(String pref) {
+        if ("sms".equals(pref))      return 3;
+        if ("trips".equals(pref))    return 2;
+        if ("expenses".equals(pref)) return 1;
+        return 0;
+    }
+    private static String landingIndexToPref(int pos) {
+        if (pos == 3) return "sms";
+        if (pos == 2) return "trips";
+        if (pos == 1) return "expenses";
+        return "home";
     }
 
     @Override
@@ -73,7 +86,7 @@ public class SettingsActivity extends Activity {
 
     void saveLandingPref(int pos) {
         getSharedPreferences(PREF_FILE, MODE_PRIVATE).edit()
-            .putString(PREF_LANDING, pos == 1 ? "sms" : "expenses")
+            .putString(PREF_LANDING, landingIndexToPref(pos))
             .apply();
     }
 
@@ -94,10 +107,6 @@ public class SettingsActivity extends Activity {
 
     void openDebug() {
         startActivity(new Intent(this, DebugActivity.class));
-    }
-
-    void openTryLanding() {
-        startActivity(new Intent(this, LandingActivity.class));
     }
 
     // ── Static listener classes ───────────────────────────────────────────────
@@ -129,11 +138,5 @@ public class SettingsActivity extends Activity {
         private final SettingsActivity mA;
         DebugRowClickListener(SettingsActivity a) { mA = a; }
         public void onClick(View v) { mA.openDebug(); }
-    }
-
-    static class TryLandingRowClickListener implements View.OnClickListener {
-        private final SettingsActivity mA;
-        TryLandingRowClickListener(SettingsActivity a) { mA = a; }
-        public void onClick(View v) { mA.openTryLanding(); }
     }
 }

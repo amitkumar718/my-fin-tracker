@@ -291,8 +291,6 @@
 
     <!-- new-look landing -->
     <string name="title_landing">my-fin-tracker</string>
-    <string name="label_try_new_landing">Try new landing</string>
-    <string name="label_try_new_landing_sub">Preview the redesigned dashboard</string>
     <string name="landing_spent_header_current">SPENT THIS MONTH</string>
     <string name="landing_spent_header_fmt">SPENT · %1$s</string>
     <string name="landing_hero_caption_fmt">%1$d transactions · %2$s</string>
@@ -411,7 +409,9 @@
     <string name="msg_focus_field_first">Tap a field first, then insert a token</string>
 
     <string-array name="landing_page_labels">
-        <item>Expenses (default)</item>
+        <item>Home dashboard (default)</item>
+        <item>Expenses</item>
+        <item>Trips</item>
         <item>SMS Inbox</item>
     </string-array>
 </resources>

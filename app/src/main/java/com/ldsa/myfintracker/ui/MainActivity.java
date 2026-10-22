@@ -70,12 +70,36 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
 
         SharedPreferences prefs = getSharedPreferences(PREF_FILE, MODE_PRIVATE);
-        String landing = prefs.getString(PREF_LANDING, "expenses");
+        // One-time migration: force the landing pref to the new Home dashboard
+        // on the first launch after this change. Flag is persisted so it only
+        // ever runs once per device; users can switch back via Settings →
+        // Landing page afterwards. This unsticks anyone who set a landing
+        // (e.g. Trips) that has no path back to Settings.
+        if (!prefs.getBoolean("landing_home_default_v1", false)) {
+            prefs.edit()
+                .putString(PREF_LANDING, "home")
+                .putBoolean("landing_home_default_v1", true)
+                .apply();
+        }
+        // Default landing is the new Home dashboard. Users can switch to the
+        // legacy expense list, Trips or the SMS inbox via Settings → Landing page.
+        String landing = prefs.getString(PREF_LANDING, "home");
+        if ("home".equals(landing)) {
+            startActivity(new Intent(this, LandingActivity.class));
+            finish();
+            return;
+        }
+        if ("trips".equals(landing)) {
+            startActivity(new Intent(this, TripListActivity.class));
+            finish();
+            return;
+        }
         if ("sms".equals(landing)) {
             startActivity(new Intent(this, SmsInboxActivity.class));
             finish();
             return;
         }
+        // else "expenses" — fall through to render this activity's own list.
 
         setContentView(R.layout.activity_main);
         getWindow().setStatusBarColor(0xFF1976D2);
