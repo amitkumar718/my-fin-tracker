@@ -1,147 +1,195 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F0F4F8">
+    android:orientation="vertical"
+    android:background="@color/landingBackground">
 
+    <!-- Top bar -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
-
-        <!-- Merged search + filter/sort bar -->
-        <LinearLayout
-            android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="@color/appBarWhite"
+        android:paddingLeft="4dp"
+        android:paddingRight="4dp">
+        <Button
+            android:id="@+id/btnBack"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:text="←"
+            android:textSize="18sp"
+            android:textColor="@color/colorPrimary"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:minWidth="0dp"
+            android:minHeight="0dp"
+            android:padding="0dp" />
+        <TextView
+            android:id="@+id/tvTitle"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:background="#1976D2"
-            android:paddingLeft="8dp"
-            android:paddingRight="8dp"
-            android:paddingTop="7dp"
-            android:paddingBottom="7dp"
-            android:gravity="center_vertical">
-
-            <EditText
-                android:id="@+id/etSearch"
-                android:layout_width="0dp"
-                android:layout_height="36dp"
-                android:layout_weight="3"
-                android:layout_marginRight="6dp"
-                android:background="@drawable/bg_search"
-                android:hint="@string/hint_search"
-                android:paddingLeft="12dp"
-                android:paddingRight="12dp"
-                android:singleLine="true"
-                android:inputType="text"
-                android:textColor="#212121"
-                android:textColorHint="#9E9E9E"
-                android:textSize="13sp" />
-
-            <Spinner
-                android:id="@+id/spinnerFilter"
-                android:layout_width="0dp"
-                android:layout_height="36dp"
-                android:layout_weight="1"
-                android:layout_marginRight="4dp"
-                android:background="@drawable/bg_spinner_white" />
-
-            <Spinner
-                android:id="@+id/spinnerSort"
-                android:layout_width="0dp"
-                android:layout_height="36dp"
-                android:layout_weight="1"
-                android:background="@drawable/bg_spinner_white" />
-
-            <Button
-                android:id="@+id/btnMenu"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
-                android:layout_marginLeft="4dp"
-                android:text="⋮"
-                android:textSize="18sp"
-                android:textColor="#FFFFFF"
-                android:background="@android:color/transparent"
-                android:padding="0dp" />
-
-        </LinearLayout>
-
-        <!-- Source tabs: SMS / PDF -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="36dp"
-            android:orientation="horizontal"
-            android:background="#1565C0">
-
-            <Button
-                android:id="@+id/btnTabSms"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:text="SMS"
-                android:textSize="13sp"
-                android:textColor="#FFFFFF"
-                android:background="@drawable/bg_tab_active"
-                android:padding="0dp"
-                android:minWidth="0dp" />
-
-            <Button
-                android:id="@+id/btnTabPdf"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:text="PDF"
-                android:textSize="13sp"
-                android:textColor="#B0BEC5"
-                android:background="@drawable/bg_tab_inactive"
-                android:padding="0dp"
-                android:minWidth="0dp" />
-
-        </LinearLayout>
-
-        <!-- Expense list -->
-        <ListView
-            android:id="@+id/listExpenses"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
             android:layout_weight="1"
-            android:divider="@android:color/transparent"
-            android:dividerHeight="3dp"
-            android:clipToPadding="false"
+            android:text="@string/title_expenses"
+            android:textColor="@color/textPrimary"
+            android:textSize="20sp"
+            android:paddingLeft="4dp" />
+        <EditText
+            android:id="@+id/etSearch"
+            android:layout_width="0dp"
+            android:layout_height="32dp"
+            android:layout_weight="1"
+            android:visibility="gone"
+            android:background="@drawable/bg_search"
+            android:hint="@string/hint_search"
             android:paddingLeft="10dp"
             android:paddingRight="10dp"
-            android:paddingTop="8dp"
-            android:paddingBottom="72dp"
-            android:scrollbarStyle="outsideOverlay"
-            android:background="#F0F4F8" />
-
-        <TextView
-            android:id="@+id/tvEmpty"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:drawableTop="@drawable/ic_empty"
-            android:drawablePadding="12dp"
-            android:text="@string/empty_expenses"
-            android:textColor="#9E9E9E"
-            android:textSize="15sp"
-            android:paddingLeft="32dp"
-            android:paddingRight="32dp"
-            android:visibility="gone" />
-
+            android:singleLine="true"
+            android:inputType="text"
+            android:textColor="@color/textPrimary"
+            android:textColorHint="#9E9E9E"
+            android:textSize="13sp" />
+        <Button
+            android:id="@+id/btnSearch"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:text="🔍"
+            android:textSize="16sp"
+            android:textColor="@color/textMuted"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:minWidth="0dp"
+            android:minHeight="0dp"
+            android:padding="0dp" />
+        <Button
+            android:id="@+id/fabAdd"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:text="⊕"
+            android:textSize="20sp"
+            android:textColor="@color/colorPrimary"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:minWidth="0dp"
+            android:minHeight="0dp"
+            android:padding="0dp" />
     </LinearLayout>
 
-    <!-- FAB -->
-    <Button
-        android:id="@+id/fabAdd"
-        android:layout_width="56dp"
-        android:layout_height="56dp"
-        android:layout_gravity="bottom|end"
-        android:layout_margin="16dp"
-        android:text="+"
-        android:textSize="28sp"
-        android:textColor="#FFFFFF"
-        android:background="@drawable/bg_fab"
-        android:elevation="6dp" />
+    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/hairline" />
 
-</FrameLayout>
+    <!-- Controls row: SMS/PDF tabs + filter + sort -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="38dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="@color/appBarWhite"
+        android:paddingLeft="8dp"
+        android:paddingRight="8dp">
+        <Button
+            android:id="@+id/btnTabSms"
+            android:layout_width="0dp"
+            android:layout_height="28dp"
+            android:layout_weight="1"
+            android:text="SMS"
+            android:textSize="12sp"
+            android:textColor="#FFFFFF"
+            android:background="@drawable/bg_tab_active"
+            android:padding="0dp"
+            android:minWidth="0dp" />
+        <Button
+            android:id="@+id/btnTabPdf"
+            android:layout_width="0dp"
+            android:layout_height="28dp"
+            android:layout_weight="1"
+            android:layout_marginLeft="2dp"
+            android:text="PDF"
+            android:textSize="12sp"
+            android:textColor="#B0BEC5"
+            android:background="@drawable/bg_tab_inactive"
+            android:padding="0dp"
+            android:minWidth="0dp" />
+        <View
+            android:layout_width="1dp"
+            android:layout_height="20dp"
+            android:layout_marginLeft="6dp"
+            android:layout_marginRight="2dp"
+            android:background="@color/hairline" />
+        <Spinner
+            android:id="@+id/spinnerFilter"
+            android:layout_width="0dp"
+            android:layout_height="28dp"
+            android:layout_weight="1.2"
+            android:background="@drawable/bg_spinner_white" />
+        <Spinner
+            android:id="@+id/spinnerSort"
+            android:layout_width="0dp"
+            android:layout_height="28dp"
+            android:layout_weight="1.2"
+            android:layout_marginLeft="2dp"
+            android:background="@drawable/bg_spinner_white" />
+    </LinearLayout>
+
+    <!-- Month filter chip — only shown when launched from landing's View all -->
+    <LinearLayout
+        android:id="@+id/rowMonthChip"
+        android:layout_width="match_parent"
+        android:layout_height="28dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="#EEF2F7"
+        android:paddingLeft="12dp"
+        android:paddingRight="4dp"
+        android:visibility="gone">
+        <TextView
+            android:id="@+id/tvMonthChip"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textColor="@color/colorPrimary"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+        <Button
+            android:id="@+id/btnClearMonth"
+            android:layout_width="40dp"
+            android:layout_height="28dp"
+            android:text="✕"
+            android:textSize="14sp"
+            android:textColor="@color/textMuted"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:minWidth="0dp"
+            android:minHeight="0dp"
+            android:padding="0dp" />
+    </LinearLayout>
+
+    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/hairline" />
+
+    <!-- Expense list -->
+    <ListView
+        android:id="@+id/listExpenses"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:divider="@android:color/transparent"
+        android:dividerHeight="3dp"
+        android:clipToPadding="false"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="16dp"
+        android:scrollbarStyle="outsideOverlay" />
+
+    <TextView
+        android:id="@+id/tvEmpty"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:drawableTop="@drawable/ic_empty"
+        android:drawablePadding="12dp"
+        android:text="@string/empty_expenses"
+        android:textColor="#9E9E9E"
+        android:textSize="15sp"
+        android:paddingLeft="32dp"
+        android:paddingRight="32dp"
+        android:visibility="gone" />
+
+</LinearLayout>

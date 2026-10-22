@@ -289,8 +289,9 @@
     <string name="msg_pattern_deleted_orphaned_fmt">Pattern deleted; %1$d expense%2$s orphaned</string>
     <string name="msg_expenses_deleted_fmt">%1$d expense%2$s removed; pattern kept</string>
 
-    <!-- new-look landing -->
+    <!-- new-look landing / expense page -->
     <string name="title_landing">my-fin-tracker</string>
+    <string name="title_expenses">Expenses</string>
     <string name="landing_spent_header_current">SPENT THIS MONTH</string>
     <string name="landing_spent_header_fmt">SPENT · %1$s</string>
     <string name="landing_hero_caption_fmt">%1$d transactions · %2$s</string>

@@ -6,14 +6,13 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.view.MenuItem;
 import android.view.View;
-import android.widget.PopupMenu;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.graphics.Color;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -33,7 +32,11 @@ import java.util.Map;
 
 public class MainActivity extends Activity {
 
-    static final String EXTRA_EXPENSE_ID = "expense_id";
+    static final String EXTRA_EXPENSE_ID   = "expense_id";
+    static final String EXTRA_MONTH_START  = "month_start";
+    static final String EXTRA_MONTH_END    = "month_end";
+    static final String EXTRA_MONTH_LABEL  = "month_label";
+
     private static final String PREF_FILE      = "fin_prefs";
     private static final String PREF_LANDING   = "landing_page";
     private static final String PREF_FILTER    = "filter";
@@ -46,36 +49,39 @@ public class MainActivity extends Activity {
     static final String[]  SORT_COLS  = {"date_ms", "date_ms", "amount",  "amount",  "merchant"};
     static final boolean[] SORT_DESCS = { true,      false,     true,      false,     false};
 
-    private EditText  mEtSearch;
-    private ListView  mListView;
-    private TextView  mTvEmpty;
-    private Spinner   mSpinnerFilter;
-    private Spinner   mSpinnerSort;
-    private Button    mBtnTabSms;
-    private Button    mBtnTabPdf;
+    private TextView     mTvTitle;
+    private EditText     mEtSearch;
+    private Button       mBtnSearch;
+    private ListView     mListView;
+    private TextView     mTvEmpty;
+    private Spinner      mSpinnerFilter;
+    private Spinner      mSpinnerSort;
+    private Button       mBtnTabSms;
+    private Button       mBtnTabPdf;
+    private LinearLayout mRowMonthChip;
+    private TextView     mTvMonthChip;
 
     private ExpenseAdapter  mAdapter;
     private ExpenseDatabase mDb;
     private List<Expense>   mExpenses = new ArrayList<Expense>();
 
-    String  mFilter   = "all";
-    String  mSortCol  = "date_ms";
-    boolean mSortDesc = true;
-    int     mSortIdx  = 0;
-    boolean mReady    = false;
-    String  mSourceTab = "sms"; // "sms" or "pdf"
+    String  mFilter      = "all";
+    String  mSortCol     = "date_ms";
+    boolean mSortDesc    = true;
+    int     mSortIdx     = 0;
+    boolean mReady       = false;
+    String  mSourceTab   = "sms";
+    boolean mSearchOpen  = false;
+
+    // Month filter from landing's View all (0 = no filter)
+    long    mMonthStart  = 0;
+    long    mMonthEnd    = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Only run the launch-time routing when MainActivity is coming up from
-        // the launcher icon (ACTION_MAIN + CATEGORY_LAUNCHER). Internal
-        // navigation like LandingActivity's "Expenses" / "View all" starts
-        // MainActivity with a plain Intent that has no action/category, and
-        // should land directly on the expense list — otherwise MainActivity
-        // would see landing=home, bounce back to LandingActivity, and the
-        // Expenses screen would never render.
+        // Only run the launch-time routing when coming from the launcher icon.
         Intent launchIntent = getIntent();
         boolean fromLauncher = launchIntent != null
             && Intent.ACTION_MAIN.equals(launchIntent.getAction())
@@ -83,19 +89,12 @@ public class MainActivity extends Activity {
 
         SharedPreferences prefs = getSharedPreferences(PREF_FILE, MODE_PRIVATE);
         if (fromLauncher) {
-            // One-time migration: force the landing pref to the new Home dashboard
-            // on the first launch after this change. Flag is persisted so it only
-            // ever runs once per device; users can switch back via Settings →
-            // Landing page afterwards. This unsticks anyone who set a landing
-            // (e.g. Trips) that has no path back to Settings.
             if (!prefs.getBoolean("landing_home_default_v1", false)) {
                 prefs.edit()
                     .putString(PREF_LANDING, "home")
                     .putBoolean("landing_home_default_v1", true)
                     .apply();
             }
-            // Default landing is the new Home dashboard. Users can switch to the
-            // legacy expense list, Trips or the SMS inbox via Settings → Landing page.
             String landing = prefs.getString(PREF_LANDING, "home");
             if ("home".equals(landing)) {
                 startActivity(new Intent(this, LandingActivity.class));
@@ -112,21 +111,34 @@ public class MainActivity extends Activity {
                 finish();
                 return;
             }
-            // else "expenses" — fall through to render this activity's own list.
         }
-        // Fall through: render the SMS/PDF-tabbed expense list.
+
+        // Read optional month-filter extras (passed by LandingActivity's View all).
+        mMonthStart = launchIntent != null ? launchIntent.getLongExtra(EXTRA_MONTH_START, 0) : 0;
+        mMonthEnd   = launchIntent != null ? launchIntent.getLongExtra(EXTRA_MONTH_END,   0) : 0;
+        String monthLabel = launchIntent != null ? launchIntent.getStringExtra(EXTRA_MONTH_LABEL) : null;
 
         setContentView(R.layout.activity_main);
-        getWindow().setStatusBarColor(0xFF1976D2);
+        getWindow().setStatusBarColor(0xFF1565C0);
         mDb = ExpenseDatabase.getInstance(this);
 
-        mEtSearch      = (EditText)  findViewById(R.id.etSearch);
-        mListView      = (ListView)  findViewById(R.id.listExpenses);
-        mTvEmpty       = (TextView)  findViewById(R.id.tvEmpty);
-        mSpinnerFilter = (Spinner)   findViewById(R.id.spinnerFilter);
-        mSpinnerSort   = (Spinner)   findViewById(R.id.spinnerSort);
-        mBtnTabSms     = (Button)    findViewById(R.id.btnTabSms);
-        mBtnTabPdf     = (Button)    findViewById(R.id.btnTabPdf);
+        mTvTitle       = (TextView)     findViewById(R.id.tvTitle);
+        mEtSearch      = (EditText)     findViewById(R.id.etSearch);
+        mBtnSearch     = (Button)       findViewById(R.id.btnSearch);
+        mListView      = (ListView)     findViewById(R.id.listExpenses);
+        mTvEmpty       = (TextView)     findViewById(R.id.tvEmpty);
+        mSpinnerFilter = (Spinner)      findViewById(R.id.spinnerFilter);
+        mSpinnerSort   = (Spinner)      findViewById(R.id.spinnerSort);
+        mBtnTabSms     = (Button)       findViewById(R.id.btnTabSms);
+        mBtnTabPdf     = (Button)       findViewById(R.id.btnTabPdf);
+        mRowMonthChip  = (LinearLayout) findViewById(R.id.rowMonthChip);
+        mTvMonthChip   = (TextView)     findViewById(R.id.tvMonthChip);
+
+        // Show month chip if launched with a month filter
+        if (mMonthStart > 0 && monthLabel != null) {
+            mTvMonthChip.setText("Showing: " + monthLabel);
+            mRowMonthChip.setVisibility(View.VISIBLE);
+        }
 
         // Restore saved prefs
         mFilter  = prefs.getString(PREF_FILTER,   "all");
@@ -157,15 +169,13 @@ public class MainActivity extends Activity {
         mBtnTabSms.setOnClickListener(new TabClickListener(this, "sms"));
         mBtnTabPdf.setOnClickListener(new TabClickListener(this, "pdf"));
 
-        Button fabAdd = (Button) findViewById(R.id.fabAdd);
-        fabAdd.setOnClickListener(new FabClickListener(this));
-
-        Button btnMenu = (Button) findViewById(R.id.btnMenu);
-        btnMenu.setOnClickListener(new MenuClickListener(this));
+        findViewById(R.id.fabAdd).setOnClickListener(new FabClickListener(this));
+        findViewById(R.id.btnBack).setOnClickListener(new BackClickListener(this));
+        mBtnSearch.setOnClickListener(new SearchToggleListener(this));
+        findViewById(R.id.btnClearMonth).setOnClickListener(new ClearMonthListener(this));
 
         mReady = true;
 
-        // Attach listeners after mReady = true so initial setSelection doesn't trigger reload
         mSpinnerFilter.setOnItemSelectedListener(new FilterSelectedListener(this));
         mSpinnerSort.setOnItemSelectedListener(new SortSelectedListener(this));
     }
@@ -179,10 +189,24 @@ public class MainActivity extends Activity {
     void reload() {
         updateTabAppearance();
         String search = mEtSearch.getText().toString().trim();
+        List<Expense> raw;
         if (!search.isEmpty()) {
-            mExpenses = mDb.searchExpenses(search);
+            raw = mDb.searchExpenses(search);
         } else {
-            mExpenses = mDb.getExpensesBySource(mSourceTab, mFilter, mSortCol, mSortDesc);
+            raw = mDb.getExpensesBySource(mSourceTab, mFilter, mSortCol, mSortDesc);
+        }
+        // Apply month filter in Java when launched from View all
+        if (mMonthStart > 0) {
+            List<Expense> filtered = new ArrayList<Expense>();
+            for (int i = 0; i < raw.size(); i++) {
+                Expense e = raw.get(i);
+                if (e.dateMs >= mMonthStart && e.dateMs <= mMonthEnd) {
+                    filtered.add(e);
+                }
+            }
+            mExpenses = filtered;
+        } else {
+            mExpenses = raw;
         }
         mAdapter.setGroupedItems(buildGroupedList(mExpenses));
         boolean empty = mExpenses.isEmpty();
@@ -203,12 +227,34 @@ public class MainActivity extends Activity {
         reload();
     }
 
+    void toggleSearch() {
+        mSearchOpen = !mSearchOpen;
+        if (mSearchOpen) {
+            mTvTitle.setVisibility(View.GONE);
+            mEtSearch.setVisibility(View.VISIBLE);
+            mBtnSearch.setText("✕");
+            mEtSearch.requestFocus();
+        } else {
+            mEtSearch.setText("");
+            mEtSearch.setVisibility(View.GONE);
+            mTvTitle.setVisibility(View.VISIBLE);
+            mBtnSearch.setText("🔍");
+            if (mReady) reload();
+        }
+    }
+
+    void clearMonthFilter() {
+        mMonthStart = 0;
+        mMonthEnd   = 0;
+        mRowMonthChip.setVisibility(View.GONE);
+        if (mReady) reload();
+    }
+
     private List<ExpenseAdapter.ListItem> buildGroupedList(List<Expense> expenses) {
         List<ExpenseAdapter.ListItem> result = new ArrayList<ExpenseAdapter.ListItem>();
         if (expenses.isEmpty()) return result;
 
         if (!"date_ms".equals(mSortCol)) {
-            // Non-date sort: flat list, no headers
             for (Expense e : expenses) {
                 ExpenseAdapter.ListItem item = new ExpenseAdapter.ListItem();
                 item.type    = ExpenseAdapter.ListItem.TYPE_EXPENSE;
@@ -218,8 +264,6 @@ public class MainActivity extends Activity {
             return result;
         }
 
-        // Date sort: group by year-month
-        // First pass — compute totals per month key (insertion-ordered)
         SimpleDateFormat labelFmt = new SimpleDateFormat("MMMM yyyy", Locale.getDefault());
         Map<String, Double> totals = new LinkedHashMap<String, Double>();
         Map<String, String> labels = new LinkedHashMap<String, String>();
@@ -234,7 +278,6 @@ public class MainActivity extends Activity {
             }
         }
 
-        // Second pass — build list with header before each new month group
         String currentKey = null;
         for (Expense e : expenses) {
             cal.setTimeInMillis(e.dateMs);
@@ -284,9 +327,7 @@ public class MainActivity extends Activity {
         return 0;
     }
 
-    // ============================================================
-    // Static listener classes — D8: no anonymous/non-static
-    // ============================================================
+    // ── Static listener classes ───────────────────────────────────────────────
 
     static class SearchWatcher implements TextWatcher {
         private final MainActivity mMain;
@@ -337,39 +378,21 @@ public class MainActivity extends Activity {
         }
     }
 
-    static class MenuClickListener implements View.OnClickListener {
+    static class BackClickListener implements View.OnClickListener {
         private final MainActivity mMain;
-        MenuClickListener(MainActivity m) { mMain = m; }
-        public void onClick(View v) {
-            PopupMenu popup = new PopupMenu(mMain, v);
-            popup.getMenuInflater().inflate(R.menu.menu_main, popup.getMenu());
-            popup.setOnMenuItemClickListener(new MenuItemClickListener(mMain));
-            popup.show();
-        }
+        BackClickListener(MainActivity m) { mMain = m; }
+        public void onClick(View v) { mMain.finish(); }
     }
 
-    static class MenuItemClickListener implements PopupMenu.OnMenuItemClickListener {
+    static class SearchToggleListener implements View.OnClickListener {
         private final MainActivity mMain;
-        MenuItemClickListener(MainActivity m) { mMain = m; }
-        public boolean onMenuItemClick(MenuItem item) {
-            int id = item.getItemId();
-            if (id == R.id.action_sms_inbox) {
-                mMain.startActivity(new Intent(mMain, SmsInboxActivity.class));
-                return true;
-            }
-            if (id == R.id.action_settings) {
-                mMain.startActivity(new Intent(mMain, SettingsActivity.class));
-                return true;
-            }
-            if (id == R.id.action_trips) {
-                mMain.startActivity(new Intent(mMain, TripListActivity.class));
-                return true;
-            }
-            if (id == R.id.action_pdf_inbox) {
-                mMain.startActivity(new Intent(mMain, PdfInboxActivity.class));
-                return true;
-            }
-            return false;
-        }
+        SearchToggleListener(MainActivity m) { mMain = m; }
+        public void onClick(View v) { mMain.toggleSearch(); }
+    }
+
+    static class ClearMonthListener implements View.OnClickListener {
+        private final MainActivity mMain;
+        ClearMonthListener(MainActivity m) { mMain = m; }
+        public void onClick(View v) { mMain.clearMonthFilter(); }
     }
 }
