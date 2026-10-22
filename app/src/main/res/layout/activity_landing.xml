@@ -8,7 +8,7 @@
     <!-- Top app bar -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="56dp"
+        android:layout_height="44dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
         android:background="@color/appBarWhite"
@@ -57,11 +57,11 @@
                 android:background="@drawable/bg_card"
                 android:layout_marginLeft="12dp"
                 android:layout_marginRight="12dp"
-                android:layout_marginTop="8dp">
+                android:layout_marginTop="2dp">
                 <Button
                     android:id="@+id/btnPrevMonth"
                     android:layout_width="40dp"
-                    android:layout_height="32dp"
+                    android:layout_height="38dp"
                     android:text="‹"
                     android:textSize="18sp"
                     android:textColor="@color/colorPrimary"
@@ -93,7 +93,7 @@
                 <Button
                     android:id="@+id/btnNextMonth"
                     android:layout_width="40dp"
-                    android:layout_height="32dp"
+                    android:layout_height="38dp"
                     android:text="›"
                     android:textSize="18sp"
                     android:textColor="@color/colorPrimary"

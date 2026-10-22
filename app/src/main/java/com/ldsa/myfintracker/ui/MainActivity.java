@@ -69,37 +69,52 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        // Only run the launch-time routing when MainActivity is coming up from
+        // the launcher icon (ACTION_MAIN + CATEGORY_LAUNCHER). Internal
+        // navigation like LandingActivity's "Expenses" / "View all" starts
+        // MainActivity with a plain Intent that has no action/category, and
+        // should land directly on the expense list — otherwise MainActivity
+        // would see landing=home, bounce back to LandingActivity, and the
+        // Expenses screen would never render.
+        Intent launchIntent = getIntent();
+        boolean fromLauncher = launchIntent != null
+            && Intent.ACTION_MAIN.equals(launchIntent.getAction())
+            && launchIntent.hasCategory(Intent.CATEGORY_LAUNCHER);
+
         SharedPreferences prefs = getSharedPreferences(PREF_FILE, MODE_PRIVATE);
-        // One-time migration: force the landing pref to the new Home dashboard
-        // on the first launch after this change. Flag is persisted so it only
-        // ever runs once per device; users can switch back via Settings →
-        // Landing page afterwards. This unsticks anyone who set a landing
-        // (e.g. Trips) that has no path back to Settings.
-        if (!prefs.getBoolean("landing_home_default_v1", false)) {
-            prefs.edit()
-                .putString(PREF_LANDING, "home")
-                .putBoolean("landing_home_default_v1", true)
-                .apply();
+        if (fromLauncher) {
+            // One-time migration: force the landing pref to the new Home dashboard
+            // on the first launch after this change. Flag is persisted so it only
+            // ever runs once per device; users can switch back via Settings →
+            // Landing page afterwards. This unsticks anyone who set a landing
+            // (e.g. Trips) that has no path back to Settings.
+            if (!prefs.getBoolean("landing_home_default_v1", false)) {
+                prefs.edit()
+                    .putString(PREF_LANDING, "home")
+                    .putBoolean("landing_home_default_v1", true)
+                    .apply();
+            }
+            // Default landing is the new Home dashboard. Users can switch to the
+            // legacy expense list, Trips or the SMS inbox via Settings → Landing page.
+            String landing = prefs.getString(PREF_LANDING, "home");
+            if ("home".equals(landing)) {
+                startActivity(new Intent(this, LandingActivity.class));
+                finish();
+                return;
+            }
+            if ("trips".equals(landing)) {
+                startActivity(new Intent(this, TripListActivity.class));
+                finish();
+                return;
+            }
+            if ("sms".equals(landing)) {
+                startActivity(new Intent(this, SmsInboxActivity.class));
+                finish();
+                return;
+            }
+            // else "expenses" — fall through to render this activity's own list.
         }
-        // Default landing is the new Home dashboard. Users can switch to the
-        // legacy expense list, Trips or the SMS inbox via Settings → Landing page.
-        String landing = prefs.getString(PREF_LANDING, "home");
-        if ("home".equals(landing)) {
-            startActivity(new Intent(this, LandingActivity.class));
-            finish();
-            return;
-        }
-        if ("trips".equals(landing)) {
-            startActivity(new Intent(this, TripListActivity.class));
-            finish();
-            return;
-        }
-        if ("sms".equals(landing)) {
-            startActivity(new Intent(this, SmsInboxActivity.class));
-            finish();
-            return;
-        }
-        // else "expenses" — fall through to render this activity's own list.
+        // Fall through: render the SMS/PDF-tabbed expense list.
 
         setContentView(R.layout.activity_main);
         getWindow().setStatusBarColor(0xFF1976D2);
