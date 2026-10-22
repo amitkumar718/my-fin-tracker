@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 820" font-family="Roboto, 'Segoe UI', system-ui, sans-serif">
+  <rect width="900" height="820" fill="#ECEFF1"/>
+  <text x="40" y="40" font-size="20" font-weight="500" fill="#212121">Delete Pattern dialog — before &amp; after</text>
+
+  <!-- BEFORE -->
+  <text x="80" y="76" font-size="11" font-weight="700" fill="#9E9E9E" letter-spacing="1.4">BEFORE · 4-item setItems list</text>
+  <g transform="translate(80,88)">
+    <rect width="360" height="700" rx="24" fill="#F5F5F5" stroke="#CFD8DC"/>
+    <rect y="0" width="360" height="28" rx="24" fill="#1976D2"/><rect y="12" width="360" height="16" fill="#1976D2"/>
+    <!-- dimmed background behind dialog -->
+    <rect y="28" width="360" height="672" rx="0" fill="#000" opacity="0.35"/>
+
+    <!-- dialog -->
+    <g transform="translate(28,220)">
+      <rect width="304" height="240" rx="8" fill="#FFFFFF"/>
+      <text x="20" y="34" font-size="16" font-weight="500" fill="#212121">Delete pattern?  3 linked expenses.</text>
+
+      <!-- items -->
+      <g font-size="15" fill="#1976D2">
+        <text x="20" y="72">Pattern + expenses</text>
+        <line x1="20" y1="88" x2="284" y2="88" stroke="#EEEEEE"/>
+        <text x="20" y="112">Pattern only</text>
+        <line x1="20" y1="128" x2="284" y2="128" stroke="#EEEEEE"/>
+        <text x="20" y="152">Expenses only</text>
+        <line x1="20" y1="168" x2="284" y2="168" stroke="#EEEEEE"/>
+        <text x="20" y="192" fill="#616161">Cancel</text>
+      </g>
+    </g>
+    <text x="180" y="490" font-size="11" fill="#FFFFFF" text-anchor="middle" opacity="0.85">destructive &amp; safe choices mixed</text>
+    <text x="180" y="506" font-size="11" fill="#FFFFFF" text-anchor="middle" opacity="0.85">no visual grouping · tight rows (compact ✓)</text>
+  </g>
+
+  <!-- AFTER -->
+  <text x="470" y="76" font-size="11" font-weight="700" fill="#1976D2" letter-spacing="1.4">AFTER · styled rows, grouped, destructive = red</text>
+  <g transform="translate(470,88)">
+    <rect width="360" height="700" rx="24" fill="#F5F7FA" stroke="#CFD8DC"/>
+    <rect y="0" width="360" height="28" rx="24" fill="#1565C0"/><rect y="12" width="360" height="16" fill="#1565C0"/>
+    <rect y="28" width="360" height="672" rx="0" fill="#000" opacity="0.35"/>
+
+    <!-- dialog -->
+    <g transform="translate(24,210)">
+      <rect width="312" height="298" rx="16" fill="#FFFFFF"/>
+      <!-- title -->
+      <text x="24" y="36" font-size="18" font-weight="500" fill="#212121">Delete pattern?</text>
+      <text x="24" y="60" font-size="13" fill="#616161">3 linked expenses.</text>
+
+      <!-- options as full-width rows w/ ripple feel -->
+      <g transform="translate(0,80)">
+        <!-- 1. pattern + expenses -->
+        <rect x="12" y="0" width="288" height="48" rx="10" fill="#FFF5F5"/>
+        <circle cx="36" cy="24" r="12" fill="#FFEBEE"/>
+        <text x="36" y="29" font-size="12" fill="#D32F2F" text-anchor="middle">✕</text>
+        <text x="58" y="22" font-size="14" font-weight="500" fill="#D32F2F">Pattern + expenses</text>
+        <text x="58" y="38" font-size="11" fill="#9E9E9E">Removes both</text>
+
+        <!-- 2. pattern only -->
+        <g transform="translate(0,56)">
+          <rect x="12" y="0" width="288" height="48" rx="10" fill="#FFFFFF" stroke="#E0E0E0"/>
+          <circle cx="36" cy="24" r="12" fill="#FFF3E0"/>
+          <text x="36" y="29" font-size="11" fill="#EF6C00" text-anchor="middle">⚑</text>
+          <text x="58" y="22" font-size="14" font-weight="500" fill="#212121">Pattern only</text>
+          <text x="58" y="38" font-size="11" fill="#9E9E9E">Expenses become orphans</text>
+        </g>
+
+        <!-- 3. expenses only -->
+        <g transform="translate(0,112)">
+          <rect x="12" y="0" width="288" height="48" rx="10" fill="#FFFFFF" stroke="#E0E0E0"/>
+          <circle cx="36" cy="24" r="12" fill="#E3F2FD"/>
+          <text x="36" y="29" font-size="11" fill="#1976D2" text-anchor="middle">↻</text>
+          <text x="58" y="22" font-size="14" font-weight="500" fill="#212121">Expenses only</text>
+          <text x="58" y="38" font-size="11" fill="#9E9E9E">Keep pattern · redo import</text>
+        </g>
+      </g>
+
+      <!-- Cancel as a text button at bottom -->
+      <g transform="translate(0,254)">
+        <rect x="188" y="0" width="112" height="36" rx="8" fill="#FFFFFF"/>
+        <text x="244" y="23" font-size="14" font-weight="500" fill="#616161" text-anchor="middle">Cancel</text>
+      </g>
+    </g>
+    <text x="180" y="548" font-size="11" fill="#FFFFFF" text-anchor="middle" opacity="0.9">destructive first + red tint · each row has sub-text</text>
+    <text x="180" y="564" font-size="11" fill="#FFFFFF" text-anchor="middle" opacity="0.9">Cancel segregated at bottom · 12dp radius · tap targets ≥44dp</text>
+  </g>
+</svg>

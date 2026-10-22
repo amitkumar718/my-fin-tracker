@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 900" font-family="Roboto, 'Segoe UI', system-ui, sans-serif">
+  <rect width="480" height="900" fill="#ECEFF1"/>
+
+  <g transform="translate(60,20)">
+    <rect width="360" height="860" rx="28" fill="#F5F7FA" stroke="#CFD8DC"/>
+
+    <rect y="0" width="360" height="28" rx="28" fill="#1565C0"/>
+    <rect y="12" width="360" height="16" fill="#1565C0"/>
+
+    <!-- Top app bar -->
+    <rect y="28" width="360" height="56" fill="#FFFFFF"/>
+    <rect y="82" width="360" height="2" fill="#E0E0E0"/>
+    <text x="20" y="62" font-size="20" font-weight="500" fill="#212121">my-fin-tracker</text>
+    <g transform="translate(324,42)">
+      <circle cx="12" cy="12" r="4" fill="none" stroke="#616161" stroke-width="2"/>
+      <g stroke="#616161" stroke-width="2" stroke-linecap="round">
+        <line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/>
+        <line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/>
+        <line x1="5" y1="5" x2="8" y2="8"/><line x1="16" y1="16" x2="19" y2="19"/>
+        <line x1="5" y1="19" x2="8" y2="16"/><line x1="16" y1="8" x2="19" y2="5"/>
+      </g>
+    </g>
+
+    <!-- Month pager — Sep 2026, green status dot -->
+    <g transform="translate(16,96)">
+      <rect width="328" height="40" rx="20" fill="#FFFFFF" stroke="#E0E0E0"/>
+      <text x="24" y="26" font-size="18" fill="#1976D2" text-anchor="middle">‹</text>
+      <text x="140" y="26" font-size="14" font-weight="500" fill="#212121" text-anchor="middle">September 2026</text>
+      <circle cx="180" cy="20" r="4" fill="#2E7D32"/>
+      <text x="304" y="26" font-size="18" fill="#1976D2" text-anchor="middle">›</text>
+    </g>
+
+    <!-- Hero summary — RECONCILED past month -->
+    <g transform="translate(16,152)">
+      <rect width="328" height="150" rx="16" fill="#FFFFFF" stroke="#E0E0E0"/>
+
+      <text x="20" y="28" font-size="11" font-weight="700" fill="#616161" letter-spacing="1.5">SPENT · SEPTEMBER 2026</text>
+      <!-- RECONCILED chip top-right -->
+      <g transform="translate(224,14)">
+        <rect width="90" height="20" rx="10" fill="#E8F5E9" stroke="#A5D6A7"/>
+        <circle cx="10" cy="10" r="3" fill="#2E7D32"/>
+        <text x="18" y="14" font-size="10" font-weight="700" fill="#1B5E20" letter-spacing="0.6">RECONCILED</text>
+      </g>
+
+      <text x="20" y="72" font-size="34" font-weight="500" fill="#212121">₹72,340</text>
+      <!-- no clock badge here -->
+
+      <text x="20" y="94" font-size="12" fill="#616161">58 transactions from statement · HDFC, ICICI, Axis</text>
+
+      <!-- sparkline -->
+      <g transform="translate(20,108)">
+        <polyline fill="none" stroke="#2E7D32" stroke-width="1.5"
+          points="0,20 10,24 20,18 30,26 40,22 50,16 60,28 70,20 80,24 90,30
+                  100,18 110,22 120,26 130,20 140,24 150,30 160,24 170,18
+                  180,22 190,28 200,24 210,20 220,30 230,26 240,22 250,24
+                  260,18 270,28 280,24 288,22"/>
+        <text x="296" y="30" font-size="10" fill="#9E9E9E">30d</text>
+      </g>
+    </g>
+
+    <!-- Attention row — now includes "4 unmatched SMS" from reconcile -->
+    <text x="16" y="332" font-size="11" font-weight="700" fill="#616161" letter-spacing="1.5">NEEDS ATTENTION</text>
+    <g transform="translate(16,344)" font-size="12">
+      <g>
+        <rect width="156" height="34" rx="17" fill="#FFF5F5" stroke="#F8D7DA"/>
+        <circle cx="18" cy="17" r="4" fill="#D32F2F"/>
+        <text x="30" y="21" font-weight="500" fill="#B71C1C">4 unmatched SMS · Sep</text>
+      </g>
+      <g transform="translate(164,0)">
+        <rect width="164" height="34" rx="17" fill="#FFF8E1" stroke="#FFE082"/>
+        <circle cx="18" cy="17" r="4" fill="#F9A825"/>
+        <text x="30" y="21" font-weight="500" fill="#795548">2 months awaiting statement</text>
+      </g>
+    </g>
+
+    <!-- Quick actions same as current month -->
+    <text x="16" y="412" font-size="11" font-weight="700" fill="#616161" letter-spacing="1.5">QUICK ACTIONS</text>
+    <g transform="translate(16,422)">
+      <g>
+        <rect width="78" height="78" rx="14" fill="#FFFFFF" stroke="#E0E0E0"/>
+        <circle cx="39" cy="30" r="18" fill="#E3F2FD"/>
+        <text x="39" y="36" font-size="20" fill="#1976D2" text-anchor="middle">+</text>
+        <text x="39" y="64" font-size="11" font-weight="500" fill="#212121" text-anchor="middle">Add</text>
+      </g>
+      <g transform="translate(84,0)">
+        <rect width="78" height="78" rx="14" fill="#FFFFFF" stroke="#E0E0E0"/>
+        <circle cx="39" cy="30" r="18" fill="#FFF3E0"/>
+        <text x="39" y="36" font-size="16" fill="#EF6C00" text-anchor="middle">PDF</text>
+        <text x="39" y="64" font-size="11" font-weight="500" fill="#212121" text-anchor="middle">Import</text>
+      </g>
+      <g transform="translate(168,0)">
+        <rect width="78" height="78" rx="14" fill="#FFFFFF" stroke="#E0E0E0"/>
+        <circle cx="39" cy="30" r="18" fill="#E0F2F1"/>
+        <text x="39" y="36" font-size="16" fill="#00695C" text-anchor="middle">SMS</text>
+        <text x="39" y="64" font-size="11" font-weight="500" fill="#212121" text-anchor="middle">Scan</text>
+      </g>
+      <g transform="translate(252,0)">
+        <rect width="76" height="78" rx="14" fill="#FFFFFF" stroke="#E0E0E0"/>
+        <circle cx="38" cy="30" r="18" fill="#F3E5F5"/>
+        <text x="38" y="36" font-size="16" fill="#6A1B9A" text-anchor="middle">✈</text>
+        <text x="38" y="64" font-size="11" font-weight="500" fill="#212121" text-anchor="middle">New trip</text>
+      </g>
+    </g>
+
+    <!-- Recent (reconciled) — PDF rows + UNMATCHED SMS row flagged -->
+    <g transform="translate(16,520)">
+      <text y="12" font-size="11" font-weight="700" fill="#616161" letter-spacing="1.5">RECENT</text>
+      <text x="328" y="12" font-size="12" font-weight="500" fill="#1976D2" text-anchor="end">View all ›</text>
+    </g>
+    <g transform="translate(16,542)">
+      <!-- row 1 PDF -->
+      <rect width="328" height="58" rx="12" fill="#FFFFFF" stroke="#E0E0E0"/>
+      <g transform="translate(16,12)">
+        <rect width="30" height="16" rx="8" fill="#1976D2"/>
+        <text x="15" y="12" font-size="9" font-weight="700" fill="#FFFFFF" letter-spacing="0.5" text-anchor="middle">PDF</text>
+      </g>
+      <text x="54" y="24" font-size="14" font-weight="500" fill="#212121">UPI PAYMENT TO AMAZON</text>
+      <text x="16" y="48" font-size="11" fill="#616161">30 Sep · HDFC</text>
+      <text x="312" y="34" font-size="15" font-weight="500" fill="#212121" text-anchor="end">₹1,249.00</text>
+
+      <!-- row 2 PDF -->
+      <g transform="translate(0,66)">
+        <rect width="328" height="58" rx="12" fill="#FFFFFF" stroke="#E0E0E0"/>
+        <g transform="translate(16,12)">
+          <rect width="30" height="16" rx="8" fill="#1976D2"/>
+          <text x="15" y="12" font-size="9" font-weight="700" fill="#FFFFFF" letter-spacing="0.5" text-anchor="middle">PDF</text>
+        </g>
+        <text x="54" y="24" font-size="14" font-weight="500" fill="#212121">NEFT: Rent · Oct</text>
+        <text x="16" y="48" font-size="11" fill="#616161">29 Sep · HDFC</text>
+        <text x="312" y="34" font-size="15" font-weight="500" fill="#212121" text-anchor="end">₹28,000.00</text>
+      </g>
+
+      <!-- row 3 UNMATCHED SMS — pink tint + red UNMATCHED pill -->
+      <g transform="translate(0,132)">
+        <rect width="328" height="58" rx="12" fill="#FFF5F5" stroke="#F8D7DA"/>
+        <g transform="translate(16,12)">
+          <rect width="30" height="16" rx="8" fill="#26A69A"/>
+          <text x="15" y="12" font-size="9" font-weight="700" fill="#FFFFFF" letter-spacing="0.5" text-anchor="middle">SMS</text>
+        </g>
+        <g transform="translate(52,12)">
+          <rect width="80" height="16" rx="8" fill="#D32F2F"/>
+          <text x="40" y="12" font-size="9" font-weight="700" fill="#FFFFFF" letter-spacing="0.5" text-anchor="middle">UNMATCHED</text>
+        </g>
+        <text x="16" y="48" font-size="12" fill="#B71C1C">UPI/mystery vendor · 25 Sep · ICICI</text>
+        <text x="312" y="34" font-size="15" font-weight="500" fill="#212121" text-anchor="end">₹425.00</text>
+      </g>
+
+      <!-- row 4 PDF -->
+      <g transform="translate(0,198)">
+        <rect width="328" height="58" rx="12" fill="#FFFFFF" stroke="#E0E0E0"/>
+        <g transform="translate(16,12)">
+          <rect width="30" height="16" rx="8" fill="#1976D2"/>
+          <text x="15" y="12" font-size="9" font-weight="700" fill="#FFFFFF" letter-spacing="0.5" text-anchor="middle">PDF</text>
+        </g>
+        <text x="54" y="24" font-size="14" font-weight="500" fill="#212121">POS Swiggy Instamart</text>
+        <text x="16" y="48" font-size="11" fill="#616161">24 Sep · Axis Credit</text>
+        <text x="312" y="34" font-size="15" font-weight="500" fill="#212121" text-anchor="end">₹687.00</text>
+      </g>
+    </g>
+
+    <!-- Footer -->
+    <g transform="translate(16,830)" font-size="12" font-weight="500" fill="#1976D2">
+      <text x="0" y="14">All expenses</text>
+      <text x="120" y="14">Trips</text>
+      <text x="180" y="14">Banks</text>
+      <text x="330" y="14" text-anchor="end" fill="#9E9E9E">v0.17</text>
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 820" font-family="Roboto, 'Segoe UI', system-ui, sans-serif">
+  <rect width="900" height="820" fill="#ECEFF1"/>
+  <text x="40" y="40" font-size="20" font-weight="500" fill="#212121">Debug → All Patterns — before &amp; after</text>
+
+  <!-- BEFORE -->
+  <text x="80" y="76" font-size="11" font-weight="700" fill="#9E9E9E" letter-spacing="1.4">BEFORE</text>
+  <g transform="translate(80,88)">
+    <rect width="360" height="700" rx="24" fill="#F5F5F5" stroke="#CFD8DC"/>
+    <rect y="0" width="360" height="28" rx="24" fill="#1976D2"/><rect y="12" width="360" height="16" fill="#1976D2"/>
+    <rect y="28" width="360" height="48" fill="#1976D2"/>
+    <text x="20" y="58" font-size="16" fill="#FFFFFF" font-weight="500">All Patterns</text>
+
+    <!-- rows with inline text badges -->
+    <g transform="translate(12,88)" font-family="Roboto, system-ui, sans-serif">
+      <!-- row 1 -->
+      <rect width="336" height="60" rx="4" fill="#FFFFFF"/>
+      <text x="12" y="22" font-size="14" font-weight="700" fill="#212121">HDFC Statement UPI</text>
+      <text x="12" y="44" font-size="11" fill="#757575">[PDF] HDFC Bank  ·  42 expenses</text>
+
+      <g transform="translate(0,68)">
+        <rect width="336" height="60" rx="4" fill="#FFFFFF"/>
+        <text x="12" y="22" font-size="14" font-weight="700" fill="#212121">HDFC NEFT</text>
+        <text x="12" y="44" font-size="11" fill="#757575">[PDF] HDFC Bank  ·  7 expenses</text>
+      </g>
+      <g transform="translate(0,136)">
+        <rect width="336" height="60" rx="4" fill="#FFFFFF"/>
+        <text x="12" y="22" font-size="14" font-weight="700" fill="#212121">PDF Pattern 03 Oct</text>
+        <text x="12" y="44" font-size="11" fill="#757575">[PDF] [ORPHAN] (orphan)  ·  0 expenses</text>
+      </g>
+      <g transform="translate(0,204)">
+        <rect width="336" height="60" rx="4" fill="#FFFFFF"/>
+        <text x="12" y="22" font-size="14" font-weight="700" fill="#212121">ICICI UPI SMS</text>
+        <text x="12" y="44" font-size="11" fill="#757575">[SMS] ICICI Bank  ·  128 expenses</text>
+      </g>
+      <g transform="translate(0,272)">
+        <rect width="336" height="60" rx="4" fill="#FFFFFF"/>
+        <text x="12" y="22" font-size="14" font-weight="700" fill="#212121">Axis Credit Card</text>
+        <text x="12" y="44" font-size="11" fill="#757575">[SMS] Axis Bank  ·  36 expenses</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- AFTER -->
+  <text x="470" y="76" font-size="11" font-weight="700" fill="#1976D2" letter-spacing="1.4">AFTER</text>
+  <g transform="translate(470,88)">
+    <rect width="360" height="700" rx="24" fill="#F5F7FA" stroke="#CFD8DC"/>
+    <rect y="0" width="360" height="28" rx="24" fill="#1565C0"/><rect y="12" width="360" height="16" fill="#1565C0"/>
+    <rect y="28" width="360" height="52" fill="#FFFFFF"/><rect y="78" width="360" height="2" fill="#E0E0E0"/>
+    <!-- back icon -->
+    <text x="18" y="60" font-size="22" fill="#212121">‹</text>
+    <text x="46" y="60" font-size="20" font-weight="500" fill="#212121">All Patterns</text>
+    <text x="340" y="60" font-size="12" fill="#9E9E9E" text-anchor="end">5</text>
+
+    <!-- filter chips row -->
+    <g transform="translate(16,96)" font-size="12">
+      <rect width="52" height="28" rx="14" fill="#1976D2"/>
+      <text x="26" y="18" fill="#FFFFFF" font-weight="500" text-anchor="middle">All</text>
+
+      <g transform="translate(60,0)">
+        <rect width="52" height="28" rx="14" fill="#FFFFFF" stroke="#CFD8DC"/>
+        <text x="26" y="18" fill="#616161" text-anchor="middle">PDF</text>
+      </g>
+      <g transform="translate(120,0)">
+        <rect width="56" height="28" rx="14" fill="#FFFFFF" stroke="#CFD8DC"/>
+        <text x="28" y="18" fill="#616161" text-anchor="middle">SMS</text>
+      </g>
+      <g transform="translate(184,0)">
+        <rect width="76" height="28" rx="14" fill="#FFFFFF" stroke="#CFD8DC"/>
+        <text x="38" y="18" fill="#616161" text-anchor="middle">Orphan</text>
+      </g>
+    </g>
+
+    <!-- card rows with badges -->
+    <g transform="translate(12,140)">
+      <!-- row 1 -->
+      <rect width="336" height="68" rx="12" fill="#FFFFFF" stroke="#E0E0E0"/>
+      <text x="16" y="26" font-size="15" font-weight="500" fill="#212121">HDFC Statement UPI</text>
+      <!-- PDF chip -->
+      <g transform="translate(195,13)">
+        <rect width="34" height="18" rx="9" fill="#1976D2"/>
+        <text x="17" y="13" font-size="9" font-weight="700" fill="#FFFFFF" letter-spacing="0.5" text-anchor="middle">PDF</text>
+      </g>
+      <text x="16" y="50" font-size="12" fill="#616161">HDFC Bank  ·  42 expenses</text>
+      <text x="320" y="40" font-size="18" fill="#9E9E9E" text-anchor="end">›</text>
+
+      <!-- row 2 -->
+      <g transform="translate(0,78)">
+        <rect width="336" height="68" rx="12" fill="#FFFFFF" stroke="#E0E0E0"/>
+        <text x="16" y="26" font-size="15" font-weight="500" fill="#212121">HDFC NEFT</text>
+        <g transform="translate(132,13)">
+          <rect width="34" height="18" rx="9" fill="#1976D2"/>
+          <text x="17" y="13" font-size="9" font-weight="700" fill="#FFFFFF" letter-spacing="0.5" text-anchor="middle">PDF</text>
+        </g>
+        <text x="16" y="50" font-size="12" fill="#616161">HDFC Bank  ·  7 expenses</text>
+        <text x="320" y="40" font-size="18" fill="#9E9E9E" text-anchor="end">›</text>
+      </g>
+
+      <!-- row 3 — orphan highlighted -->
+      <g transform="translate(0,156)">
+        <rect width="336" height="68" rx="12" fill="#FFF5F5" stroke="#F8D7DA"/>
+        <text x="16" y="26" font-size="15" font-weight="500" fill="#212121">PDF Pattern 03 Oct</text>
+        <g transform="translate(187,13)">
+          <rect width="34" height="18" rx="9" fill="#1976D2"/>
+          <text x="17" y="13" font-size="9" font-weight="700" fill="#FFFFFF" letter-spacing="0.5" text-anchor="middle">PDF</text>
+        </g>
+        <g transform="translate(225,13)">
+          <rect width="54" height="18" rx="9" fill="#D32F2F"/>
+          <text x="27" y="13" font-size="9" font-weight="700" fill="#FFFFFF" letter-spacing="0.5" text-anchor="middle">ORPHAN</text>
+        </g>
+        <text x="16" y="50" font-size="12" fill="#616161">no bank  ·  0 expenses</text>
+        <text x="320" y="40" font-size="18" fill="#9E9E9E" text-anchor="end">›</text>
+      </g>
+
+      <!-- row 4 -->
+      <g transform="translate(0,234)">
+        <rect width="336" height="68" rx="12" fill="#FFFFFF" stroke="#E0E0E0"/>
+        <text x="16" y="26" font-size="15" font-weight="500" fill="#212121">ICICI UPI SMS</text>
+        <g transform="translate(145,13)">
+          <rect width="34" height="18" rx="9" fill="#26A69A"/>
+          <text x="17" y="13" font-size="9" font-weight="700" fill="#FFFFFF" letter-spacing="0.5" text-anchor="middle">SMS</text>
+        </g>
+        <text x="16" y="50" font-size="12" fill="#616161">ICICI Bank  ·  128 expenses</text>
+        <text x="320" y="40" font-size="18" fill="#9E9E9E" text-anchor="end">›</text>
+      </g>
+
+      <!-- row 5 -->
+      <g transform="translate(0,312)">
+        <rect width="336" height="68" rx="12" fill="#FFFFFF" stroke="#E0E0E0"/>
+        <text x="16" y="26" font-size="15" font-weight="500" fill="#212121">Axis Credit Card</text>
+        <g transform="translate(144,13)">
+          <rect width="34" height="18" rx="9" fill="#26A69A"/>
+          <text x="17" y="13" font-size="9" font-weight="700" fill="#FFFFFF" letter-spacing="0.5" text-anchor="middle">SMS</text>
+        </g>
+        <text x="16" y="50" font-size="12" fill="#616161">Axis Bank  ·  36 expenses</text>
+        <text x="320" y="40" font-size="18" fill="#9E9E9E" text-anchor="end">›</text>
+      </g>
+    </g>
+  </g>
+</svg>
