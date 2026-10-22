@@ -39,7 +39,7 @@ public class DropboxSettingsActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_dropbox_settings);
-        getWindow().setStatusBarColor(0xFF1976D2);
+        getWindow().setStatusBarColor(0xFF1565C0);
 
         mEtAppKey     = (EditText) findViewById(R.id.etAppKey);
         mEtAppSecret  = (EditText) findViewById(R.id.etAppSecret);

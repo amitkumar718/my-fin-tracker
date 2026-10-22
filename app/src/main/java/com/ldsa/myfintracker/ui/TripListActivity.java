@@ -33,7 +33,7 @@ public class TripListActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_trip_list);
-        setTitle(R.string.label_trips);
+        getWindow().setStatusBarColor(0xFF1565C0);
 
         mDb       = ExpenseDatabase.getInstance(this);
         mListView = (ListView) findViewById(R.id.listTrips);
@@ -45,6 +45,8 @@ public class TripListActivity extends Activity {
 
         Button btnNew = (Button) findViewById(R.id.btnNewTrip);
         btnNew.setOnClickListener(new NewTripClickListener(this));
+        findViewById(R.id.btnAdd).setOnClickListener(new NewTripClickListener(this));
+        findViewById(R.id.btnBack).setOnClickListener(new BackListener(this));
     }
 
     @Override
@@ -89,6 +91,12 @@ public class TripListActivity extends Activity {
     }
 
     // ── Static inner classes ──────────────────────────────────────
+
+    static class BackListener implements View.OnClickListener {
+        private final TripListActivity mActivity;
+        BackListener(TripListActivity a) { mActivity = a; }
+        public void onClick(View v) { mActivity.finish(); }
+    }
 
     static class LoadTripsThread extends Thread {
         private final TripListActivity mActivity;

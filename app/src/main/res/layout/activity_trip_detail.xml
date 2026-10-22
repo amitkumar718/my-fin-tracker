@@ -3,7 +3,40 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#F0F4F8">
+    android:background="@color/landingBackground">
+
+    <!-- Top bar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="@color/appBarWhite"
+        android:paddingLeft="4dp"
+        android:paddingRight="4dp">
+        <Button
+            android:id="@+id/btnBack"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:text="←"
+            android:textSize="18sp"
+            android:textColor="@color/colorPrimary"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:minWidth="0dp"
+            android:minHeight="0dp"
+            android:padding="0dp" />
+        <TextView
+            android:id="@+id/tvTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Trip Detail"
+            android:textColor="@color/textPrimary"
+            android:textSize="20sp"
+            android:paddingLeft="4dp" />
+    </LinearLayout>
+    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/hairline" />
+
 
     <!-- Trip header card -->
     <LinearLayout

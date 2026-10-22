@@ -83,6 +83,7 @@ public class DropboxPdfInboxActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_dropbox_pdf_inbox);
+        getWindow().setStatusBarColor(0xFF1565C0);
 
         mDb = ExpenseDatabase.getInstance(this);
         mSenderId = getIntent().getLongExtra(EXTRA_SENDER_ID, -1L);
@@ -99,6 +100,8 @@ public class DropboxPdfInboxActivity extends Activity {
         mBtnDownload.setOnClickListener(new DownloadClickListener(this));
         btnCancel.setOnClickListener(new CancelClickListener(this));
         ((TextView) findViewById(R.id.btnDbxChangeToken)).setOnClickListener(new ChangeTokenClickListener(this));
+        findViewById(R.id.btnBack).setOnClickListener(new BackListener(this));
+        findViewById(R.id.btnRefresh).setOnClickListener(new RefreshListener(this));
 
         // Build set of already-imported dropbox paths (dedupe)
         for (PdfStatement s : mDb.getAllPdfStatements()) {
@@ -351,6 +354,18 @@ public class DropboxPdfInboxActivity extends Activity {
     // ============================================================
     // Adapter
     // ============================================================
+
+    static class BackListener implements View.OnClickListener {
+        private final DropboxPdfInboxActivity mA;
+        BackListener(DropboxPdfInboxActivity a) { mA = a; }
+        public void onClick(View v) { mA.finish(); }
+    }
+
+    static class RefreshListener implements View.OnClickListener {
+        private final DropboxPdfInboxActivity mA;
+        RefreshListener(DropboxPdfInboxActivity a) { mA = a; }
+        public void onClick(View v) { mA.startList(); }
+    }
 
     static class DbxPdfAdapter extends BaseAdapter {
         private final DropboxPdfInboxActivity mOuter;

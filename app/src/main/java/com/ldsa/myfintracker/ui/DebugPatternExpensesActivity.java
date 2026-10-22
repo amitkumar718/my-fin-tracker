@@ -37,11 +37,12 @@ public class DebugPatternExpensesActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_debug_pattern_expenses);
-        setTitle(R.string.title_debug_pattern_expenses);
+        getWindow().setStatusBarColor(0xFF1565C0);
         mPatternId = getIntent().getLongExtra(EXTRA_PATTERN_ID, -1L);
         mDb = ExpenseDatabase.getInstance(this);
         ((Button) findViewById(R.id.btnEditPattern))
             .setOnClickListener(new EditPatternClickListener(this));
+        findViewById(R.id.btnBack).setOnClickListener(new BackListener(this));
     }
 
     @Override
@@ -96,6 +97,12 @@ public class DebugPatternExpensesActivity extends Activity {
             i.putExtra(SmsExtractConfigActivity.EXTRA_PATTERN_ID, mPattern.id);
             startActivity(i);
         }
+    }
+
+    static class BackListener implements View.OnClickListener {
+        private final DebugPatternExpensesActivity mA;
+        BackListener(DebugPatternExpensesActivity a) { mA = a; }
+        public void onClick(View v) { mA.finish(); }
     }
 
     static class EditPatternClickListener implements View.OnClickListener {

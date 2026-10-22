@@ -59,7 +59,7 @@ public class PdfLinePickerActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_pdf_line_picker);
-        getWindow().setStatusBarColor(0xFF1976D2);
+        getWindow().setStatusBarColor(0xFF1565C0);
 
         mTvBankPreview   = (TextView) findViewById(R.id.tvBankLinePreview);
         mTvPeriodPreview = (TextView) findViewById(R.id.tvPeriodLinePreview);

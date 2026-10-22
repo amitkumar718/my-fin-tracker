@@ -47,10 +47,10 @@ public class PdfLinesActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_pdf_lines);
-        getWindow().setStatusBarColor(0xFF1976D2);
+        getWindow().setStatusBarColor(0xFF1565C0);
         mDb = ExpenseDatabase.getInstance(this);
 
-        mTvHeader = (TextView) findViewById(R.id.tvPdfLinesHeader);
+        mTvHeader = (TextView) findViewById(R.id.tvTitle);
         mTvStatus = (TextView) findViewById(R.id.tvPdfStatus);
         mTvEmpty  = (TextView) findViewById(R.id.tvPdfEmpty);
         mListView = (ListView) findViewById(R.id.listPdfLines);
@@ -58,6 +58,7 @@ public class PdfLinesActivity extends Activity {
         mAdapter = new PdfLineAdapter(this);
         mListView.setAdapter(mAdapter);
         mListView.setOnItemClickListener(new LineClickListener(this));
+        findViewById(R.id.btnBack).setOnClickListener(new BackListener(this));
 
         long stmtId = getIntent().getLongExtra(EXTRA_STATEMENT_ID, -1L);
         if (stmtId < 0) { finish(); return; }
@@ -220,6 +221,12 @@ public class PdfLinesActivity extends Activity {
     }
 
     // ── Listener classes ──────────────────────────────────────────────────────
+
+    static class BackListener implements View.OnClickListener {
+        private final PdfLinesActivity mA;
+        BackListener(PdfLinesActivity a) { mA = a; }
+        public void onClick(View v) { mA.finish(); }
+    }
 
     static class LineClickListener implements AdapterView.OnItemClickListener {
         private final PdfLinesActivity mA;

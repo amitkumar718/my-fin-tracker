@@ -62,12 +62,12 @@ public class BankConfigActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_bank_config);
-        getWindow().setStatusBarColor(0xFF1976D2);
+        getWindow().setStatusBarColor(0xFF1565C0);
 
         mSenderId = getIntent().getLongExtra(EXTRA_SENDER_ID, -1L);
         mDb = ExpenseDatabase.getInstance(this);
 
-        mTvTitle             = (TextView)     findViewById(R.id.tvBankConfigTitle);
+        mTvTitle             = (TextView)     findViewById(R.id.tvTitle);
         mBtnDeleteBank       = (TextView)     findViewById(R.id.btnDeleteBank);
         mEtBankName          = (EditText)     findViewById(R.id.etBankName);
         mContainerSenderIds  = (LinearLayout) findViewById(R.id.containerSenderIds);

@@ -60,7 +60,7 @@ public class StatementImportActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_statement_import);
-        getWindow().setStatusBarColor(0xFF1976D2);
+        getWindow().setStatusBarColor(0xFF1565C0);
         mDb = ExpenseDatabase.getInstance(this);
 
         mSpinnerBank  = (Spinner)  findViewById(R.id.spinnerBank);
@@ -78,6 +78,7 @@ public class StatementImportActivity extends Activity {
         btnPick.setOnClickListener(new PickFileClickListener(this));
         mBtnScan.setOnClickListener(new ScanClickListener(this));
         mBtnImport.setOnClickListener(new ImportClickListener(this));
+        findViewById(R.id.btnBack).setOnClickListener(new BackListener(this));
 
         loadSenders();
     }
@@ -424,6 +425,12 @@ public class StatementImportActivity extends Activity {
     // ============================================================
     // Static listener classes
     // ============================================================
+
+    static class BackListener implements View.OnClickListener {
+        private final StatementImportActivity mA;
+        BackListener(StatementImportActivity a) { mA = a; }
+        public void onClick(View v) { mA.finish(); }
+    }
 
     static class PickFileClickListener implements View.OnClickListener {
         private final StatementImportActivity mA;

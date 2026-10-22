@@ -22,11 +22,11 @@
             android:textColor="@color/textPrimary"
             android:textSize="20sp" />
         <Button
-            android:id="@+id/btnSettings"
+            android:id="@+id/btnSearch"
             android:layout_width="40dp"
             android:layout_height="40dp"
-            android:text="⚙"
-            android:textSize="18sp"
+            android:text="🔍"
+            android:textSize="16sp"
             android:textColor="@color/textMuted"
             android:background="?android:attr/selectableItemBackgroundBorderless"
             android:minWidth="0dp"

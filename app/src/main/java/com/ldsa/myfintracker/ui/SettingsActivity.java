@@ -32,6 +32,7 @@ public class SettingsActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
+        getWindow().setStatusBarColor(0xFF1565C0);
 
         mDb = ExpenseDatabase.getInstance(this);
 
@@ -54,6 +55,7 @@ public class SettingsActivity extends Activity {
         rowBanks.setOnClickListener(new BanksRowClickListener(this));
         rowDropbox.setOnClickListener(new DropboxRowClickListener(this));
         rowDebug.setOnClickListener(new DebugRowClickListener(this));
+        findViewById(R.id.btnBack).setOnClickListener(new BackListener(this));
     }
 
     // Mapping between the four spinner positions and the pref value.
@@ -110,6 +112,12 @@ public class SettingsActivity extends Activity {
     }
 
     // ── Static listener classes ───────────────────────────────────────────────
+
+    static class BackListener implements View.OnClickListener {
+        private final SettingsActivity mA;
+        BackListener(SettingsActivity a) { mA = a; }
+        public void onClick(View v) { mA.finish(); }
+    }
 
     static class LandingSelectedListener implements AdapterView.OnItemSelectedListener {
         private final SettingsActivity mA;

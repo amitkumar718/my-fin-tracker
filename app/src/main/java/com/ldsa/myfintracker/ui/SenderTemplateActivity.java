@@ -27,6 +27,7 @@ public class SenderTemplateActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sender_template);
+        getWindow().setStatusBarColor(0xFF1565C0);
 
         mDb       = ExpenseDatabase.getInstance(this);
         mSenderId = getIntent().getLongExtra(EXTRA_SENDER_ID, -1L);
@@ -42,6 +43,7 @@ public class SenderTemplateActivity extends Activity {
         }
 
         btnSave.setOnClickListener(new SaveClickListener(this));
+        findViewById(R.id.btnBack).setOnClickListener(new BackListener(this));
     }
 
     private void populate(SenderConfig s) {
@@ -78,6 +80,12 @@ public class SenderTemplateActivity extends Activity {
         mDb.insertSender(s);
         Toast.makeText(this, R.string.msg_sender_saved, Toast.LENGTH_SHORT).show();
         finish();
+    }
+
+    static class BackListener implements View.OnClickListener {
+        private final SenderTemplateActivity mA;
+        BackListener(SenderTemplateActivity a) { mA = a; }
+        public void onClick(View v) { mA.finish(); }
     }
 
     static class SaveClickListener implements View.OnClickListener {

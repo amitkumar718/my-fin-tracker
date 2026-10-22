@@ -29,7 +29,8 @@ public class DebugPatternsActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_debug_patterns);
-        setTitle(R.string.title_debug_patterns);
+        getWindow().setStatusBarColor(0xFF1565C0);
+        findViewById(R.id.btnBack).setOnClickListener(new BackListener(this));
     }
 
     @Override
@@ -61,6 +62,12 @@ public class DebugPatternsActivity extends Activity {
         Intent i = new Intent(this, DebugPatternExpensesActivity.class);
         i.putExtra(DebugPatternExpensesActivity.EXTRA_PATTERN_ID, patternId);
         startActivity(i);
+    }
+
+    static class BackListener implements View.OnClickListener {
+        private final DebugPatternsActivity mA;
+        BackListener(DebugPatternsActivity a) { mA = a; }
+        public void onClick(View v) { mA.finish(); }
     }
 
     static class PatternAdapter extends BaseAdapter {

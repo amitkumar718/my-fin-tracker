@@ -37,7 +37,7 @@ public class TripDetailActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_trip_detail);
-        setTitle(R.string.title_trip_detail);
+        getWindow().setStatusBarColor(0xFF1565C0);
 
         mDb       = ExpenseDatabase.getInstance(this);
         mListView = (ListView) findViewById(R.id.listTripExpenses);
@@ -49,6 +49,7 @@ public class TripDetailActivity extends Activity {
         mAdapter = new ExpenseAdapter(this, new ArrayList<Expense>());
         mListView.setAdapter(mAdapter);
         mListView.setOnItemClickListener(new ExpenseClickListener(this));
+        findViewById(R.id.btnBack).setOnClickListener(new BackListener(this));
 
         long tripId = getIntent().getLongExtra(EXTRA_TRIP_ID, -1);
         if (tripId >= 0) {
@@ -85,6 +86,12 @@ public class TripDetailActivity extends Activity {
     }
 
     // ── Static inner classes ──────────────────────────────────────
+
+    static class BackListener implements View.OnClickListener {
+        private final TripDetailActivity mActivity;
+        BackListener(TripDetailActivity a) { mActivity = a; }
+        public void onClick(View v) { mActivity.finish(); }
+    }
 
     static class LoadDetailThread extends Thread {
         private final TripDetailActivity mActivity;

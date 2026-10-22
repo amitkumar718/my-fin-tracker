@@ -40,6 +40,7 @@ public class AddExpenseActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_expense);
+        getWindow().setStatusBarColor(0xFF1565C0);
 
         mDb             = ExpenseDatabase.getInstance(this);
         mSelectedDateMs = System.currentTimeMillis();
@@ -61,6 +62,7 @@ public class AddExpenseActivity extends Activity {
         mEtDate.setOnClickListener(new DateClickListener(this));
         mEtTime.setOnClickListener(new TimeClickListener(this));
         btnSave.setOnClickListener(new SaveClickListener(this));
+        findViewById(R.id.btnBack).setOnClickListener(new BackListener(this));
     }
 
     void onDateSet(int year, int month, int day) {
@@ -122,6 +124,12 @@ public class AddExpenseActivity extends Activity {
         mDb.insertExpense(expense);
         Toast.makeText(this, R.string.msg_expense_saved, Toast.LENGTH_SHORT).show();
         finish();
+    }
+
+    static class BackListener implements View.OnClickListener {
+        private final AddExpenseActivity mA;
+        BackListener(AddExpenseActivity a) { mA = a; }
+        public void onClick(View v) { mA.finish(); }
     }
 
     static class DateClickListener implements View.OnClickListener {

@@ -31,46 +31,55 @@
         <activity
             android:name=".ui.MapExpenseActivity"
             android:label="@string/title_sms_map"
+            android:theme="@android:style/Theme.Material.Light.NoActionBar"
             android:exported="false" />
 
         <activity
             android:name=".ui.ExpenseDetailActivity"
             android:label="@string/title_expense_detail"
+            android:theme="@android:style/Theme.Material.Light.NoActionBar"
             android:exported="false" />
 
         <activity
             android:name=".ui.AddExpenseActivity"
             android:label="@string/title_add_expense"
+            android:theme="@android:style/Theme.Material.Light.NoActionBar"
             android:exported="false" />
 
         <activity
             android:name=".ui.SettingsActivity"
             android:label="@string/title_settings"
+            android:theme="@android:style/Theme.Material.Light.NoActionBar"
             android:exported="false" />
 
         <activity
             android:name=".ui.SenderTemplateActivity"
             android:label="@string/title_sender_template"
+            android:theme="@android:style/Theme.Material.Light.NoActionBar"
             android:exported="false" />
 
         <activity
             android:name=".ui.SmsExtractConfigActivity"
             android:label="@string/title_sms_extract_config"
+            android:theme="@android:style/Theme.Material.Light.NoActionBar"
             android:exported="false" />
 
         <activity
             android:name=".ui.TripListActivity"
             android:label="@string/label_trips"
+            android:theme="@android:style/Theme.Material.Light.NoActionBar"
             android:exported="false" />
 
         <activity
             android:name=".ui.TripDetailActivity"
             android:label="@string/title_trip_detail"
+            android:theme="@android:style/Theme.Material.Light.NoActionBar"
             android:exported="false" />
 
         <activity
             android:name=".ui.EditTripActivity"
             android:label="@string/label_new_trip"
+            android:theme="@android:style/Theme.Material.Light.NoActionBar"
             android:exported="false" />
 
         <activity
@@ -94,11 +103,13 @@
         <activity
             android:name=".ui.DropboxPdfInboxActivity"
             android:label="@string/title_dropbox_pdf_inbox"
+            android:theme="@android:style/Theme.Material.Light.NoActionBar"
             android:exported="false" />
 
         <activity
             android:name=".ui.StatementScanActivity"
             android:label="@string/title_statement_scan"
+            android:theme="@android:style/Theme.Material.Light.NoActionBar"
             android:exported="false" />
 
         <activity
@@ -153,21 +164,25 @@
         <activity
             android:name=".ui.DebugActivity"
             android:label="@string/title_debug"
+            android:theme="@android:style/Theme.Material.Light.NoActionBar"
             android:exported="false" />
 
         <activity
             android:name=".ui.DebugPatternsActivity"
             android:label="@string/title_debug_patterns"
+            android:theme="@android:style/Theme.Material.Light.NoActionBar"
             android:exported="false" />
 
         <activity
             android:name=".ui.DebugOrphansActivity"
             android:label="@string/title_debug_orphans"
+            android:theme="@android:style/Theme.Material.Light.NoActionBar"
             android:exported="false" />
 
         <activity
             android:name=".ui.DebugPatternExpensesActivity"
             android:label="@string/title_debug_pattern_expenses"
+            android:theme="@android:style/Theme.Material.Light.NoActionBar"
             android:exported="false" />
 
     </application>

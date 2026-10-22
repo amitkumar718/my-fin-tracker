@@ -17,11 +17,12 @@ public class DebugActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_debug);
-        setTitle(R.string.title_debug);
+        getWindow().setStatusBarColor(0xFF1565C0);
         ((LinearLayout) findViewById(R.id.rowPatterns))
             .setOnClickListener(new PatternsClickListener(this));
         ((LinearLayout) findViewById(R.id.rowOrphans))
             .setOnClickListener(new OrphansClickListener(this));
+        findViewById(R.id.btnBack).setOnClickListener(new BackListener(this));
     }
 
     @Override
@@ -40,6 +41,11 @@ public class DebugActivity extends Activity {
     void openPatterns() { startActivity(new Intent(this, DebugPatternsActivity.class)); }
     void openOrphans()  { startActivity(new Intent(this, DebugOrphansActivity.class));  }
 
+    static class BackListener implements View.OnClickListener {
+        private final DebugActivity mA;
+        BackListener(DebugActivity a) { mA = a; }
+        public void onClick(View v) { mA.finish(); }
+    }
     static class PatternsClickListener implements View.OnClickListener {
         private final DebugActivity mA;
         PatternsClickListener(DebugActivity a) { mA = a; }

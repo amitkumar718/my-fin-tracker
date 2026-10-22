@@ -148,7 +148,7 @@ public class MapExpenseActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sms_map);
-        getWindow().setStatusBarColor(0xFF1976D2);
+        getWindow().setStatusBarColor(0xFF1565C0);
 
         mSenderAddress     = getIntent().getStringExtra(EXTRA_SENDER_ADDRESS);
         mTransLine        = getIntent().getStringExtra(EXTRA_TRANS_LINE);
@@ -234,6 +234,7 @@ public class MapExpenseActivity extends Activity {
         mEtDate.setOnClickListener(new DateClickListener(this));
         mEtTime.setOnClickListener(new TimeClickListener(this));
         btnSave.setOnClickListener(new SaveClickListener(this));
+        findViewById(R.id.btnBack).setOnClickListener(new BackListener(this));
 
         if (mStatementId >= 0 && mPdfStatement != null && !mPdfLoaded) {
             startPdfLoad(null);
@@ -1398,6 +1399,12 @@ public class MapExpenseActivity extends Activity {
         public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
         public void onTextChanged(CharSequence s, int start, int before, int count) {}
         public void afterTextChanged(Editable s) { mA.updateRegexPreview(); }
+    }
+
+    static class BackListener implements View.OnClickListener {
+        private final MapExpenseActivity mA;
+        BackListener(MapExpenseActivity a) { mA = a; }
+        public void onClick(View v) { mA.finish(); }
     }
 
     static class TokenButtonListener implements View.OnClickListener {

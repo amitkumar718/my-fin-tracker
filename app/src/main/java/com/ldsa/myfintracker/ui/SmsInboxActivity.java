@@ -6,8 +6,6 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
@@ -46,6 +44,7 @@ public class SmsInboxActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sms_inbox);
+        getWindow().setStatusBarColor(0xFF1565C0);
 
         mDb = ExpenseDatabase.getInstance(this);
 
@@ -59,6 +58,8 @@ public class SmsInboxActivity extends Activity {
         mListView.setOnItemClickListener(new SmsClickListener(this));
         mListView.setOnItemLongClickListener(new SmsLongClickListener(this));
         mBtnNewMatches.setOnClickListener(new NewMatchesClickListener(this));
+        findViewById(R.id.btnBack).setOnClickListener(new BackListener(this));
+        findViewById(R.id.btnRefresh).setOnClickListener(new RefreshListener(this));
 
         checkPermissionAndLoad();
     }
@@ -69,22 +70,7 @@ public class SmsInboxActivity extends Activity {
         if (hasSmsPermission()) loadSms();
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_sms, menu);
-        return true;
-    }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-        if (id == R.id.action_refresh)  { loadSms(); return true; }
-        if (id == R.id.action_settings) {
-            startActivity(new Intent(this, SettingsActivity.class));
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
 
     void openSmsMap(SmsAdapter.ListItem item) {
         Intent i = new Intent(this, MapExpenseActivity.class);
@@ -352,6 +338,18 @@ public class SmsInboxActivity extends Activity {
         public void run() {
             if (!mActivity.isFinishing()) mActivity.onAutoCreateDone(mCount, mLog);
         }
+    }
+
+    static class BackListener implements View.OnClickListener {
+        private final SmsInboxActivity mA;
+        BackListener(SmsInboxActivity a) { mA = a; }
+        public void onClick(View v) { mA.finish(); }
+    }
+
+    static class RefreshListener implements View.OnClickListener {
+        private final SmsInboxActivity mA;
+        RefreshListener(SmsInboxActivity a) { mA = a; }
+        public void onClick(View v) { mA.loadSms(); }
     }
 
     static class NewMatchesClickListener implements View.OnClickListener {

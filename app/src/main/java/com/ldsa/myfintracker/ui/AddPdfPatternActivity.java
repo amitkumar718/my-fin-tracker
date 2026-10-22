@@ -86,7 +86,7 @@ public class AddPdfPatternActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_pdf_pattern);
-        getWindow().setStatusBarColor(0xFF1976D2);
+        getWindow().setStatusBarColor(0xFF1565C0);
 
         mSenderId  = getIntent().getLongExtra(EXTRA_SENDER_ID,  -1L);
         mPatternId = getIntent().getLongExtra(EXTRA_PATTERN_ID, -1L);

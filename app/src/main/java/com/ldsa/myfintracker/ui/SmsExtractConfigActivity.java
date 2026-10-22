@@ -54,6 +54,7 @@ public class SmsExtractConfigActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sms_extract_config);
+        getWindow().setStatusBarColor(0xFF1565C0);
 
         mSenderId  = getIntent().getLongExtra(EXTRA_SENDER_ID,  -1L);
         mPatternId = getIntent().getLongExtra(EXTRA_PATTERN_ID, -1L);
@@ -96,6 +97,7 @@ public class SmsExtractConfigActivity extends Activity {
         if (mPattern == null) mCardPreview.setVisibility(View.GONE);
 
         btnSave.setOnClickListener(new SaveClickListener(this));
+        findViewById(R.id.btnBack).setOnClickListener(new BackListener(this));
     }
 
     private void populate(ExtractionPattern p) {
@@ -149,6 +151,12 @@ public class SmsExtractConfigActivity extends Activity {
     // ============================================================
     // Static classes — D8 constraints
     // ============================================================
+
+    static class BackListener implements View.OnClickListener {
+        private final SmsExtractConfigActivity mA;
+        BackListener(SmsExtractConfigActivity a) { mA = a; }
+        public void onClick(View v) { mA.finish(); }
+    }
 
     static class SaveClickListener implements View.OnClickListener {
         private final SmsExtractConfigActivity mA;

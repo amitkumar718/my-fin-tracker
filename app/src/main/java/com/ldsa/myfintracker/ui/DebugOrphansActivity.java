@@ -27,7 +27,8 @@ public class DebugOrphansActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_debug_orphans);
-        setTitle(R.string.title_debug_orphans);
+        getWindow().setStatusBarColor(0xFF1565C0);
+        findViewById(R.id.btnBack).setOnClickListener(new BackListener(this));
     }
 
     @Override
@@ -51,6 +52,12 @@ public class DebugOrphansActivity extends Activity {
         Intent i = new Intent(this, ExpenseDetailActivity.class);
         i.putExtra(MainActivity.EXTRA_EXPENSE_ID, expenseId);
         startActivity(i);
+    }
+
+    static class BackListener implements View.OnClickListener {
+        private final DebugOrphansActivity mA;
+        BackListener(DebugOrphansActivity a) { mA = a; }
+        public void onClick(View v) { mA.finish(); }
     }
 
     static class ExpenseAdapter extends BaseAdapter {

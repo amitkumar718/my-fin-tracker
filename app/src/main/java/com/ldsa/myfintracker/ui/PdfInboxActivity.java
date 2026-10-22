@@ -63,7 +63,7 @@ public class PdfInboxActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_pdf_inbox);
-        getWindow().setStatusBarColor(0xFF1976D2);
+        getWindow().setStatusBarColor(0xFF1565C0);
         mDb = ExpenseDatabase.getInstance(this);
         mSenderId = getIntent().getLongExtra(EXTRA_SENDER_ID, -1L);
         mPickMode = getIntent().getBooleanExtra(EXTRA_PICK_MODE, false);
@@ -76,12 +76,13 @@ public class PdfInboxActivity extends Activity {
         mListView.setOnItemClickListener(new ItemClickListener(this));
         mListView.setOnItemLongClickListener(new ItemLongClickListener(this));
 
-        Button addBtn = (Button) findViewById(R.id.btnAddStatement);
+        Button btnAdd = (Button) findViewById(R.id.btnAdd);
         if (mSenderId > 0) {
-            addBtn.setVisibility(View.GONE);
+            if (btnAdd != null) btnAdd.setVisibility(View.GONE);
         } else {
-            addBtn.setOnClickListener(new AddClickListener(this));
+            if (btnAdd != null) btnAdd.setOnClickListener(new AddClickListener(this));
         }
+        findViewById(R.id.btnBack).setOnClickListener(new BackListener(this));
     }
 
     @Override
@@ -429,6 +430,12 @@ public class PdfInboxActivity extends Activity {
     // ============================================================
     // Static listener classes
     // ============================================================
+
+    static class BackListener implements View.OnClickListener {
+        private final PdfInboxActivity mA;
+        BackListener(PdfInboxActivity a) { mA = a; }
+        public void onClick(View v) { mA.finish(); }
+    }
 
     static class AddClickListener implements View.OnClickListener {
         private final PdfInboxActivity mA;

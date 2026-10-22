@@ -6,8 +6,6 @@ import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -30,9 +28,6 @@ import java.util.List;
 import java.util.Locale;
 
 public class ExpenseDetailActivity extends Activity {
-
-    private static final int MENU_EDIT   = 1;
-    private static final int MENU_DELETE = 2;
 
     private TextView mTvAmount;
     private TextView mTvDate;
@@ -74,6 +69,7 @@ public class ExpenseDetailActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_expense_detail);
+        getWindow().setStatusBarColor(0xFF1565C0);
 
         mDb = ExpenseDatabase.getInstance(this);
         long id = getIntent().getLongExtra(MainActivity.EXTRA_EXPENSE_ID, -1);
@@ -119,36 +115,11 @@ public class ExpenseDetailActivity extends Activity {
         mBtnSave.setOnClickListener(new SaveClickListener(this));
         mEtDate.setOnClickListener(new DateClickListener(this));
         mEtTime.setOnClickListener(new TimeClickListener(this));
+        findViewById(R.id.btnBack).setOnClickListener(new BackListener(this));
+        findViewById(R.id.btnEdit).setOnClickListener(new EditToggleListener(this));
+        findViewById(R.id.btnDelete).setOnClickListener(new DeleteClickListener(this));
 
         showViewMode();
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        menu.add(0, MENU_EDIT,   0, R.string.action_edit);
-        menu.add(0, MENU_DELETE, 1, R.string.action_delete);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == MENU_EDIT) {
-            if (mEditMode.getVisibility() == View.GONE) {
-                showEditMode();
-            } else {
-                showViewMode();
-            }
-            return true;
-        }
-        if (item.getItemId() == MENU_DELETE) {
-            new AlertDialog.Builder(this, R.style.RoundedDialog)
-                .setMessage(R.string.confirm_delete_expense)
-                .setPositiveButton(android.R.string.ok, new DeleteConfirmListener(this))
-                .setNegativeButton(android.R.string.cancel, null)
-                .show();
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
     }
 
     private void showViewMode() {
@@ -348,9 +319,43 @@ public class ExpenseDetailActivity extends Activity {
         return (s != null && !s.isEmpty()) ? s : "—";
     }
 
+    void toggleEditMode() {
+        if (mEditMode.getVisibility() == View.GONE) {
+            showEditMode();
+        } else {
+            showViewMode();
+        }
+    }
+
+    void confirmDelete() {
+        new AlertDialog.Builder(this, R.style.RoundedDialog)
+            .setMessage(R.string.confirm_delete_expense)
+            .setPositiveButton(android.R.string.ok, new DeleteConfirmListener(this))
+            .setNegativeButton(android.R.string.cancel, null)
+            .show();
+    }
+
     // ============================================================
     // Static listener classes — D8 constraints
     // ============================================================
+
+    static class BackListener implements View.OnClickListener {
+        private final ExpenseDetailActivity mA;
+        BackListener(ExpenseDetailActivity a) { mA = a; }
+        public void onClick(View v) { mA.finish(); }
+    }
+
+    static class EditToggleListener implements View.OnClickListener {
+        private final ExpenseDetailActivity mA;
+        EditToggleListener(ExpenseDetailActivity a) { mA = a; }
+        public void onClick(View v) { mA.toggleEditMode(); }
+    }
+
+    static class DeleteClickListener implements View.OnClickListener {
+        private final ExpenseDetailActivity mA;
+        DeleteClickListener(ExpenseDetailActivity a) { mA = a; }
+        public void onClick(View v) { mA.confirmDelete(); }
+    }
 
     static class AddLabelClickListener implements View.OnClickListener {
         private final ExpenseDetailActivity mA;

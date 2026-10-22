@@ -41,7 +41,7 @@ public class EditTripActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_trip);
-        setTitle(R.string.label_new_trip);
+        getWindow().setStatusBarColor(0xFF1565C0);
 
         mDb          = ExpenseDatabase.getInstance(this);
         mEtName      = (EditText) findViewById(R.id.etTripName);
@@ -67,6 +67,7 @@ public class EditTripActivity extends Activity {
 
         Button btnSave = (Button) findViewById(R.id.btnSaveTrip);
         btnSave.setOnClickListener(new SaveClickListener(this));
+        findViewById(R.id.btnBack).setOnClickListener(new BackListener(this));
     }
 
     void updateDateButtons() {
@@ -99,6 +100,12 @@ public class EditTripActivity extends Activity {
     }
 
     // ── Static inner classes ──────────────────────────────────────
+
+    static class BackListener implements View.OnClickListener {
+        private final EditTripActivity mActivity;
+        BackListener(EditTripActivity a) { mActivity = a; }
+        public void onClick(View v) { mActivity.finish(); }
+    }
 
     static class SaveClickListener implements View.OnClickListener {
         private final EditTripActivity mActivity;

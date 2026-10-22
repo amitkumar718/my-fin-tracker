@@ -66,8 +66,6 @@ public class LandingActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_landing);
         getWindow().setStatusBarColor(0xFF1565C0);
-        setTitle(R.string.title_landing);
-
         mDb = ExpenseDatabase.getInstance(this);
 
         // Start on current month, zeroed to day 1.
@@ -76,7 +74,7 @@ public class LandingActivity extends Activity {
 
         findViewById(R.id.btnPrevMonth).setOnClickListener(new MonthStepListener(this, -1));
         findViewById(R.id.btnNextMonth).setOnClickListener(new MonthStepListener(this, +1));
-        findViewById(R.id.btnSettings) .setOnClickListener(new OpenActivityListener(this, SettingsActivity.class));
+        findViewById(R.id.btnSearch)   .setOnClickListener(new SearchClickListener(this));
         findViewById(R.id.btnViewAll)  .setOnClickListener(new ViewAllClickListener(this));
 
         // Bottom nav wiring. Home has no listener — we're already on this screen.
@@ -513,6 +511,16 @@ public class LandingActivity extends Activity {
         private final Class<?> mTarget;
         OpenActivityListener(Activity a, Class<?> target) { mA = a; mTarget = target; }
         public void onClick(View v) { mA.startActivity(new Intent(mA, mTarget)); }
+    }
+
+    static class SearchClickListener implements View.OnClickListener {
+        private final LandingActivity mA;
+        SearchClickListener(LandingActivity a) { mA = a; }
+        public void onClick(View v) {
+            Intent i = new Intent(mA, MainActivity.class);
+            i.putExtra("open_search", true);
+            mA.startActivity(i);
+        }
     }
 
     static class ViewAllClickListener implements View.OnClickListener {

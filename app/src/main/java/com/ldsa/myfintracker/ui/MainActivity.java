@@ -178,6 +178,10 @@ public class MainActivity extends Activity {
 
         mSpinnerFilter.setOnItemSelectedListener(new FilterSelectedListener(this));
         mSpinnerSort.setOnItemSelectedListener(new SortSelectedListener(this));
+
+        if (launchIntent != null && launchIntent.getBooleanExtra("open_search", false)) {
+            toggleSearch();
+        }
     }
 
     @Override

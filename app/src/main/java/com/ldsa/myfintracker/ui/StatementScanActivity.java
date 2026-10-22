@@ -62,6 +62,7 @@ public class StatementScanActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_statement_scan);
+        getWindow().setStatusBarColor(0xFF1565C0);
 
         mDb      = ExpenseDatabase.getInstance(this);
         mHandler = new Handler();
@@ -77,7 +78,7 @@ public class StatementScanActivity extends Activity {
         mListView.setOnItemClickListener(new ItemClickListener(this));
         mBtnImport.setOnClickListener(new ImportClickListener(this));
         mBtnSetupTemplate.setOnClickListener(new SetupTemplateClickListener(this));
-        ((Button) findViewById(R.id.btnScanClose)).setOnClickListener(new CloseClickListener(this));
+        findViewById(R.id.btnBack).setOnClickListener(new CloseClickListener(this));
 
         long stmtId = getIntent().getLongExtra(EXTRA_STATEMENT_ID, -1L);
         mStatement  = mDb.getPdfStatementById(stmtId);

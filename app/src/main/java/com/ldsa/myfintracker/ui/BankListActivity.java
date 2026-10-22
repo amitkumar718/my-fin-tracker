@@ -30,14 +30,14 @@ public class BankListActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_bank_list);
-        getWindow().setStatusBarColor(0xFF1976D2);
+        getWindow().setStatusBarColor(0xFF1565C0);
 
         mDb        = ExpenseDatabase.getInstance(this);
         mContainer = (LinearLayout) findViewById(R.id.containerBanks);
         mTvEmpty   = (TextView)     findViewById(R.id.tvBanksEmpty);
 
         ((TextView) findViewById(R.id.btnBack)).setOnClickListener(new BackClickListener(this));
-        ((Button)   findViewById(R.id.btnAddBank)).setOnClickListener(new AddBankClickListener(this));
+        ((Button) findViewById(R.id.btnAdd)).setOnClickListener(new AddBankClickListener(this));
     }
 
     @Override
