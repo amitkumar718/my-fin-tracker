@@ -6,6 +6,8 @@ import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,16 +19,24 @@ import android.widget.TextView;
 import com.ldsa.myfintracker.R;
 import com.ldsa.myfintracker.db.Expense;
 import com.ldsa.myfintracker.db.ExpenseDatabase;
+import com.ldsa.myfintracker.db.ExtractionPattern;
 import com.ldsa.myfintracker.db.PdfStatement;
 import com.ldsa.myfintracker.db.SenderConfig;
+import com.ldsa.myfintracker.sms.SmsMessage;
+import com.ldsa.myfintracker.sms.SmsReader;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * New-look landing dashboard. Phase 1: entered via Settings → "Try new landing"
@@ -42,6 +52,7 @@ public class LandingActivity extends Activity {
 
     private ExpenseDatabase mDb;
     private final Calendar  mCursor = Calendar.getInstance();
+    private int mPendingSmsCount = 0; // updated by background scan
 
     private final SimpleDateFormat mFmtMonthLong =
         new SimpleDateFormat("MMMM yyyy", Locale.getDefault());
@@ -66,7 +77,7 @@ public class LandingActivity extends Activity {
         findViewById(R.id.btnPrevMonth).setOnClickListener(new MonthStepListener(this, -1));
         findViewById(R.id.btnNextMonth).setOnClickListener(new MonthStepListener(this, +1));
         findViewById(R.id.btnSettings) .setOnClickListener(new OpenActivityListener(this, SettingsActivity.class));
-        findViewById(R.id.btnViewAll)  .setOnClickListener(new OpenActivityListener(this, MainActivity.class));
+        findViewById(R.id.btnViewAll)  .setOnClickListener(new ViewAllClickListener(this));
 
         // Bottom nav wiring. Home has no listener — we're already on this screen.
         findViewById(R.id.navExpenses).setOnClickListener(new OpenActivityListener(this, MainActivity.class));
@@ -79,6 +90,23 @@ public class LandingActivity extends Activity {
     protected void onResume() {
         super.onResume();
         render();
+        startSmsScan();
+    }
+
+    private void startSmsScan() {
+        if (android.os.Build.VERSION.SDK_INT >= 23) {
+            if (checkSelfPermission(android.Manifest.permission.READ_SMS)
+                    != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                return;
+            }
+        }
+        new CountPendingSmsThread(this, mDb.getAllSenders(), mDb.getAllPatterns(),
+            mDb.getAppliedSmsBodies(), new Handler(Looper.getMainLooper())).start();
+    }
+
+    void onSmsScanDone(int count) {
+        mPendingSmsCount = count;
+        renderAttention();
     }
 
     void stepMonth(int delta) {
@@ -177,16 +205,23 @@ public class LandingActivity extends Activity {
         container.removeAllViews();
         TextView header = (TextView) findViewById(R.id.tvAttentionHeader);
 
-        int orphans   = mDb.getOrphanExpenses().size();
+        int orphans    = mDb.getOrphanExpenses().size();
         int pdfsToScan = countPdfsPendingScan();
-        int awaiting  = countMonthsAwaitingStatement();
+        int awaiting   = countMonthsAwaitingStatement();
+        int smsPending = mPendingSmsCount;
 
-        if (orphans == 0 && pdfsToScan == 0 && awaiting == 0) {
+        if (orphans == 0 && pdfsToScan == 0 && awaiting == 0 && smsPending == 0) {
             header.setVisibility(View.GONE);
             return;
         }
         header.setVisibility(View.VISIBLE);
 
+        if (smsPending > 0) {
+            container.addView(makeAttentionPill(
+                smsPending + " SMS expense" + (smsPending == 1 ? "" : "s") + " ready to import",
+                R.color.statusReconciledBg, R.color.smsTag, R.color.smsTag,
+                new OpenActivityListener(this, SmsInboxActivity.class)));
+        }
         if (pdfsToScan > 0) {
             container.addView(makeAttentionPill(
                 getString(R.string.landing_attn_pdf_scan_fmt, pdfsToScan, pdfsToScan == 1 ? "" : "s"),
@@ -479,6 +514,7 @@ public class LandingActivity extends Activity {
         OpenActivityListener(Activity a, Class<?> target) { mA = a; mTarget = target; }
         public void onClick(View v) { mA.startActivity(new Intent(mA, mTarget)); }
     }
+
     static class ViewAllClickListener implements View.OnClickListener {
         private final LandingActivity mA;
         ViewAllClickListener(LandingActivity a) { mA = a; }
@@ -530,5 +566,71 @@ public class LandingActivity extends Activity {
             mDialog.dismiss();
             mA.startActivity(new Intent(mA, mTarget));
         }
+    }
+
+    // ── Background SMS scan ──────────────────────────────────────────────────
+
+    static class CountPendingSmsThread extends Thread {
+        private final LandingActivity         mA;
+        private final List<SenderConfig>      mConfigs;
+        private final List<ExtractionPattern> mPatterns;
+        private final Set<String>             mApplied;
+        private final Handler                 mHandler;
+
+        CountPendingSmsThread(LandingActivity a, List<SenderConfig> configs,
+                              List<ExtractionPattern> patterns, Set<String> applied, Handler h) {
+            mA = a; mConfigs = configs; mPatterns = patterns; mApplied = applied; mHandler = h;
+        }
+
+        public void run() {
+            if (mConfigs.isEmpty()) {
+                post(0);
+                return;
+            }
+            List<SmsMessage> allSms = SmsReader.readMatchingSms(mA, mConfigs);
+            Map<Long, List<ExtractionPattern>> bysender = new HashMap<Long, List<ExtractionPattern>>();
+            for (ExtractionPattern p : mPatterns) {
+                List<ExtractionPattern> list = bysender.get(p.senderId);
+                if (list == null) {
+                    list = new ArrayList<ExtractionPattern>();
+                    bysender.put(p.senderId, list);
+                }
+                list.add(p);
+            }
+            int count = 0;
+            for (SenderConfig cfg : mConfigs) {
+                List<ExtractionPattern> cfgPats = bysender.get(cfg.id);
+                if (cfgPats == null || cfgPats.isEmpty()) continue;
+                for (SmsMessage msg : allSms) {
+                    if (!cfg.matches(msg.address)) continue;
+                    if (msg.body == null || mApplied.contains(msg.body)) continue;
+                    if (hasPatternMatch(msg.body, cfgPats)) count++;
+                }
+            }
+            post(count);
+        }
+
+        private static boolean hasPatternMatch(String body, List<ExtractionPattern> pats) {
+            for (ExtractionPattern p : pats) {
+                if (!p.matches(body)) continue;
+                try {
+                    if (Pattern.compile(p.templateRegex,
+                            Pattern.CASE_INSENSITIVE | Pattern.MULTILINE)
+                            .matcher(body).find()) return true;
+                } catch (Exception ignored) {}
+            }
+            return false;
+        }
+
+        private void post(final int count) {
+            mHandler.post(new SmsCountRunnable(mA, count));
+        }
+    }
+
+    static class SmsCountRunnable implements Runnable {
+        private final LandingActivity mA;
+        private final int             mCount;
+        SmsCountRunnable(LandingActivity a, int count) { mA = a; mCount = count; }
+        public void run() { mA.onSmsScanDone(mCount); }
     }
 }
