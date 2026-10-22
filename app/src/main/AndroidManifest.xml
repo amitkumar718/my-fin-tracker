@@ -145,6 +145,12 @@
             android:theme="@android:style/Theme.Material.Light.NoActionBar" />
 
         <activity
+            android:name=".ui.LandingActivity"
+            android:label="@string/title_landing"
+            android:theme="@android:style/Theme.Material.Light.NoActionBar"
+            android:exported="false" />
+
+        <activity
             android:name=".ui.DebugActivity"
             android:label="@string/title_debug"
             android:exported="false" />

@@ -288,6 +288,36 @@
     <string name="msg_pattern_and_expenses_deleted_fmt">Pattern deleted; %1$d expense%2$s removed</string>
     <string name="msg_pattern_deleted_orphaned_fmt">Pattern deleted; %1$d expense%2$s orphaned</string>
     <string name="msg_expenses_deleted_fmt">%1$d expense%2$s removed; pattern kept</string>
+
+    <!-- new-look landing -->
+    <string name="title_landing">my-fin-tracker</string>
+    <string name="label_try_new_landing">Try new landing</string>
+    <string name="label_try_new_landing_sub">Preview the redesigned dashboard</string>
+    <string name="landing_spent_header_current">SPENT THIS MONTH</string>
+    <string name="landing_spent_header_fmt">SPENT · %1$s</string>
+    <string name="landing_hero_caption_fmt">%1$d transactions · %2$s</string>
+    <string name="landing_hero_caption_banks_none">no banks yet</string>
+    <string name="landing_status_live">LIVE</string>
+    <string name="landing_status_no_stmt">NO STATEMENT</string>
+    <string name="landing_status_reconciled">RECONCILED</string>
+    <string name="landing_section_attention">NEEDS ATTENTION</string>
+    <string name="landing_section_actions">QUICK ACTIONS</string>
+    <string name="landing_section_recent">RECENT</string>
+    <string name="landing_recent_view_all">View all ›</string>
+    <string name="landing_attn_orphans_fmt">%1$d orphan%2$s</string>
+    <string name="landing_attn_pdf_scan_fmt">%1$d PDF%2$s to scan</string>
+    <string name="landing_attn_awaiting_stmt_fmt">%1$d month%2$s awaiting statement</string>
+    <string name="landing_action_add">Add</string>
+    <string name="landing_action_import">Import</string>
+    <string name="landing_action_scan">Scan</string>
+    <string name="landing_action_trip">New trip</string>
+    <string name="landing_no_recent">No transactions this month.</string>
+    <string name="landing_footer_all">All expenses</string>
+    <string name="landing_footer_trips">Trips</string>
+    <string name="landing_footer_banks">Banks</string>
+    <string name="landing_tag_sms">SMS</string>
+    <string name="landing_tag_pdf">PDF</string>
+    <string name="landing_tag_manual">MAN</string>
     <string name="msg_save_bank_first">Save the bank identity first</string>
     <string name="label_pdf_sources">PDF Sources</string>
     <string name="btn_add_source">+ Add</string>

@@ -22,4 +22,36 @@
     <color name="badgeRegexText">#2E7D32</color>
     <color name="badgeOnline">#E3F2FD</color>
     <color name="badgeOnlineText">#1565C0</color>
+
+    <!-- new-look palette (used by LandingActivity + future screens) -->
+    <color name="landingBackground">#F5F7FA</color>
+    <color name="appBarWhite">#FFFFFF</color>
+    <color name="hairline">#E0E0E0</color>
+    <color name="textMuted">#616161</color>
+    <color name="debit">#C62828</color>
+    <color name="credit">#2E7D32</color>
+    <color name="orphan">#D32F2F</color>
+    <color name="autoAmount">#6A1B9A</color>
+    <color name="smsTag">#26A69A</color>
+    <color name="pdfTag">#1976D2</color>
+    <color name="manualTag">#9E9E9E</color>
+    <color name="statusLiveBg">#FFF3E0</color>
+    <color name="statusLiveText">#E65100</color>
+    <color name="statusLiveDot">#FB8C00</color>
+    <color name="statusReconciledBg">#E8F5E9</color>
+    <color name="statusReconciledText">#1B5E20</color>
+    <color name="statusReconciledDot">#2E7D32</color>
+    <color name="statusNoStmtBg">#FFF5F5</color>
+    <color name="statusNoStmtText">#B71C1C</color>
+    <color name="statusNoStmtDot">#D32F2F</color>
+    <color name="attnOrangeBg">#FFF3E0</color>
+    <color name="attnBlueBg">#E3F2FD</color>
+    <color name="attnRedBg">#FFF5F5</color>
+    <color name="attnYellowBg">#FFF8E1</color>
+    <color name="attnYellowDot">#F9A825</color>
+    <color name="attnYellowText">#795548</color>
+    <color name="tileAddBg">#E3F2FD</color>
+    <color name="tileImportBg">#FFF3E0</color>
+    <color name="tileScanBg">#E0F2F1</color>
+    <color name="tileTripBg">#F3E5F5</color>
 </resources>

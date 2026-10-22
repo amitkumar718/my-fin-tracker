@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_card"
+    android:paddingLeft="10dp"
+    android:paddingRight="10dp"
+    android:paddingTop="6dp"
+    android:paddingBottom="6dp"
+    android:layout_marginBottom="2dp"
+    android:foreground="?android:attr/selectableItemBackground">
+
+    <TextView
+        android:id="@+id/tvRecentTag"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="9sp"
+        android:textStyle="bold"
+        android:textColor="@color/white"
+        android:letterSpacing="0.08"
+        android:paddingLeft="6dp"
+        android:paddingRight="6dp"
+        android:paddingTop="2dp"
+        android:paddingBottom="2dp"
+        android:background="@drawable/bg_pill" />
+
+    <TextView
+        android:id="@+id/tvRecentMerchant"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toRightOf="@id/tvRecentTag"
+        android:layout_marginLeft="6dp"
+        android:textSize="13sp"
+        android:textStyle="bold"
+        android:textColor="@color/textPrimary"
+        android:maxLines="1"
+        android:ellipsize="end" />
+
+    <TextView
+        android:id="@+id/tvRecentAmount"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_alignBottom="@id/tvRecentMerchant"
+        android:textSize="13sp"
+        android:textStyle="bold"
+        android:textColor="@color/textPrimary" />
+
+    <TextView
+        android:id="@+id/tvRecentCaption"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/tvRecentMerchant"
+        android:layout_marginTop="1dp"
+        android:textSize="10sp"
+        android:textColor="@color/textMuted" />
+</RelativeLayout>
